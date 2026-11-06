@@ -257,3 +257,14 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
   .eroe { padding-top: 2rem; }
   .cifra strong { font-size: 2.4rem; }
 }
+
+/* ------------------------------------------------------------------ ricerca dei libri (letture.js) */
+.risultati-ricerca { list-style: none; margin: .25rem 0 0; padding: 0; border: 1px solid var(--linea); border-radius: var(--r); background: #fff; max-height: 18rem; overflow-y: auto; font-family: var(--sans); font-size: .85rem; }
+.risultati-ricerca li { border-bottom: 1px solid var(--linea); padding: .45rem .7rem; }
+.risultati-ricerca li:last-child { border-bottom: 0; }
+.risultati-ricerca button { all: unset; cursor: pointer; display: block; width: 100%; }
+.risultati-ricerca button:hover, .risultati-ricerca button:focus-visible { color: var(--accento); }
+.risultati-ricerca button:focus-visible { outline: 2px solid var(--accento); outline-offset: 2px; }
+.risultati-ricerca small { display: block; color: var(--inchiostro-lo); }
+.risultati-ricerca .in-zotero { background: var(--accento-bg); }
+.risultati-ricerca .in-zotero small { color: var(--accento); font-weight: 600; }

@@ -1,12 +1,16 @@
-"""Area riservata del docente: profilo, candidature, invio materiali."""
-from flask import (Blueprint, abort, current_app, flash, redirect, render_template,
-                   send_from_directory, url_for)
+"""Area riservata del docente: profilo, candidature, invio materiali, ricerca dei libri."""
+import time
+from collections import defaultdict, deque
+
+from flask import (Blueprint, abort, current_app, flash, jsonify, redirect, render_template,
+                   request, send_from_directory, url_for)
 from flask_login import current_user, login_required
 
 from ..extensions import db
 from ..forms import CandidaturaForm, MaterialeForm, ProfiloForm
 from ..models import Candidatura, Edizione, Materiale, adesso
 from ..posta import email_conferma_invio
+from ..ricerca_libri import cerca
 from ..utils import conta_caratteri, elimina_upload, salva_upload
 
 bp = Blueprint("area", __name__)
@@ -146,3 +150,29 @@ def nuovo_materiale():
             flash("Materiale inviato: sarà pubblicato dopo la revisione.", "ok")
             return redirect(url_for("area.dashboard"))
     return render_template("area/materiale_form.html", form=form)
+
+
+# ------------------------------------------------------------------ ricerca dei libri (lookup)
+LIMITE_RICERCHE = 30  # al minuto, per utente
+# ponytail: memoria del processo; con più processi mod_wsgi il limite vale per processo
+_ricerche = defaultdict(deque)
+
+
+def _troppe_ricerche(uid):
+    ora, coda = time.monotonic(), _ricerche[uid]
+    while coda and ora - coda[0] > 60:
+        coda.popleft()
+    if len(coda) >= LIMITE_RICERCHE:
+        return True
+    coda.append(ora)
+    return False
+
+
+@bp.route("/letture/cerca")
+def cerca_letture():
+    q = request.args.get("q", "").strip()
+    if len(q) < 3:
+        return jsonify(errore="Scrivi almeno 3 caratteri."), 400
+    if _troppe_ricerche(current_user.id):
+        return jsonify(errore="Troppe ricerche: riprova tra un minuto."), 429
+    return jsonify(cerca(q[:200], request.args.get("isbn")))

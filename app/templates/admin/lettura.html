@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import campo, stato %}
 {% block title %}Lettura proposta{% endblock %}
+{% block script %}<script src="{{ url_for('static', filename='js/letture.js') }}" defer></script>{% endblock %}
 {% block content %}
 <p class="occhiello"><a href="{{ url_for('admin.letture', edizione=ed.id) }}">← Letture {{ ed.anno }}</a></p>
 <h1>{{ p.titolo }} {{ stato(p.stato, STATI_PROPOSTA) }}</h1>
@@ -25,7 +26,7 @@
     <form method="post" class="modulo scheda">
       {{ form.hidden_tag() }}
       <h3>Scheda da salvare in Zotero</h3>
-      {% for nome in campi %}{{ campo(form[nome]) }}{% endfor %}
+      {% for nome in campi %}{% if nome == 'title' and p.tipo == 'book' %}{{ campo(form[nome], data_ricerca_url=url_for('area.cerca_letture')) }}{% else %}{{ campo(form[nome]) }}{% endif %}{% endfor %}
       <fieldset>
         <legend>Già in Zotero?</legend>
         {% for key, descr in scelte %}

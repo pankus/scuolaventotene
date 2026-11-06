@@ -51,6 +51,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /admin/candidature/<id>                          scheda, valutazione, esito
 /admin/materiali                                 revisione e caricamento
 /admin/letture[?edizione=<id>], /admin/letture/<id>   revisione delle letture proposte (comitato)
+/area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
 /admin/utenti                                    ruoli e attivazione
 /admin/zotero/sync                               sincronizzazione manuale
 ```
@@ -88,6 +89,8 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - La chiave API deve avere il permesso di scrittura sul gruppo (controllo: `flask zotero-verifica`); per la sola lettura basta una chiave in lettura, o nessuna se il gruppo è pubblico.
 
 **Letture proposte** (PIANO_LETTURE.md): il docente indica libri e siti nella candidatura (dalla fase F5). In `/admin/letture` il comitato vede le proposte delle candidature inviate, corregge la scheda e sceglie: collegarla a un record già in Zotero (doppioni trovati per ISBN o per titolo e anno) oppure crearne uno nuovo. In entrambi i casi l'item entra nella collezione dell'edizione con il tag `ZOTERO_TAG_PROPOSTE`, e la copertina viene scaricata in `uploads/copertine/` (solo da Google Books, Open Library e archive.org). Serve che l'edizione abbia la collezione Zotero. Se in Zotero si fondono due item, la sync sposta le proposte sul superstite (`dc:replaces`). Una proposta rifiutata riporta la nota del comitato; una approvata si corregge direttamente in Zotero.
+
+**Ricerca dei libri**: mentre si scrive il titolo (`letture.js`, 300 ms di pausa) il sito cerca nella copia locale di Zotero e, dal server, su Google Books e Open Library (timeout 5 s, in parallelo, risultati fusi per ISBN; se una fonte non risponde restano le altre). I risultati già in Zotero sono evidenziati; scegliendone uno si compilano i campi della scheda. Il browser non contatta servizi esterni: le copertine restano un indirizzo finché il comitato non approva. Per i siti web niente ricerca automatica (il titolo da un URL richiederebbe protezioni SSRF). Oggi la ricerca serve al comitato in `/admin/letture/<id>`; dalla fase F5 al docente.
 
 ## 6. Sicurezza e dati personali
 

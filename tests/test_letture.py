@@ -83,7 +83,9 @@ def test_approva_collega_esistente(app, zot):
     sincronizza(zot=zot)
     p = crea_proposta()
     c = client_di(app, crea_utente(ruolo="comitato"))
-    assert "Il confino fascista" in c.get(f"/admin/letture/{p.id}").get_data(as_text=True)
+    html = c.get(f"/admin/letture/{p.id}").get_data(as_text=True)
+    assert "Il confino fascista" in html
+    assert 'data-ricerca-url="/area/letture/cerca"' in html and "js/letture.js" in html
     approva(c, p, zotero_key="ESIST")
 
     assert not zot.creati

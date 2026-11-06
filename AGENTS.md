@@ -21,7 +21,8 @@ Lingua del sito, del codice di dominio e dei commenti: **italiano**.
 - Python **3.14** (fissato in `.python-version` e `requires-python`), gestito con **uv**
 - Flask 3, Flask-SQLAlchemy, Flask-Migrate (Alembic), Flask-Login, Flask-WTF (CSRF), WTForms, email-validator
 - SQLite in `instance/ventotene.db` (WAL + foreign keys attivati in `app/extensions.py`)
-- Jinja2 senza framework JS né build step; CSS scritto a mano in `app/static/css/style.css`
+- Jinja2 senza framework JS né build step; CSS scritto a mano in `app/static/css/style.css`;
+  JS a mano solo dove serve (`app/static/js/letture.js`, ricerca dei libri), caricato con `{% block script %}`
 - pyzotero (bibliografia), python-docx (conteggio caratteri), markdown (testi delle edizioni)
 - Produzione: Ubuntu 22.04, Apache + mod_wsgi compilato contro il Python del `.venv` (`wsgi.py`)
 
@@ -57,11 +58,12 @@ app/forms.py         form WTForms
 app/utils.py         decoratori di permesso, upload, conteggio caratteri, filtri Jinja, context processor
 app/zotero_sync.py   sync Zotero → sito, verifica chiave, normalizzazione ISBN/firma
 app/zotero_scrittura.py  crea/aggiorna item book|webpage, controllo duplicati (ISBN, firma+anno, ricerca remota)
+app/ricerca_libri.py     lookup: cache ZoteroItem + Google Books / Open Library (dal server, in parallelo, fusi per ISBN)
 app/posta.py         email SMTP (Infomaniak) e token firmati per verifica email / reset password
 app/cli.py           comandi flask
 app/views/           un blueprint per area: public, auth, area (/area), archivio, bibliografia, admin (/admin)
 app/templates/       una cartella per blueprint; base.html e _macros.html condivisi
-app/static/          css/style.css e font locali (ET Book, Inter, JetBrains Mono)
+app/static/          css/style.css, js/letture.js e font locali (ET Book, Inter, JetBrains Mono)
 migrations/          migrazioni Alembic (Flask-Migrate), da committare
 instance/            database e uploads/ — non versionata, non toccare a mano
 ```
@@ -142,7 +144,9 @@ Citazioni già formattate (`include=bib`). La chiave ha permesso di scrittura (c
 `aggiorna_item` con 412 → `ErroreScrittura`, `candidati_duplicati`): solo campi bibliografici,
 mai dati del docente; la usa la revisione del comitato (`/admin/letture`, `collega_item` per i
 record già presenti). Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
-nei redirect, solo immagini, max 2 MB). Nei test solo `FakeZot`
+nei redirect, solo immagini, max 2 MB). Ricerca dei libri in `app/ricerca_libri.py`
+(`/area/letture/cerca`): le API esterne si chiamano solo dal server, il browser non carica
+immagini esterne (nei risultati solo testo). Nei test solo `FakeZot`
 (`tests/conftest.py`), mai il gruppo vero: `TestConfig` usa un ID finto.
 
 ## Sicurezza e dati personali
@@ -165,6 +169,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
 - `test_rotte.py`: permessi admin/comitato/docente/anonimo, candidature di altri, invio,
   download dei materiali.
 - `test_zotero.py`, `test_zotero_scrittura.py`: sync, scrittura, duplicati, con `FakeZot`.
+- `test_ricerca_libri.py`: lookup con `_json` finto (mai le API vere), fusione per ISBN, fonte giù,
+  limite di 30 ricerche al minuto.
 - `test_letture.py`: revisione delle letture (permessi, collega/crea, nessun dato del docente
   nel payload Zotero), copertine, merge `dc:replaces`.
 

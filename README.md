@@ -21,12 +21,13 @@ ventotene/
     ├── utils.py            permessi, upload, conteggio caratteri, filtri Jinja
     ├── zotero_sync.py      sincronizzazione incrementale del gruppo Zotero
     ├── zotero_scrittura.py scrittura in Zotero (letture approvate) e controllo duplicati
+    ├── ricerca_libri.py    ricerca dei libri: cache Zotero + Google Books / Open Library
     ├── posta.py            email SMTP (Infomaniak) e token
     ├── cli.py              init-db, crea-admin, seed-2026, zotero-sync, zotero-verifica, prova-email
     ├── views/
     │   ├── public.py       home, edizione, la scuola, contatti, privacy
     │   ├── auth.py         registrazione, accesso, verifica email, reset password
-    │   ├── area.py         area docente: profilo, candidature, materiali
+    │   ├── area.py         area docente: profilo, candidature, materiali, ricerca libri
     │   ├── archivio.py     archivio edizioni e download
     │   ├── bibliografia.py invito alla lettura
     │   └── admin.py        back-office
@@ -106,6 +107,11 @@ Il file `.env` contiene la `SECRET_KEY` e la chiave Zotero: `chmod 640 .env`, pr
 l'utente del deploy, gruppo `www-data`; non va mai in git (è già nel `.gitignore`).
 
 L'utente di Apache deve poter scrivere in `instance/` (database, file WAL, uploads).
+
+Ricerca dei libri: il server chiama `www.googleapis.com` e `openlibrary.org` (e scarica le
+copertine da Google Books, Open Library e archive.org): servono le uscite HTTPS verso questi
+host. `GOOGLE_BOOKS_API_KEY` è facoltativa ma consigliata: senza chiave Google risponde spesso
+429 e restano solo i risultati di Open Library.
 
 Email (Infomaniak): nel `.env` `MAIL_SERVER=mail.infomaniak.com`, `MAIL_PORT=465`, utente e
 password della casella (con la 2FA serve una password per applicazione), `MAIL_MITTENTE` uguale
