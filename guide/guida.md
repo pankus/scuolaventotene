@@ -80,8 +80,9 @@ Facoltativo ma raccomandato: fino a **10** libri o siti web utili per il tema de
 - **Motivazione**: perché lo consigliate. Resta nel sito, non entra in Zotero.
 
 Il comitato rivede le proposte; quelle approvate entrano nella bibliografia dell'edizione
-**senza il vostro nome**. Finché la candidatura è in bozza potete modificarle o eliminarle;
-dopo l'invio ne vedete lo stato e l'eventuale nota del comitato.
+**senza il vostro nome**. Potete modificarle o eliminarle fino alla scadenza del bando, anche
+dopo l'invio, finché il comitato non le ha rivedute; ne vedete lo stato e l'eventuale nota del
+comitato.
 
 ### Invio, ritiro ed esito
 
@@ -90,7 +91,13 @@ documento, lunghezza fuori dai limiti): il pulsante **Invia candidatura** si att
 manca nulla. Si può inviare solo **entro la scadenza** del bando. All'invio arriva un'email di
 conferma con il riepilogo e le letture proposte.
 
-Dopo l'invio la candidatura non si modifica più. Si può **ritirare** finché non è conclusa
+Dopo l'invio si possono ancora modificare la proposta (titolo, discipline, abstract, documento)
+e le letture **fino alla scadenza** del bando, o fino a quando arriva l'esito se viene prima:
+nella candidatura compaiono i pulsanti **Modifica la proposta** e **Modifica le letture**. Le
+modifiche valgono subito e non serve inviare di nuovo; se però la nuova versione non rispetta il
+bando (per esempio un documento troppo corto), non viene salvata e resta quella inviata.
+
+Si può **ritirare** finché non è conclusa
 (pulsante **Ritira candidatura**). L'esito (*ammessa*, *in graduatoria come riserva*, *non
 ammessa*) arriva per email e compare nell'area personale.
 

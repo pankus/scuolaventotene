@@ -11,9 +11,20 @@
   <dt>Proposta</dt><dd>{% if c.file_path %}<a href="{{ url_for('area.file_candidatura', cid=c.id) }}">{{ c.file_nome }}</a>
       {% if c.n_caratteri %}· {{ c.n_caratteri }} caratteri{% endif %}{% else %}—{% endif %}</dd>
   <dt>Invito alla lettura</dt><dd>{% if c.letture %}<ul>{% for l in c.letture %}<li>{{ l.titolo }}{% if c.stato != 'bozza' %} {{ stato(l.stato, STATI_PROPOSTA) }}{% endif %}</li>{% endfor %}</ul>{% else %}—{% endif %}
-      <a href="{{ url_for('area.letture', cid=c.id) }}">{{ 'modifica' if c.stato == 'bozza' else 'dettagli' }}</a></dd>
+      <a href="{{ url_for('area.letture', cid=c.id) }}">{{ 'modifica' if c.modificabile else 'dettagli' }}</a></dd>
   {% if c.inviata_il %}<dt>Inviata il</dt><dd>{{ c.inviata_il|data_it('%d/%m/%Y %H:%M') }}</dd>{% endif %}
 </dl>
+
+{% if c.modificabile and c.stato != 'bozza' %}
+<div class="avviso avviso-info">Puoi ancora modificare la proposta e le letture
+  {%- if c.edizione.scadenza_candidature %} fino al {{ c.edizione.scadenza_candidature|data_it }}{% endif %}:
+  le modifiche valgono subito, senza un nuovo invio. Le letture già rivedute dal comitato non si cambiano.
+  <div class="azioni" style="margin-bottom:0">
+    <a class="btn btn-secondario btn-piccolo" href="{{ url_for('area.candidatura', slug=c.edizione.slug) }}">Modifica la proposta</a>
+    <a class="btn btn-secondario btn-piccolo" href="{{ url_for('area.letture', cid=c.id) }}">Modifica le letture</a>
+  </div>
+</div>
+{% endif %}
 
 {% if c.dopo_la_scuola or c.materiali %}
 <h2>Dopo la scuola</h2>

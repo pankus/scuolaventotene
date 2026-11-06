@@ -93,7 +93,9 @@ non scrivere stringhe sparse nelle viste o nei template.
 **Regole del bando** (non cambiarle senza che lo chieda l'utente): una candidatura per docente
 per edizione (vincolo unico); proposta di UD tra `caratteri_min` e `caratteri_max` dell'edizione
 (6000–8000 nel 2026), contata spazi inclusi; data di nascita, telefono, residenza ed email confermata obbligatori
-per inviare; invio solo entro `scadenza_candidature`; valutazione su tre criteri 0–25
+per inviare; invio solo entro `scadenza_candidature`; dopo l'invio proposta e letture non
+ancora rivedute si modificano fino alla scadenza o all'esito (`Candidatura.modificabile`), e una
+modifica che non passa `problemi_invio` viene scartata; valutazione su tre criteri 0–25
 (originalità, potenzialità didattiche, valorizzazione delle fonti), massimo 75, una valutazione
 per membro del comitato, graduatoria sulla media. I controlli sul contenuto prima dell'invio
 stanno in `Candidatura.problemi_invio` (il conteggio caratteri vale solo per i .docx: per PDF/ODT
@@ -208,7 +210,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
 - `test_ricerca_libri.py`: lookup con `_json` finto (mai le API vere), fusione per ISBN, fonte giù,
   limite di 30 ricerche al minuto.
 - `test_iscrizione.py`: passi della candidatura, letture del docente (valori della ricerca
-  verificati, limite, sola lettura dopo l'invio, email di conferma).
+  verificati, limite, modificabili dopo l'invio fino alla scadenza, email di conferma),
+  `Candidatura.modificabile`, modifica della proposta dopo l'invio (scartata se fuori bando).
 - `test_relatori.py`: account del relatore collegato alla lezione (solo admin), materiali e
   bibliografia della lezione (solo le proprie, doppioni, niente tag), pagina edizione per lezione,
   UD dei docenti ammessi senza dati personali, vincolo `una_origine`.

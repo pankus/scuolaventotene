@@ -63,7 +63,9 @@ def profilo():
 def candidatura(slug):
     ed = Edizione.query.filter_by(slug=slug).first_or_404()
     cand = Candidatura.query.filter_by(utente_id=current_user.id, edizione_id=ed.id).first()
-    if cand and cand.stato != "bozza":
+    if cand and not cand.modificabile:
+        if cand.stato == "bozza":
+            flash("Le candidature per questa edizione non sono aperte.", "errore")
         return redirect(url_for("area.dettaglio", cid=cand.id))
     if not ed.candidature_aperte:
         flash("Le candidature per questa edizione non sono aperte.", "errore")
@@ -71,6 +73,7 @@ def candidatura(slug):
 
     form = CandidaturaForm(obj=cand)
     if form.validate_on_submit():
+        inviata = cand is not None and cand.stato != "bozza"
         if cand is None:
             cand = Candidatura(utente=current_user, edizione=ed)
             db.session.add(cand)
@@ -78,13 +81,27 @@ def candidatura(slug):
         cand.titolo_ud = form.titolo_ud.data
         cand.discipline = form.discipline.data
         cand.abstract = form.abstract.data
+        vecchio = nuovo = None
         if form.file.data:
             info = salva_upload(form.file.data, f"candidature/{ed.slug}",
                                 current_app.config["ESTENSIONI_PROPOSTE"])
-            elimina_upload(cand.file_path)
+            vecchio, nuovo = cand.file_path, info["file_path"]
             cand.file_path, cand.file_nome = info["file_path"], info["file_nome"]
             cand.n_caratteri = conta_caratteri(cand.file_path)
+        problemi = cand.problemi_invio() if inviata else []
+        if problemi:
+            # già inviata: le modifiche devono rispettare il bando, se no resta la versione inviata
+            db.session.rollback()
+            elimina_upload(nuovo)
+            for p in problemi:
+                flash(p, "errore")
+            flash("Modifiche non salvate: la candidatura inviata resta com'era.", "errore")
+            return render_template("area/candidatura_form.html", form=form, ed=ed, cand=cand)
         db.session.commit()
+        elimina_upload(vecchio)
+        if inviata:
+            flash("Modifiche salvate: la candidatura resta inviata, non serve inviarla di nuovo.", "ok")
+            return redirect(url_for("area.dettaglio", cid=cand.id))
         flash("Bozza salvata. Ora puoi consigliare libri e siti (facoltativo).", "ok")
         return redirect(url_for("area.letture", cid=cand.id))
     return render_template("area/candidatura_form.html", form=form, ed=ed, cand=cand)
@@ -110,11 +127,12 @@ def _compila(p, form):
 
 @bp.route("/candidatura/<int:cid>/letture", methods=["GET", "POST"])
 def letture(cid):
-    """Passo 3: invito alla lettura (facoltativo), modificabile finché la candidatura è in bozza.
-    Dopo la scuola il docente ammesso ne aggiunge altre (momento post_scuola), stessa revisione."""
+    """Passo 3: invito alla lettura (facoltativo), modificabile finché lo è la candidatura
+    (``Candidatura.modificabile``). Dopo la scuola il docente ammesso ne aggiunge altre (momento
+    post_scuola), stessa revisione."""
     c = _mia_candidatura(cid)
-    aperte = c.stato == "bozza" or c.dopo_la_scuola
-    momento = "iscrizione" if c.stato == "bozza" else "post_scuola"
+    aperte = c.modificabile or c.dopo_la_scuola
+    momento = "iscrizione" if c.modificabile else "post_scuola"
     p = None
     if request.values.get("p"):
         p = next((x for x in c.letture if x.id == request.values.get("p", type=int)

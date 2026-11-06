@@ -88,6 +88,10 @@ graduatoria con le medie per criterio (separatore `;`, apribile in Excel).
 
 ### Valutare una candidatura
 
+Fino alla scadenza il docente può ancora modificare la candidatura inviata (proposta e letture
+non ancora rivedute): conviene valutare dopo la scadenza, quando la versione è definitiva.
+L'esito blocca comunque ogni modifica.
+
 Nella scheda: dati del docente, unità didattica, documento, abstract, letture proposte e le
 valutazioni già date. In **La mia valutazione** si assegnano tre punteggi da 0 a 25:
 

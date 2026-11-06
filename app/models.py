@@ -286,6 +286,12 @@ class Candidatura(db.Model):
         return self.stato == "ammessa" and self.edizione.stato in ("chiusa", "conclusa")
 
     @property
+    def modificabile(self):
+        """Il docente cambia proposta e letture, anche dopo l'invio, finché le candidature sono
+        aperte (entro la scadenza) e il comitato non ha deciso l'esito."""
+        return self.stato in ("bozza", "inviata", "in_valutazione") and self.edizione.candidature_aperte
+
+    @property
     def punteggio_medio(self):
         if not self.valutazioni:
             return None
@@ -377,10 +383,12 @@ class PropostaLettura(db.Model):
 
     @property
     def modificabile(self):
-        """Il docente cambia le letture in bozza e, dopo la scuola, quelle nuove non ancora riviste."""
+        """Il docente cambia le letture non ancora riviste dal comitato: quelle dell'iscrizione
+        finché la candidatura è modificabile, quelle nuove dopo la scuola."""
         c = self.candidatura
-        return c is not None and (c.stato == "bozza" or (
-            c.dopo_la_scuola and self.momento == "post_scuola" and self.stato == "proposta"))
+        return c is not None and self.stato == "proposta" and (
+            (c.modificabile and self.momento == "iscrizione")
+            or (c.dopo_la_scuola and self.momento == "post_scuola"))
 
 
 # --------------------------------------------------------------------------- materiali

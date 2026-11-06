@@ -47,7 +47,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 
 /area/                    area personale del docente
 /area/profilo
-/area/candidatura/edizione/<slug>  bozza → invio
+/area/candidatura/edizione/<slug>  bozza → invio; dopo l'invio modifica fino alla scadenza (Candidatura.modificabile)
 /area/candidatura/<id>    riepilogo, controlli del bando, invio/ritiro
 /area/materiali/nuovo?lezione=<id>|?candidatura=<id>   materiale della propria lezione (relatore) o
                           del modulo dopo la scuola (docente ammesso); va in revisione
@@ -59,7 +59,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /admin/materiali                                 revisione e caricamento
 /admin/letture[?edizione=<id>], /admin/letture/<id>   revisione delle letture proposte (comitato)
 /area/candidatura/<id>/letture[?tipo=webpage|?p=<id>]   passo 3: invito alla lettura del docente
-/area/candidatura/<id>/letture/<id>/elimina      (in bozza; dopo la scuola solo le nuove non rivedute)
+/area/candidatura/<id>/letture/<id>/elimina      (finché la candidatura è modificabile e la lettura non è riveduta; dopo la scuola solo le nuove)
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
 /admin/utenti                                    ruoli e attivazione
 /admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione o UD (admin)
@@ -97,7 +97,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 
 ## 5. Flussi principali
 
-**Candidatura**: il docente si registra (con consenso privacy), poi segue quattro passi (macro `passi` in `_macros.html`, senza JS): 1 profilo (data di nascita, telefono e residenza sono richiesti dal bando), 2 proposta (bozza con il file), 3 invito alla lettura (facoltativo ma consigliato: fino a 10 libri o siti, con la ricerca dei libri; si modificano finché la candidatura è in bozza), 4 riepilogo e invio. Il sistema controlla i requisiti; le letture non bloccano l'invio (nel riepilogo c'è solo un avviso) e sono elencate nell'email di conferma. Può inviare solo entro la scadenza. Poi il comitato valuta, l'admin assegna l'esito, e l'export CSV restituisce la graduatoria.
+**Candidatura**: il docente si registra (con consenso privacy), poi segue quattro passi (macro `passi` in `_macros.html`, senza JS): 1 profilo (data di nascita, telefono e residenza sono richiesti dal bando), 2 proposta (bozza con il file), 3 invito alla lettura (facoltativo ma consigliato: fino a 10 libri o siti, con la ricerca dei libri; si modificano finché la candidatura è modificabile e non sono state rivedute), 4 riepilogo e invio. Dopo l'invio il docente modifica proposta e letture fino alla scadenza, o fino all'esito (`Candidatura.modificabile`: stato `bozza | inviata | in_valutazione` e candidature aperte); una modifica che non rispetta il bando viene scartata e resta la versione inviata. Il sistema controlla i requisiti; le letture non bloccano l'invio (nel riepilogo c'è solo un avviso) e sono elencate nell'email di conferma. Può inviare solo entro la scadenza. Poi il comitato valuta, l'admin assegna l'esito, e l'export CSV restituisce la graduatoria.
 
 **Materiali**: l'admin pubblica direttamente da `/admin/materiali`. Il relatore carica dalla propria lezione; il docente dalla propria candidatura, solo **dopo la scuola** (`Candidatura.dopo_la_scuola`: ammessa, edizione chiusa o conclusa). Non c'è un caricamento libero. I materiali restano in revisione finché l'admin non li pubblica o rifiuta, scegliendo anche la visibilità (default pubblico). L'archivio dell'edizione li divide in «Lezioni», «Unità didattiche dei docenti» e «Altri materiali».
 
