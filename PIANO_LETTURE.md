@@ -17,9 +17,12 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F8 Sfogliare i materiali | da decidere |
 
 ## Riprendere da qui (stato al 2026-11-06)
-- **Prossima fase: F8** (sfogliare i materiali): è una decisione, non codice da subito.
-  Chiedere all'utente 2–3 file veri (un PDF, un PPTX, un ODP) e se sul server CNR si può
-  installare LibreOffice; poi prototipo delle opzioni a/b/c della sezione F8.
+- **F8 rimandata dall'utente** (2026-11-06). Quando si riprende: prototipo con file **di prova**
+  generati qui (scelta dell'utente); ancora da chiedere se sul server CNR si può installare
+  LibreOffice e cosa conta di più (testo selezionabile, mobile, accessibilità, nessuna
+  installazione). In locale ci sono LibreOffice (`/Applications/LibreOffice.app`) e `pdftoppm`.
+- Fatto dopo F7: doppioni delle letture (comitato e relatori, campo `visti`), testata con menu
+  dell'account e «Gestione» in evidenza, guide in `guide/` con link «Guida» per pagina.
 - Doppioni (dopo F7, 2026-11-06): la ricerca remota per titolo ora tiene anche i record già in
   cache (prima scartati: un titolo simile ma non uguale passava senza avviso); all'approvazione
   con «crea nuovo» il comitato rivede la scheda se è comparso un doppione non mostrato (campo
