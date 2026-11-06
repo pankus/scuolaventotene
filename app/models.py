@@ -4,7 +4,8 @@ Entità principali
 - Utente            docenti registrati, membri del comitato, amministratori
 - Edizione          un'edizione annuale della scuola (bando, date, stato)
 - ProgrammaVoce     voci del programma (lezioni, sessioni UD, visite)
-- Persona / EdizionePersona   comitato scientifico e relatori per edizione
+- Persona / EdizionePersona   comitato scientifico e relatori per edizione; per un relatore
+                    l'EdizionePersona è la sua lezione, e Persona.utente lega l'account
 - Candidatura       domanda di partecipazione (borsista / uditore) + proposta UD
 - Valutazione       punteggi del comitato (originalità, potenzialità, fonti)
 - Materiale         PDF/PowerPoint dell'archivio, caricati da admin o docenti
@@ -24,7 +25,8 @@ def adesso():
 
 
 # --------------------------------------------------------------------------- utenti
-RUOLI = {"docente": "Docente", "comitato": "Comitato scientifico", "admin": "Amministratore"}
+RUOLI = {"docente": "Docente", "relatore": "Relatore", "comitato": "Comitato scientifico",
+         "admin": "Amministratore"}
 
 
 class Utente(UserMixin, db.Model):
@@ -73,6 +75,17 @@ class Utente(UserMixin, db.Model):
     @property
     def is_comitato(self):
         return self.ruolo in ("comitato", "admin")
+
+    @property
+    def is_relatore(self):
+        return self.ruolo == "relatore"
+
+    def lezioni(self):
+        """Le lezioni (EdizionePersona con ruolo relatore) della persona legata all'account."""
+        if not self.persona:
+            return []
+        return sorted((ep for ep in self.persona.edizioni if ep.ruolo == "relatore"),
+                      key=lambda ep: (-ep.edizione.anno, ep.posizione))
 
     @property
     def nome_completo(self):
@@ -177,6 +190,11 @@ class Persona(db.Model):
     affiliazione = db.Column(db.String(255))
     bio = db.Column(db.Text)
     url = db.Column(db.String(255))
+    # account del relatore (uno per persona); l'admin lo collega nella scheda dell'edizione
+    utente_id = db.Column(db.Integer, db.ForeignKey("utenti.id", ondelete="SET NULL"), unique=True)
+
+    utente = db.relationship("Utente", backref=db.backref("persona", uselist=False))
+    edizioni = db.relationship("EdizionePersona", back_populates="persona")
 
     @property
     def nome_completo(self):
@@ -191,9 +209,22 @@ class EdizionePersona(db.Model):
     edizione_id = db.Column(db.Integer, db.ForeignKey("edizioni.id", ondelete="CASCADE"), nullable=False)
     persona_id = db.Column(db.Integer, db.ForeignKey("persone.id", ondelete="CASCADE"), nullable=False)
     ruolo = db.Column(db.String(20), nullable=False, default="comitato")  # comitato | relatore
+    # solo per i relatori: la lezione
+    titolo_lezione = db.Column(db.String(255))
+    ordine = db.Column(db.Integer, default=0)
 
     edizione = db.relationship("Edizione", back_populates="persone")
-    persona = db.relationship("Persona")
+    persona = db.relationship("Persona", back_populates="edizioni")
+    materiali = db.relationship("Materiale", back_populates="lezione")
+
+    @property
+    def posizione(self):
+        """Chiave d'ordinamento delle lezioni (ordine può mancare nelle righe vecchie)."""
+        return (self.ordine or 0, self.id)
+
+    @property
+    def nome_lezione(self):
+        return f"{self.persona.nome_completo} – {self.titolo_lezione or 'lezione'}"
 
 
 # --------------------------------------------------------------------------- candidature
@@ -353,10 +384,13 @@ class Materiale(db.Model):
     visibilita = db.Column(db.String(20), nullable=False, default="pubblico")
     stato = db.Column(db.String(20), nullable=False, default="in_revisione")
     caricato_da_id = db.Column(db.Integer, db.ForeignKey("utenti.id"))
+    # materiale di una lezione (caricato dal relatore); vuoto per quelli dei docenti e dello staff
+    lezione_id = db.Column(db.Integer, db.ForeignKey("edizioni_persone.id", ondelete="SET NULL"))
     creato_il = db.Column(db.DateTime, default=adesso)
 
     edizione = db.relationship("Edizione", back_populates="materiali")
     caricato_da = db.relationship("Utente")
+    lezione = db.relationship("EdizionePersona", back_populates="materiali")
 
     def visibile_a(self, user):
         if user.is_authenticated and (user.is_comitato or user.id == self.caricato_da_id):

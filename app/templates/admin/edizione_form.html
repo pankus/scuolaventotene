@@ -25,11 +25,21 @@
 </form>
 
 <h2 id="persone">Comitato scientifico e relatori</h2>
+<p class="nota">Il relatore si registra dal sito; poi in <a href="{{ url_for('admin.utenti') }}">Utenti</a> gli dai
+  il ruolo «Relatore» e qui colleghi il suo account alla lezione: potrà caricarne i materiali.</p>
 <ul class="persone">
   {% for ep in ed.persone %}
   <li>{{ ep.persona.nome_completo }} · {{ ep.persona.affiliazione or '' }} <em>({{ ep.ruolo }})</em>
+    {% if ep.ruolo == 'relatore' %}<small>{{ ep.titolo_lezione or 'lezione senza titolo' }} ·
+      {{ 'account: ' ~ ep.persona.utente.email if ep.persona.utente else 'nessun account collegato' }}</small>{% endif %}
     <form method="post" action="{{ url_for('admin.elimina_persona', epid=ep.id) }}" style="display:inline">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo">rimuovi</button></form></li>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo">rimuovi</button></form>
+    {% if ep.ruolo == 'relatore' %}{% set lf = lezione_forms[ep.id] %}
+    <form method="post" action="{{ url_for('admin.aggiorna_lezione', epid=ep.id) }}" class="modulo modulo-riga">
+      {{ lf.hidden_tag() }}
+      {{ campo(lf.titolo_lezione) }}{{ campo(lf.ordine) }}{{ campo(lf.utente_id) }}
+      <button class="btn btn-piccolo">Salva lezione</button>
+    </form>{% endif %}</li>
   {% endfor %}
 </ul>
 <form method="post" action="{{ url_for('admin.aggiungi_persona', eid=ed.id) }}" class="modulo modulo-riga">

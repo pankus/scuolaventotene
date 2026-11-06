@@ -4,6 +4,8 @@
 {% block content %}
 <div class="stretto">
   <h1>Invia un materiale</h1>
+  {% if lezione %}<p>Per la lezione <strong>{{ lezione.titolo_lezione or 'senza titolo' }}</strong>
+    ({{ lezione.edizione.anno }}).</p>{% endif %}
   <p class="nota">Slide, unità didattiche o testi legati a un'edizione. Saranno pubblicati nell'archivio dopo la revisione.</p>
   {{ form_auto(form, "Invia") }}
 </div>

@@ -5,10 +5,11 @@ import io
 from flask import (Blueprint, Response, abort, current_app, flash, redirect, render_template,
                    request, url_for)
 from flask_login import current_user, login_required
+from sqlalchemy import or_
 
 from ..extensions import db
 from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il nome
-from ..forms import (EdizioneForm, LetturaRevisioneForm, MaterialeAdminForm, PersonaEdizioneForm, ProgrammaVoceForm,
+from ..forms import (EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm, PersonaEdizioneForm, ProgrammaVoceForm,
                      StatoCandidaturaForm, ValutazioneForm)
 from ..models import (ESITI_CANDIDATURA, RUOLI, STATI_MATERIALE, VISIBILITA, Candidatura,
                       Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce,
@@ -80,7 +81,19 @@ def _form_edizione(ed):
         return redirect(url_for("admin.modifica_edizione", eid=ed.id))
     return render_template("admin/edizione_form.html", form=form, ed=ed,
                            voce_form=ProgrammaVoceForm(prefix="voce"),
-                           persona_form=PersonaEdizioneForm(prefix="pers"))
+                           persona_form=PersonaEdizioneForm(prefix="pers"),
+                           lezione_forms={ep.id: _lezione_form(ep) for ep in ed.persone
+                                          if ep.ruolo == "relatore"})
+
+
+def _lezione_form(ep):
+    f = LezioneForm(prefix=f"lez{ep.id}", data={"titolo_lezione": ep.titolo_lezione, "ordine": ep.ordine,
+                                                "utente_id": ep.persona.utente_id or 0})
+    relatori = Utente.query.filter(or_(Utente.ruolo == "relatore", Utente.id == ep.persona.utente_id)) \
+        .order_by(Utente.cognome, Utente.nome)
+    f.utente_id.choices = [(0, "— nessun account —")] + [(u.id, f"{u.cognome} {u.nome} ({u.email})")
+                                                       for u in relatori]
+    return f
 
 
 @bp.post("/edizioni/<int:eid>/programma")
@@ -121,9 +134,33 @@ def aggiungi_persona(eid):
         db.session.add(p)
         db.session.flush()
         if not EdizionePersona.query.filter_by(edizione_id=ed.id, persona_id=p.id, ruolo=f.ruolo.data).first():
-            db.session.add(EdizionePersona(edizione=ed, persona=p, ruolo=f.ruolo.data))
+            db.session.add(EdizionePersona(edizione=ed, persona=p, ruolo=f.ruolo.data,
+                                           titolo_lezione=(f.titolo_lezione.data or None)
+                                           if f.ruolo.data == "relatore" else None))
         db.session.commit()
     return redirect(url_for("admin.modifica_edizione", eid=eid) + "#persone")
+
+
+@bp.post("/edizioni-persone/<int:epid>/lezione")
+@admin_required
+def aggiorna_lezione(epid):
+    """Titolo e ordine della lezione di un relatore e account collegato alla persona."""
+    ep = db.get_or_404(EdizionePersona, epid)
+    if ep.ruolo != "relatore":
+        abort(404)
+    f = _lezione_form(ep)
+    if f.validate_on_submit():
+        ep.titolo_lezione, ep.ordine = f.titolo_lezione.data or None, f.ordine.data or 0
+        uid = f.utente_id.data or None
+        if uid and Persona.query.filter(Persona.utente_id == uid, Persona.id != ep.persona_id).first():
+            flash("Quell'account è già collegato a un'altra persona.", "errore")
+        else:
+            ep.persona.utente_id = uid
+            flash("Lezione aggiornata.", "ok")
+        db.session.commit()
+    else:
+        flash("Dati della lezione non validi.", "errore")
+    return redirect(url_for("admin.modifica_edizione", eid=ep.edizione_id) + "#persone")
 
 
 @bp.post("/edizioni-persone/<int:epid>/elimina")

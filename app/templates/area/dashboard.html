@@ -16,6 +16,20 @@
 </div>
 {% endif %}
 
+{% if current_user.is_relatore %}
+<h2>Le mie lezioni</h2>
+{% if lezioni %}
+<table class="tabella">
+  <tr><th>Edizione</th><th>Lezione</th><th>Materiali</th><th></th></tr>
+  {% for ep in lezioni %}
+  <tr><td>{{ ep.edizione.anno }}</td><td>{{ ep.titolo_lezione or '—' }}</td>
+    <td>{% for m in ep.materiali %}{{ m.titolo }} {{ stato(m.stato, STATI_MATERIALE) }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>
+    <td><a class="btn btn-piccolo" href="{{ url_for('area.nuovo_materiale', lezione=ep.id) }}">Carica un materiale</a></td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="nota">Il tuo account non è ancora collegato a una lezione: lo fa l'amministrazione della scuola.</p>{% endif %}
+{% endif %}
+
 {% for e in aperte %}
 <div class="avviso avviso-info">
   Candidature aperte per la {{ e.numero }}ª edizione (<em>{{ e.titolo }}</em>) fino al {{ e.scadenza_candidature|data_it }}.

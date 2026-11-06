@@ -93,7 +93,10 @@ stanno in `Candidatura.problemi_invio` (il conteggio caratteri vale solo per i .
 `n_caratteri` resta `None`), l'apertura delle candidature in `Edizione.candidature_aperte`:
 estendere lì, non nelle viste.
 
-**Ruoli e permessi.** `visitatore`, `docente`, `comitato`, `admin` (admin include comitato).
+**Ruoli e permessi.** `visitatore`, `docente`, `relatore`, `comitato`, `admin` (admin include
+comitato; il relatore non entra nel back-office). Docente = insegnante che si candida; relatore =
+storico che tiene una lezione: le sue lezioni sono `Utente.lezioni()` (via `Persona.utente_id`),
+e ogni accesso a una lezione passa da lì.
 Proteggere le viste con `@login_required`, `@comitato_required` o `@admin_required`
 (`app/utils.py`); per i materiali usare `Materiale.visibile_a(user)`. Ogni nuova rotta del
 back-office deve avere un decoratore di permesso.
@@ -121,10 +124,11 @@ tutto, per esempio i rinomini di colonna diventano drop + add, con perdita dei d
 `uv run flask db upgrade`. `tests/test_migrazioni.py` fallisce se un modello cambia senza
 migrazione. Su SQLite le modifiche passano in modalità batch (`render_as_batch`, la tabella viene
 ricopiata) e i vincoli hanno nomi fissi (`naming_convention` in `app/extensions.py`): non
-toglierla. Le tabelle referenziate da altre (`edizioni`, `utenti`, `candidature`…) non si
-ricopiano: con le foreign key attive il DROP fallisce a metà e lascia `_alembic_tmp_<tabella>`.
-Per rinominare una colonna usare `op.execute("ALTER TABLE … RENAME COLUMN …")` (nativo SQLite,
-vedi `b7d1c2e4f901`); `add_column` non ricopia. Non usare `db.create_all()` sui database veri (solo i test lo fanno, in memoria).
+toglierla. `migrations/env.py` spegne le foreign key durante l'upgrade (il batch ricopia anche
+le tabelle referenziate, come `edizioni` o `persone`) e alla fine lancia `PRAGMA
+foreign_key_check`: se ci sono riferimenti rotti l'upgrade fallisce. Se un upgrade si ferma a
+metà resta `_alembic_tmp_<tabella>`: controllare che sia vuota e la tabella vera intatta, poi
+eliminarla. Per rinominare una colonna basta `RENAME COLUMN` nativo (vedi `b7d1c2e4f901`). Non usare `db.create_all()` sui database veri (solo i test lo fanno, in memoria).
 Prima di una migrazione che tocca dati esistenti, backup: `sqlite3 instance/ventotene.db
 ".backup percorso.db"`. Mai cancellare `instance/ventotene.db` senza chiedere. Mantenere
 `ondelete="CASCADE"` coerente con le relazioni esistenti.
@@ -178,6 +182,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
   limite di 30 ricerche al minuto.
 - `test_iscrizione.py`: passi della candidatura, letture del docente (valori della ricerca
   verificati, limite, sola lettura dopo l'invio, email di conferma).
+- `test_relatori.py`: account del relatore collegato alla lezione (solo admin), materiali della
+  lezione (solo le proprie), archivio diviso per lezioni.
 - `test_letture.py`: revisione delle letture (permessi, collega/crea, nessun dato del docente
   nel payload Zotero), copertine, merge `dc:replaces`.
 

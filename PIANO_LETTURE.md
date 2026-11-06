@@ -10,7 +10,7 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F4 Lookup durante la digitazione | **fatta** (2026-11-06): `app/ricerca_libri.py`, `/area/letture/cerca`, `static/js/letture.js` (già attivo nella revisione del comitato); `GOOGLE_BOOKS_API_KEY` facoltativa (senza: 429 frequenti, resta Open Library); niente miniature esterne nel browser |
 | F5 Flusso di iscrizione | **fatta** (2026-11-06): passi 1–4 (macro `passi`), `/area/candidatura/<id>/letture` (aggiungi/modifica/elimina in bozza, max 10, ricerca attiva), avviso nel riepilogo, letture nell'email di conferma, `la_scuola` e informativa aggiornate (Zotero, Google Books, Open Library senza dati personali) |
 | R1 Struttura Zotero dell'edizione | **fatta** (2026-11-06): collezione dell'edizione scelta da elenco, sottocollezione «Docenti» creata dal sito (`zotero_docenti_key`), pagina edizione con il sotto-albero; struttura semplificata su richiesta (Edizione → Relatori, Docenti) |
-| R2 Ruolo relatore e lezioni | da fare |
+| R2 Ruolo relatore e lezioni | **fatta** (2026-11-06): ruolo `relatore`, `Persona.utente_id`, lezione = `EdizionePersona` (`titolo_lezione`, `ordine`), `Materiale.lezione_id`; admin collega l'account nella scheda edizione; area «Le mie lezioni» con caricamento; archivio diviso per lezioni; `env.py` spegne le FK durante le migrazioni |
 | R3 Bibliografia della lezione e UD per i relatori | da fare |
 | F6 Dopo la scuola: altri libri e materiali | da fare |
 | F7 Invito alla lettura pubblico | da fare |
@@ -148,9 +148,10 @@ riorganizzata a mano in Zotero se la si vuole uniforme. Materiali dei relatori
 
 ### R3 — Bibliografia della lezione e UD per i relatori
 - `PropostaLettura` con `candidatura_id` **oppure** `lezione_id` (CHECK: esattamente uno); il
-  relatore propone con la stessa ricerca (F4); stessa coda `/admin/letture` (da confermare: o
-  approvazione diretta), destinazione la sottocollezione «Relatori» (`Edizione.zotero_relatori_key`,
-  creata come «Docenti»). Nel sito le letture si raggruppano per lezione.
+  relatore propone con la stessa ricerca (F4) e la lettura entra **direttamente** in Zotero, senza
+  revisione del comitato (decisione dell'utente, 2026-11-06), nella sottocollezione «Relatori»
+  (`Edizione.zotero_relatori_key`, creata come «Docenti»). Nel sito le letture si raggruppano per
+  lezione.
 - Il relatore vede le candidature **ammesse** delle proprie edizioni: titolo, discipline,
   abstract, file della UD; mai email, telefono, nascita, residenza. `file_candidatura` esteso.
 - Informativa privacy: i relatori vedono nome e UD dei docenti ammessi.

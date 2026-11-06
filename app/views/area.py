@@ -38,7 +38,8 @@ def dashboard():
     materiali = Materiale.query.filter_by(caricato_da_id=current_user.id).order_by(
         Materiale.creato_il.desc()).all()
     return render_template("area/dashboard.html", aperte=[e for e in aperte if e.id not in gia],
-                           candidature=current_user.candidature, materiali=materiali)
+                           candidature=current_user.candidature, materiali=materiali,
+                           lezioni=current_user.lezioni() if current_user.is_relatore else [])
 
 
 @bp.route("/profilo", methods=["GET", "POST"])
@@ -177,10 +178,15 @@ def file_candidatura(cid):
 
 @bp.route("/materiali/nuovo", methods=["GET", "POST"])
 def nuovo_materiale():
+    # ?lezione=<id>: materiale della lezione di un relatore (solo la propria)
+    lezione = None
+    if request.args.get("lezione"):
+        lezione = next((ep for ep in current_user.lezioni()
+                        if ep.id == request.args.get("lezione", type=int)), None) or abort(404)
     form = MaterialeForm()
-    form.edizione_id.choices = [(e.id, f"{e.anno} – {e.titolo}") for e in
-                                Edizione.query.filter(Edizione.stato != "bozza")
-                                .order_by(Edizione.anno.desc())]
+    edizioni = [lezione.edizione] if lezione else \
+        Edizione.query.filter(Edizione.stato != "bozza").order_by(Edizione.anno.desc())
+    form.edizione_id.choices = [(e.id, f"{e.anno} – {e.titolo}") for e in edizioni]
     if form.validate_on_submit():
         if not form.file.data and not form.url.data:
             flash("Carica un file oppure indica un link.", "errore")
@@ -189,7 +195,7 @@ def nuovo_materiale():
                           autori=form.autori.data or current_user.nome_completo,
                           tipo=form.tipo.data, descrizione=form.descrizione.data,
                           url=form.url.data or None, caricato_da_id=current_user.id,
-                          stato="in_revisione", visibilita="pubblico")
+                          lezione=lezione, stato="in_revisione", visibilita="pubblico")
             if form.file.data:
                 info = salva_upload(form.file.data, "materiali",
                                     current_app.config["ESTENSIONI_MATERIALI"])
@@ -199,7 +205,7 @@ def nuovo_materiale():
             db.session.commit()
             flash("Materiale inviato: sarà pubblicato dopo la revisione.", "ok")
             return redirect(url_for("area.dashboard"))
-    return render_template("area/materiale_form.html", form=form)
+    return render_template("area/materiale_form.html", form=form, lezione=lezione)
 
 
 # ------------------------------------------------------------------ ricerca dei libri (lookup)

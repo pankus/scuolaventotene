@@ -97,6 +97,14 @@ def run_migrations_online():
     connectable = get_engine()
 
     with connectable.connect() as connection:
+        sqlite = connection.dialect.name == "sqlite"
+        if sqlite:
+            # Il sito attiva le foreign key (app/extensions.py). Il batch di SQLite ricopia le
+            # tabelle: con le FK attive il DROP di una tabella referenziata (edizioni, utenti,
+            # persone...) fallisce a metà. Si spengono qui (fuori da transazione, altrimenti il
+            # PRAGMA non ha effetto) e si controlla l'integrità alla fine.
+            connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+            connection.commit()
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
@@ -105,6 +113,12 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
+        if sqlite:
+            rotte = connection.exec_driver_sql("PRAGMA foreign_key_check").fetchall()
+            connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+            if rotte:
+                raise RuntimeError(f"Migrazione: riferimenti rotti dopo l'upgrade: {rotte[:10]}")
 
 
 if context.is_offline_mode():

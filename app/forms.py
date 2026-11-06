@@ -133,6 +133,14 @@ class PersonaEdizioneForm(FlaskForm):
     cognome = StringField("Cognome", validators=[DataRequired()])
     affiliazione = StringField("Affiliazione", validators=[Optional()])
     ruolo = SelectField("Ruolo", choices=[("comitato", "Comitato scientifico"), ("relatore", "Relatore")])
+    titolo_lezione = StringField("Titolo della lezione (relatori)", validators=[Optional(), Length(max=255)])
+
+
+class LezioneForm(FlaskForm):
+    """Lezione di un relatore nell'edizione: titolo, ordine e account collegato."""
+    titolo_lezione = StringField("Titolo della lezione", validators=[Optional(), Length(max=255)])
+    ordine = IntegerField("Ordine", default=0, validators=[Optional()])
+    utente_id = SelectField("Account del relatore", coerce=int)  # scelte: utenti con ruolo relatore
 
 
 class LetturaForm(FlaskForm):

@@ -20,6 +20,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 |---|---|
 | Visitatore | Consulta l'edizione corrente, il programma, il bando, l'archivio pubblico e la bibliografia |
 | Docente (registrato) | Gestisce il profilo, si candida (come borsista o uditore), carica la proposta di UD, invia materiali e vede quelli riservati ai registrati |
+| Relatore | Storico che tiene una lezione: si registra, l'admin gli dà il ruolo e collega l'account alla sua lezione (scheda dell'edizione); dall'area personale carica i materiali della lezione (in revisione come gli altri). Con R3: bibliografia della lezione e UD dei docenti ammessi |
 | Comitato | Accede al back-office, legge le candidature, assegna i punteggi (ognuno i propri) e vede la graduatoria |
 | Admin | Fa tutto ciò che fa il comitato e in più gestisce edizioni, programma, comitato, esiti, materiali, utenti e la sincronizzazione Zotero |
 
@@ -43,7 +44,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /area/profilo
 /area/candidatura/edizione/<slug>  bozza → invio
 /area/candidatura/<id>    riepilogo, controlli del bando, invio/ritiro
-/area/materiali/nuovo     invio di un materiale (va in revisione)
+/area/materiali/nuovo[?lezione=<id>]   invio di un materiale (va in revisione); con lezione: del relatore
 
 /admin/                   cruscotto (comitato e admin)
 /admin/edizioni/nuova, /admin/edizioni/<id>     edizione + programma + persone
@@ -55,6 +56,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /area/candidatura/<id>/letture/<id>/elimina      (solo in bozza)
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
 /admin/utenti                                    ruoli e attivazione
+/admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione (admin)
 /admin/zotero/sync                               sincronizzazione manuale
 ```
 
@@ -65,7 +67,8 @@ utenti ─┬─< candidature >── edizioni ──< programma_voci
         │        └──< valutazioni >── utenti (comitato)
         │        └──< proposte_lettura ··· zotero_items (zotero_key)
         └─< materiali >── edizioni
-edizioni ──< edizioni_persone >── persone        (comitato / relatori)
+edizioni ──< edizioni_persone >── persone ··· utenti (persone.utente_id: account del relatore)
+                 └──< materiali (lezione_id: materiali della lezione)
 edizioni.zotero_collection_key ··· zotero_collezioni
 zotero_items >──< zotero_collezioni   (zotero_item_collezioni)
 sync_stato (versione libreria Zotero, data ultima sync)
@@ -75,7 +78,8 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - **Candidatura**: tipo (borsista o uditore), stato (`bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`), titolo dell'UD, discipline, file e numero di caratteri (calcolato automaticamente per i .docx). Ogni docente ha al massimo una candidatura per edizione.
 - **Valutazione**: una per membro del comitato, con originalità, potenzialità didattiche e valorizzazione delle fonti (0–25 ciascuna, massimo 75). La graduatoria usa la media dei punteggi.
 - **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato dal docente nella candidatura; campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione | post_scuola`), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
-- **Materiale**: edizione, tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
+- **EdizionePersona**: persona nel comitato o tra i relatori di un'edizione; per un relatore è la lezione (`titolo_lezione`, `ordine`). **Persona.utente_id** lega la persona all'account del relatore (uno per persona).
+- **Materiale**: edizione, lezione (se è di un relatore), tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
 
 ## 5. Flussi principali
 
