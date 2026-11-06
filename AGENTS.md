@@ -178,7 +178,9 @@ record già presenti), che scrive nella sottocollezione «Docenti» dell'edizion
 Logica comune in `zotero_scrittura.py`: `sottocollezione_edizione`, `scelte_duplicati`,
 `salva_lettura` (docenti con il tag, relatori senza, subito in «Relatori»). Struttura del gruppo e ruolo relatore in
 PIANO_LETTURE.md (R1–R3): docente = insegnante candidato, relatore = storico delle lezioni. Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
-nei redirect, solo immagini, max 2 MB). Ricerca dei libri in `app/ricerca_libri.py`
+nei redirect, solo immagini, max 2 MB) o `carica_copertina()` (file dell'admin, firma del
+formato controllata), sostituite con `sostituisci_copertina()`; `copertina_path=""` = nessuna,
+da non cercare più. L'admin corregge una voce da `/admin/bibliografia/<key>` (`aggiorna_item`). Ricerca dei libri in `app/ricerca_libri.py`
 (`/area/letture/cerca`): le API esterne si chiamano solo dal server, il browser non carica
 immagini esterne (nei risultati solo testo). Nei test solo `FakeZot`
 (`tests/conftest.py`), mai il gruppo vero: `TestConfig` usa un ID finto.
@@ -218,6 +220,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
   candidatura ammessa, niente upload libero), archivio, letture `post_scuola`.
 - `test_ud.py`: UD dal programma, pagine di lezione/UD (permessi, 404, niente dati personali),
   materiali e abstract caricati dall'admin, copertine per ISBN (`scarica_copertine` con fonti finte).
+- `test_item_admin.py`: voce della bibliografia corretta dall'admin (permessi, scrittura in
+  Zotero, 412), copertina caricata/tolta/rifiutata, ricerca per ISBN che non perde la vecchia.
 - `test_bibliografia.py`: sezioni con sottosezioni, copertine (solo item vivi), ISBN e link,
   nessun dato del docente, letture nella scheda candidatura del comitato.
 

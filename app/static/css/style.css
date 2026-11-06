@@ -284,6 +284,9 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .scaffale-testo { font-size: 1.05rem; }
 .scaffale-testo .csl-bib-body, .scaffale-testo .csl-entry { display: inline; }
 .motivazione { font-style: italic; color: var(--inchiostro-md); border-left: 2px solid var(--accento-bd); padding-left: .8rem; margin: .6rem 0 .4rem; }
+.modifica-item { font-family: var(--sans) !important; font-size: .75rem !important; margin-left: .5rem; color: var(--accento-dk); }
+.anteprima-copertina { width: 8rem; margin: .4rem 0 .8rem; }
+.anteprima-copertina .copertina-vuota { font-size: .6rem; }
 .riquadro-admin { margin-top: 1.5rem; padding: .8rem 1rem; border: 1px dashed var(--accento-bd); border-radius: var(--r); background: var(--accento-bg); font-family: var(--sans); font-size: .9rem; }
 .riquadro-admin summary { cursor: pointer; color: var(--accento-dk); }
 .riquadro-admin form { margin-top: 1rem; max-width: 38rem; }

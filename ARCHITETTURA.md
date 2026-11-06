@@ -68,6 +68,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /area/lezioni/<id>/letture[?tipo=webpage]         bibliografia della lezione (relatore; admin per ogni lezione/UD)
 /area/lezioni/<id>/letture/<id>/elimina           toglie dal sito (il record resta in Zotero)
 /area/lezioni/<id>/unita-didattiche               UD dei docenti ammessi (relatore)
+/admin/bibliografia/<key>                        correggere una voce (scritta in Zotero) e la sua copertina (admin)
 /admin/zotero/sync                               sincronizzazione manuale
 ```
 

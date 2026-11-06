@@ -168,6 +168,18 @@ class LetturaForm(FlaskForm):
     accessDate = StringField("Data di consultazione (AAAA-MM-GG)", validators=[Optional(), Length(max=20)])
 
 
+class ItemZoteroForm(LetturaForm):
+    """L'admin corregge un item della bibliografia: si scrive in Zotero (versione = controllo 412)."""
+    versione = HiddenField(validators=[DataRequired()])
+
+
+class CopertinaForm(FlaskForm):
+    url = StringField("Indirizzo dell'immagine (Open Library, Google Books, archive.org)",
+                      validators=[Optional(), URL(), Length(max=1000)])
+    file = FileField("oppure carica un'immagine (jpg, png, webp, gif; max 2 MB)",
+                     validators=[FileAllowed(["jpg", "jpeg", "png", "webp", "gif"], "Solo immagini")])
+
+
 class LetturaRevisioneForm(LetturaForm):
     """Il comitato corregge la scheda prima di scriverla in Zotero."""
     nota_comitato = TextAreaField("Nota del comitato (visibile al docente)", validators=[Optional()])

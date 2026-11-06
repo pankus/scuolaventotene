@@ -61,6 +61,32 @@ def _applica(data, campi, autori, curatori):
         data["creators"] = creatori + [c for c in vecchi if c.get("creatorType") not in CREATORI[tipo]]
 
 
+def campi_da_item(zi):
+    """Valori per ``LetturaForm`` dall'item in cache (dati Zotero): campi del tipo, autori e
+    curatori come testo, una persona per riga ("Cognome, Nome")."""
+    import json
+    data = json.loads(zi.dati_json or "{}")
+    campi = {k: data.get(k) or "" for k in TIPI.get(data.get("itemType"), [])}
+
+    def righe(tipo):
+        return "\n".join(f"{c['lastName']}, {c.get('firstName', '')}".rstrip(", ") if c.get("lastName")
+                         else c.get("name", "")
+                         for c in data.get("creators", []) if c.get("creatorType") == tipo)
+    campi["autori"], campi["curatori"] = righe("author"), righe("editor")
+    return campi
+
+
+def sostituisci_copertina(zi, nuova):
+    """Mette la copertina ``nuova`` (percorso, o "" = nessuna, da non cercare più) ed elimina il
+    file vecchio se nessun altro item lo usa (dopo un merge in Zotero il file è condiviso)."""
+    from .utils import elimina_upload
+    vecchia = zi.copertina_path
+    zi.copertina_path = nuova
+    if vecchia and vecchia != nuova and not ZoteroItem.query.filter(
+            ZoteroItem.key != zi.key, ZoteroItem.copertina_path == vecchia).first():
+        elimina_upload(vecchia)
+
+
 def _aggiorna_cache(zot, key):
     """Riscarica l'item da Zotero e lo salva in ``ZoteroItem`` (flush; commit del chiamante)."""
     cfg = current_app.config

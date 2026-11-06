@@ -9,7 +9,7 @@ from sqlalchemy import or_
 
 from ..extensions import db
 from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il nome
-from ..forms import (DescrizioneForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
+from ..forms import (CopertinaForm, DescrizioneForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
                      MaterialeUDForm, PersonaEdizioneForm, ProgrammaVoceForm, StatoCandidaturaForm,
                      ValutazioneForm)
 from ..models import (ESITI_CANDIDATURA, RUOLI, STATI_MATERIALE, VISIBILITA, Candidatura,
@@ -17,9 +17,12 @@ from ..models import (ESITI_CANDIDATURA, RUOLI, STATI_MATERIALE, VISIBILITA, Can
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroCollezione, ZoteroItem,
                       adesso)
 from ..posta import email_esito
-from ..utils import admin_required, comitato_required, elimina_upload, salva_upload
-from ..zotero_scrittura import (CAMPI_MODULO, SOTTOCOLLEZIONI, ErroreScrittura, salva_lettura,
-                                scelte_duplicati)
+from ..ricerca_libri import cerca_copertina
+from ..utils import (admin_required, carica_copertina, comitato_required, elimina_upload,
+                     salva_copertina, salva_upload)
+from ..zotero_scrittura import (CAMPI_MODULO, SOTTOCOLLEZIONI, ErroreScrittura, aggiorna_item,
+                                campi_da_item, salva_lettura, scelte_duplicati,
+                                sostituisci_copertina)
 
 bp = Blueprint("admin", __name__)
 
@@ -338,6 +341,70 @@ def aggiorna_materiale(mid):
             m.visibilita = request.form["visibilita"]
     db.session.commit()
     return redirect(url_for("admin.materiali"))
+
+
+# ------------------------------------------------------------------ item della bibliografia
+def _torna():
+    """Pagina da cui si è arrivati (solo percorsi interni), per il link di ritorno."""
+    t = request.values.get("torna", "")
+    return t if t.startswith("/") and not t.startswith("//") else url_for("bibliografia.index")
+
+
+@bp.route("/bibliografia/<key>", methods=["GET", "POST"])
+@admin_required
+def item_zotero(key):
+    """Scheda di un item dell'invito alla lettura: campi (scritti in Zotero) e copertina."""
+    zi = ZoteroItem.query.filter_by(key=key, eliminato=False).first_or_404()
+    modificabile = zi.tipo in CAMPI_MODULO
+    form = ItemZoteroForm(data={**campi_da_item(zi), "versione": zi.version} if modificabile else None)
+    form_cop = CopertinaForm()
+    azione = request.form.get("azione")
+    torna = _torna()
+
+    if azione == "scheda" and modificabile and form.validate_on_submit():
+        campi = {k: (form[k].data or "").strip() for k in CAMPI_MODULO[zi.tipo]
+                 if k not in ("autori", "curatori")}
+        try:
+            aggiorna_item(modulo_sync.client(), key, form.versione.data, campi,
+                          form.autori.data or "", (form.curatori.data or "") if zi.tipo == "book" else None)
+        except (ErroreScrittura, RuntimeError) as e:
+            db.session.rollback()
+            flash(str(e), "errore")
+        except Exception as e:  # noqa: BLE001  (rete, permessi)
+            db.session.rollback()
+            flash(f"Scrittura in Zotero non riuscita: {e}", "errore")
+        else:
+            db.session.commit()
+            flash("Scheda aggiornata in Zotero.", "ok")
+            return redirect(url_for("admin.item_zotero", key=key, torna=torna))
+
+    elif azione in ("cerca", "url", "file", "togli") and form_cop.validate_on_submit():
+        try:
+            if azione == "togli":
+                sostituisci_copertina(zi, "")
+            elif azione == "cerca":
+                if not zi.isbn:
+                    raise ValueError("l'item non ha un ISBN")
+                sostituisci_copertina(zi, cerca_copertina(zi.isbn))
+            elif azione == "url":
+                if not form_cop.url.data:
+                    raise ValueError("indica l'indirizzo dell'immagine")
+                sostituisci_copertina(zi, salva_copertina(form_cop.url.data))
+            else:
+                if not form_cop.file.data:
+                    raise ValueError("scegli un file")
+                sostituisci_copertina(zi, carica_copertina(form_cop.file.data))
+        except Exception as e:  # noqa: BLE001  (host non ammesso, non immagine, rete)
+            db.session.rollback()
+            flash(f"Copertina non salvata: {e}", "errore")
+        else:
+            db.session.commit()
+            flash("Copertina tolta." if azione == "togli" else "Copertina salvata.", "ok")
+            return redirect(url_for("admin.item_zotero", key=key, torna=torna))
+
+    return render_template("admin/item_zotero.html", zi=zi, form=form, form_cop=form_cop,
+                           modificabile=modificabile, campi=CAMPI_MODULO.get(zi.tipo, []), torna=torna,
+                           url_zotero=current_app.config.get("ZOTERO_GROUP_URL"))
 
 
 # ------------------------------------------------------------------ letture proposte

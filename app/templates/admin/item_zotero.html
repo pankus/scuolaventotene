@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, copertina %}
+{% block title %}Modifica voce della bibliografia{% endblock %}
+{% block content %}
+<p class="occhiello"><a href="{{ torna }}">← Torna</a></p>
+<h1>Voce della bibliografia</h1>
+<p class="nota">Zotero è la fonte di verità: le modifiche alla scheda si scrivono nel gruppo Zotero
+  e la copia del sito si aggiorna con ciò che risponde Zotero. Copertine: solo sul sito.
+  {% if url_zotero %}<a href="{{ url_zotero }}" target="_blank" rel="noopener">Apri il gruppo su Zotero</a>{% endif %}</p>
+
+<div class="due-colonne">
+  <div>
+    <h2 style="margin-top:0">Scheda</h2>
+    {% if modificabile %}
+    <form method="post" class="modulo">
+      {{ form.hidden_tag() }}
+      <input type="hidden" name="torna" value="{{ torna }}">
+      {% for nome in campi %}{{ campo(form[nome]) }}{% endfor %}
+      <button class="btn" name="azione" value="scheda">Salva in Zotero</button>
+    </form>
+    {% else %}
+    <p>{% if zi.citazione_html %}{{ zi.citazione_html|safe }}{% else %}<em>{{ zi.titolo }}</em>{% endif %}</p>
+    <p class="nota">Tipo «{{ zi.tipo }}»: dal sito si modificano solo libri e siti web; questa voce si corregge in Zotero.</p>
+    {% endif %}
+  </div>
+
+  <aside class="scheda">
+    <p class="etichetta">Copertina</p>
+    <div class="anteprima-copertina">{{ copertina(zi) }}</div>
+    <p class="nota">{% if zi.copertina_path %}Copertina salvata sul sito.
+      {% elif zi.copertina_path == '' %}Nessuna copertina: la ricerca automatica non la cerca più.
+      {% else %}Nessuna copertina: la ricerca automatica la cercherà{{ ' per ISBN' if zi.isbn else " solo se c'è un ISBN" }}.{% endif %}</p>
+    <form method="post" enctype="multipart/form-data" class="modulo">
+      {{ form_cop.hidden_tag() }}
+      <input type="hidden" name="torna" value="{{ torna }}">
+      {% if zi.isbn %}<p><button class="btn btn-piccolo btn-secondario" name="azione" value="cerca">Cerca per ISBN {{ zi.isbn }}</button></p>{% endif %}
+      {{ campo(form_cop.url) }}
+      <button class="btn btn-piccolo" name="azione" value="url">Scarica dall'indirizzo</button>
+      {{ campo(form_cop.file) }}
+      <button class="btn btn-piccolo" name="azione" value="file">Carica l'immagine</button>
+      {% if zi.copertina_path %}
+      <p style="margin-top:1rem"><button class="link-pericolo" name="azione" value="togli"
+         onclick="return confirm('Togliere la copertina?')">togli la copertina</button></p>{% endif %}
+    </form>
+  </aside>
+</div>
+{% endblock %}

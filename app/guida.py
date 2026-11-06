@@ -43,6 +43,7 @@ AIUTO = {
     "admin.lettura": ("comitato", "Approvare: collegare o creare"),
     "admin.materiali": ("comitato", "Materiali"),
     "admin.utenti": ("comitato", "Utenti e ruoli"),
+    "admin.item_zotero": ("comitato", "Correggere una voce e la copertina"),
 }
 # pagine senza link: file e JSON, conferme via link, le guide stesse
 SENZA_AIUTO = {"area.file_candidatura", "area.cerca_letture", "auth.verifica", "public.guida"}

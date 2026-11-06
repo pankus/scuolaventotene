@@ -101,6 +101,24 @@ def salva_copertina(url):
     return salva_upload(fs, "copertine", set(TIPI_COPERTINA.values()))["file_path"]
 
 
+# firme dei formati ammessi per le copertine caricate a mano (non ci si fida dell'estensione)
+FIRME_IMMAGINI = {"jpg": (b"\xff\xd8\xff",), "png": (b"\x89PNG\r\n\x1a\n",),
+                  "gif": (b"GIF87a", b"GIF89a"), "webp": (b"RIFF",)}
+
+
+def carica_copertina(file_storage):
+    """Copertina caricata dall'admin: solo jpg/png/webp/gif veri, max 2 MB. Percorso o ValueError."""
+    dati = file_storage.read(MAX_COPERTINA + 1)
+    if len(dati) > MAX_COPERTINA:
+        raise ValueError("copertina troppo grande (max 2 MB)")
+    ext = next((e for e, firme in FIRME_IMMAGINI.items() if dati.startswith(firme)
+                and (e != "webp" or dati[8:12] == b"WEBP")), None)
+    if not ext:
+        raise ValueError("il file non è un'immagine jpg, png, webp o gif")
+    fs = FileStorage(io.BytesIO(dati), filename=f"copertina.{ext}")
+    return salva_upload(fs, "copertine", set(TIPI_COPERTINA.values()))["file_path"]
+
+
 def conta_caratteri(rel):
     """Caratteri spazi inclusi per .docx (come il conteggio di Word). None se non calcolabile."""
     if not rel or not rel.lower().endswith(".docx"):

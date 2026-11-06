@@ -174,6 +174,21 @@ Lezione e unità didattica di ogni lettura le conosce solo il sito. Si può lavo
 come sempre (correggere, spostare, fondere doppioni): alla sincronizzazione il sito si adegua,
 e se due item vengono fusi le proposte passano al superstite.
 
+### Correggere una voce e la copertina
+
+Solo admin. In **Invito alla lettura** e nelle pagine di lezioni e UD ogni voce ha il link
+**modifica**. La pagina ha due parti:
+
+- **Scheda** (libri e siti web): titolo, autori e curatori (uno per riga, «Cognome, Nome»),
+  anno, editore, ISBN… **Salva in Zotero** scrive nel gruppo e aggiorna il sito con la risposta
+  di Zotero. Se intanto qualcuno ha cambiato la voce in Zotero, il salvataggio si ferma: ricarica
+  la pagina e ripeti. Gli altri tipi (articoli, capitoli…) si correggono in Zotero.
+- **Copertina** (solo sul sito, non va in Zotero): **Cerca per ISBN** (Open Library, poi Google
+  Books), **Scarica dall'indirizzo** (solo immagini di Open Library, Google Books o archive.org),
+  **Carica l'immagine** (jpg, png, webp o gif, massimo 2 MB) oppure **togli la copertina**: una
+  copertina tolta non viene più cercata dal comando automatico. Le copertine dei libri con ISBN
+  si cercano anche da sole, ogni ora, con `flask zotero-copertine`.
+
 ### Sincronizzazione
 
 Gira in automatico (cron). Dal cruscotto l'admin può lanciare **Sincronizza modifiche**

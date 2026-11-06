@@ -130,6 +130,17 @@ def _copertine_per_isbn(isbn, chiave_google=None):
                 yield r["copertina_url"]
 
 
+def cerca_copertina(isbn, salva=None):
+    """Prima copertina scaricabile per l'ISBN (pulsante dell'admin): percorso o ValueError."""
+    from .utils import salva_copertina
+    for url in _copertine_per_isbn(isbn, current_app.config.get("GOOGLE_BOOKS_API_KEY")):
+        try:
+            return (salva or salva_copertina)(url)
+        except Exception:  # noqa: BLE001  (404, non immagine: si prova la fonte dopo)
+            continue
+    raise ValueError("nessuna copertina trovata per questo ISBN")
+
+
 def scarica_copertine(limite=50, salva=None, candidati=None):
     """Copertine in locale per i libri con ISBN che non ne hanno una (``flask zotero-copertine``,
     in cron dopo il sync). Un libro senza copertina trovata resta con ``copertina_path=""`` e non

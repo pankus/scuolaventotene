@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import copertina, campo %}
+{% from "_macros.html" import copertina, campo, modifica_item with context %}
 {% set tipo_nome = 'Unità didattica' if ud else 'Lezione' %}
 {% block title %}{{ titolo }} · {{ ed.anno }}{% endblock %}
 {% block content %}
@@ -95,6 +95,7 @@
         {% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}{% if i.autori %}, {% endif %}<em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
         {% if motivazione %}<p class="motivazione">{{ motivazione }}</p>{% endif %}
         {% if i.url %}<a class="nota" href="{{ i.url }}" target="_blank" rel="noopener">{{ 'sito' if i.tipo == 'webpage' else 'link' }}</a>{% endif %}
+        {{ modifica_item(i) }}
       </div>
     </li>
     {% endfor %}

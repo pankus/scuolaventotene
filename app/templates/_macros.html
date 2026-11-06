@@ -26,6 +26,11 @@
   <span class="cv-titolo">{{ (i.titolo or '')|striptags|truncate(60, True, '…') }}</span></span>{% endif %}
 {%- endmacro %}
 
+{# link «modifica» per l'admin: scheda in Zotero e copertina #}
+{% macro modifica_item(i) -%}
+{% if current_user.is_authenticated and current_user.is_admin %}<a class="modifica-item" href="{{ url_for('admin.item_zotero', key=i.key, torna=request.full_path) }}">modifica</a>{% endif %}
+{%- endmacro %}
+
 {% macro voce_biblio(i) %}
 <li class="con-copertina">
   {{ copertina(i) }}
@@ -33,6 +38,7 @@
   {% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}{% if i.autori %}, {% endif %}<em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
   {% if i.isbn %}<small class="isbn">ISBN {{ i.isbn }}</small>{% endif %}
   {% if i.doi %}<a href="https://doi.org/{{ i.doi }}" target="_blank" rel="noopener">DOI</a>{% elif i.url %}<a href="{{ i.url }}" target="_blank" rel="noopener">{{ 'sito' if i.tipo == 'webpage' else 'link' }}</a>{% endif %}
+  {{ modifica_item(i) }}
   </div>
 </li>
 {%- endmacro %}

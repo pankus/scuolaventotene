@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import voce_biblio %}
+{% from "_macros.html" import voce_biblio with context %}
 {% block title %}{{ ed.titolo }} · {{ ed.anno }}{% endblock %}
 {% block content %}
 <section class="eroe">
