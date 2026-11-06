@@ -1,5 +1,8 @@
-"""Sito pubblico: home, pagina edizione, la scuola, contatti, privacy."""
+"""Sito pubblico: home, pagina edizione, la scuola, contatti, privacy, guide."""
 from flask import Blueprint, abort, current_app, render_template, send_from_directory
+from flask_login import current_user
+
+from ..guida import GUIDE, leggi
 
 from ..extensions import db
 from ..models import Edizione, EdizionePersona, PropostaLettura, ZoteroCollezione
@@ -101,3 +104,16 @@ def contatti():
 @bp.route("/privacy")
 def privacy():
     return render_template("public/privacy.html")
+
+
+@bp.route("/guida", defaults={"slug": "docenti"})
+@bp.route("/guida/<slug>")
+def guida(slug):
+    g = GUIDE.get(slug) or abort(404)
+    if g["riservata"]:
+        if not current_user.is_authenticated:
+            return current_app.login_manager.unauthorized()
+        if not current_user.is_comitato:
+            abort(403)
+    html, indice = leggi(slug)
+    return render_template("public/guida.html", guida=g, slug=slug, html=html, indice=indice)

@@ -28,11 +28,13 @@ def create_app(config_class=Config):
     app.register_blueprint(bibliografia.bp)
     app.register_blueprint(admin.bp, url_prefix="/admin")
 
+    from . import guida
     from .cli import register_cli
     from .utils import register_template_utils
 
     register_cli(app)
     register_template_utils(app)
+    guida.registra(app)
 
     from flask import render_template
 

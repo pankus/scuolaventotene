@@ -81,6 +81,38 @@ main.contenitore { padding-top: 2.5rem; padding-bottom: 5rem; min-height: 60vh; 
 .menu a { color: var(--inchiostro); text-decoration: none; }
 .menu a:hover { color: var(--accento); }
 .menu .btn { color: #fff; }
+.menu a[aria-current="page"] { color: var(--accento); box-shadow: inset 0 -2px 0 var(--accento); }
+.menu .menu-gestione { font-weight: 600; color: var(--accento); border: 1px solid var(--accento-bd); background: var(--accento-bg); border-radius: 999px; padding: .3rem .8rem; }
+.menu .menu-gestione:hover, .menu .menu-gestione[aria-current="page"] { background: var(--accento); color: #fff; box-shadow: none; }
+
+/* menu dell'account: <details> nativo, menu.js lo chiude con un clic fuori o Esc */
+.utente { position: relative; }
+.utente summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .45rem; border: 1px solid var(--linea); border-radius: 999px; padding: .2rem .7rem .2rem .2rem; }
+.utente summary::-webkit-details-marker { display: none; }
+.utente summary::after { content: "▾"; font-size: .7rem; color: var(--inchiostro-lo); }
+.utente summary:hover, .utente[open] summary { border-color: var(--accento); }
+.utente summary:focus-visible { outline: 2px solid var(--accento); outline-offset: 2px; }
+.utente-iniziali { display: inline-grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--inchiostro); color: #fff; font-size: .72rem; font-weight: 600; letter-spacing: .03em; }
+.utente-punto { width: .5rem; height: .5rem; border-radius: 50%; background: var(--accento); }
+.utente-pannello { position: absolute; right: 0; top: calc(100% + .5rem); z-index: 20; width: 17rem; background: var(--carta); border: 1px solid var(--linea); border-radius: var(--r); box-shadow: 0 10px 30px rgba(5, 28, 44, .12); padding: .9rem 1rem; }
+.utente-chi { margin: 0 0 .6rem; display: grid; gap: .15rem; }
+.utente-chi small { color: var(--inchiostro-md); overflow-wrap: anywhere; }
+.utente-chi .badge { justify-self: start; margin-top: .3rem; }
+.utente-avviso { font-size: .8rem; color: var(--accento-dk); background: var(--accento-bg); border-radius: var(--r); padding: .45rem .6rem; margin: 0 0 .6rem; }
+.utente-pannello ul { list-style: none; margin: 0; padding: .5rem 0; border-top: 1px solid var(--linea-lo); }
+.utente-pannello li { padding: .25rem 0; }
+.utente-pannello li .badge { margin-left: .3rem; }
+.utente-pannello a[aria-current="page"] { box-shadow: none; font-weight: 600; }
+.utente-pannello form { border-top: 1px solid var(--linea-lo); padding-top: .6rem; margin: 0; }
+.utente-esci { all: unset; cursor: pointer; font-family: var(--sans); font-size: .88rem; color: var(--err); }
+.utente-esci:hover { text-decoration: underline; }
+.utente-esci:focus-visible { outline: 2px solid var(--accento); outline-offset: 2px; }
+
+/* link alla sezione della guida per la pagina corrente (app/guida.py, AIUTO) */
+.aiuto { position: fixed; right: 1rem; bottom: 1rem; z-index: 15; font-family: var(--sans); font-size: .8rem; color: var(--inchiostro); text-decoration: none; background: var(--carta); border: 1px solid var(--linea); border-radius: 999px; padding: .4rem .9rem; box-shadow: 0 4px 14px rgba(5, 28, 44, .1); }
+.aiuto::before { content: "?"; display: inline-grid; place-items: center; width: 1.1rem; height: 1.1rem; margin-right: .45rem; border-radius: 50%; background: var(--accento); color: #fff; font-size: .7rem; font-weight: 600; }
+.aiuto:hover { border-color: var(--accento); color: var(--accento); }
+@media print { .aiuto, .utente { display: none; } }
 
 /* ------------------------------------------------------------------ eroe */
 .eroe { position: relative; padding: 3.5rem 0 3rem; margin-bottom: 1rem; isolation: isolate; }
@@ -259,6 +291,23 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
   .menu { gap: .3rem 1rem; font-size: .82rem; }
   .eroe { padding-top: 2rem; }
   .cifra strong { font-size: 2.4rem; }
+}
+
+/* ------------------------------------------------------------------ guida */
+.guida-griglia { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 3rem; align-items: start; }
+.guida-indice { position: sticky; top: 6rem; max-height: calc(100vh - 7rem); overflow-y: auto; font-family: var(--sans); font-size: .82rem; border-right: 1px solid var(--linea-lo); padding-right: 1rem; }
+.guida-indice ol { list-style: none; margin: 0; padding: 0; }
+.guida-indice li { padding: .2rem 0; }
+.guida-indice .livello-2 { font-weight: 600; margin-top: .55rem; }
+.guida-indice .livello-3 { padding-left: .8rem; color: var(--inchiostro-md); }
+.guida-indice a { color: inherit; text-decoration: none; }
+.guida-indice a:hover { color: var(--accento); }
+.guida-testo h2 { scroll-margin-top: 6rem; border-top: 1px solid var(--linea); padding-top: 1.2rem; margin-top: 2.4rem; }
+.guida-testo h3 { scroll-margin-top: 6rem; }
+.guida-testo h1 + p { font-size: 1.25rem; }
+@media (max-width: 860px) {
+  .guida-griglia { grid-template-columns: 1fr; gap: 1rem; }
+  .guida-indice { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--linea-lo); padding: 0 0 1rem; }
 }
 
 /* ------------------------------------------------------------------ ricerca dei libri (letture.js) */

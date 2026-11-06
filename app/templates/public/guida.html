@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ guida.titolo }} · Scuola di Ventotene{% endblock %}
+{% block content %}
+<p class="occhiello">Istruzioni
+  {% if current_user.is_authenticated and current_user.is_comitato %} ·
+    {% if slug == 'comitato' %}<a href="{{ url_for('public.guida') }}">Guida per docenti e relatori</a>
+    {% else %}<a href="{{ url_for('public.guida', slug='comitato') }}">Guida del comitato</a>{% endif %}
+  {% endif %}</p>
+<div class="guida-griglia">
+  <nav class="guida-indice" aria-label="Indice della guida">
+    <p class="etichetta">Indice</p>
+    <ol>
+      {% for v in indice %}<li class="livello-{{ v.livello }}"><a href="#{{ v.id }}">{{ v.titolo }}</a></li>{% endfor %}
+    </ol>
+  </nav>
+  <article class="guida-testo misura">{{ html|safe }}</article>
+</div>
+{% endblock %}

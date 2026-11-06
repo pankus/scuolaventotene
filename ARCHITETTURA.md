@@ -37,7 +37,8 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /bibliografia             invito alla lettura (Zotero): ricerca, sezioni (con le sottosezioni), tag
 /bibliografia/copertine/<key>   copertina locale di un item non nel cestino
 /contatti  /privacy
-/registrati  /accedi  /esci
+/guida, /guida/comitato    istruzioni (guide/*.md); quella del comitato solo per comitato e admin
+/registrati  /accedi  /esci (POST, con CSRF)
 /verifica/<token>         conferma dell'email (link inviato alla registrazione; /verifica/reinvia per un nuovo link)
 /password-dimenticata  /reimposta-password/<token>   reset password via email (link valido 1 ora, una volta)
 

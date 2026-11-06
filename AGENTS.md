@@ -56,6 +56,7 @@ app/extensions.py    db (naming convention), migrate, login_manager, csrf, PRAGM
 app/models.py        tutti i modelli + dizionari di stati/tipi (STATI_*, TIPI_*, VISIBILITA, RUOLI)
 app/forms.py         form WTForms
 app/utils.py         decoratori di permesso, upload, conteggio caratteri, filtri Jinja, context processor
+app/guida.py         guide (guide/*.md, markdown + indice), mappa pagina → sezione AIUTO, link «Guida»
 app/zotero_sync.py   sync Zotero → sito, verifica chiave, normalizzazione ISBN/firma
 app/zotero_scrittura.py  crea/aggiorna item book|webpage, controllo duplicati (ISBN, firma+anno, ricerca remota)
 app/ricerca_libri.py     lookup: cache ZoteroItem + Google Books / Open Library (dal server, in parallelo, fusi per ISBN)
@@ -63,7 +64,8 @@ app/posta.py         email SMTP (Infomaniak) e token firmati per verifica email 
 app/cli.py           comandi flask
 app/views/           un blueprint per area: public, auth, area (/area), archivio, bibliografia, admin (/admin)
 app/templates/       una cartella per blueprint; base.html e _macros.html condivisi
-app/static/          css/style.css, js/letture.js e font locali (ET Book, Inter, JetBrains Mono)
+app/static/          css/style.css, js/letture.js, js/menu.js e font locali (ET Book, Inter, JetBrains Mono)
+guide/               istruzioni: guida.md (docenti e relatori, pubblica), comitato.md (comitato e admin)
 migrations/          migrazioni Alembic (Flask-Migrate), da committare
 instance/            database e uploads/ — non versionata, non toccare a mano
 ```
@@ -119,6 +121,13 @@ testi, Inter per l'interfaccia, accento `#cf3f02` (variabili `--accento*` in `:r
 variabili CSS, non colori scritti a mano. Niente CDN: font e risorse restano locali. Date
 nei template con i filtri `data_it` e `giorno_it`; testi lunghi delle edizioni in markdown con il
 filtro `markdown`.
+
+**Guide.** Le istruzioni stanno in `guide/guida.md` (docenti e relatori) e `guide/comitato.md`
+(comitato e admin), modello Itinera ma senza modifica dal browser: si correggono nel repository.
+Pagina nuova in `area`, `admin` o `auth`: aggiungerla ad `AIUTO` in `app/guida.py` (endpoint →
+titolo della sezione) e, se serve, scrivere la sezione; `test_guida.py` fallisce altrimenti.
+Cambia un flusso descritto nelle guide: aggiornare anche la guida. Nella testata le variabili
+di `base.html` hanno il prefisso `_` (`_ep`, `_u`…) per non coprire quelle dei template figli.
 
 **Database.** Lo schema si gestisce con Flask-Migrate: le migrazioni stanno in
 `migrations/versions/` e vanno committate. Dopo ogni modifica ai modelli:
@@ -190,6 +199,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
 - `test_relatori.py`: account del relatore collegato alla lezione (solo admin), materiali e
   bibliografia della lezione (solo le proprie, doppioni, niente tag), pagina edizione per lezione,
   UD dei docenti ammessi senza dati personali, vincolo `una_origine`.
+- `test_guida.py`: ogni pagina di area/admin/auth ha la sua sezione in `AIUTO`, i titoli
+  esistono, guida del comitato riservata, menu dell'account, `/esci` solo POST.
 - `test_letture.py`: revisione delle letture (permessi, collega/crea, nessun dato del docente
   nel payload Zotero), copertine, merge `dc:replaces`.
 - `test_dopo_scuola.py`: `Candidatura.dopo_la_scuola`, materiali del modulo (solo la propria

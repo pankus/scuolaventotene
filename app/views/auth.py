@@ -53,7 +53,7 @@ def login():
     return render_template("auth/login.html", form=form)
 
 
-@bp.route("/esci")
+@bp.post("/esci")  # POST con CSRF: un link o un'immagine altrui non può far uscire
 @login_required
 def logout():
     logout_user()
