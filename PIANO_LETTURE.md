@@ -13,12 +13,17 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | R2 Ruolo relatore e lezioni | **fatta** (2026-11-06): ruolo `relatore`, `Persona.utente_id`, lezione = `EdizionePersona` (`titolo_lezione`, `ordine`), `Materiale.lezione_id`; admin collega l'account nella scheda edizione; area «Le mie lezioni» con caricamento; archivio diviso per lezioni; `env.py` spegne le FK durante le migrazioni |
 | R3 Bibliografia della lezione e UD per i relatori | **fatta** (2026-11-06): `PropostaLettura` di una candidatura **o** di una lezione (CHECK), letture dei relatori subito in «Relatori» (senza tag, conferma se ci sono doppioni), pagina edizione con «Relatori» divisa per lezione, UD dei docenti ammessi per i relatori, informativa aggiornata |
 | F6 Dopo la scuola: altri libri e materiali | **fatta** (2026-11-06): `Candidatura.dopo_la_scuola` (ammessa, edizione chiusa/conclusa), `Materiale.candidatura_id` + migrazione, upload dalla candidatura (`?candidatura=`), upload libero chiuso, archivio con «Unità didattiche dei docenti», letture `post_scuola` (`PropostaLettura.modificabile`), informativa aggiornata |
-| F7 Invito alla lettura pubblico | da fare |
+| F7 Invito alla lettura pubblico | **fatta** (2026-11-06): filtro per sezione con le sottosezioni (edizione → «Relatori», «Docenti»), macro `voce_biblio` (copertina, ISBN, link) in `/bibliografia` e nella pagina edizione, `/bibliografia/copertine/<key>`, letture nella scheda candidatura del comitato; nessuna migrazione |
 | F8 Sfogliare i materiali | da decidere |
 
 ## Riprendere da qui (stato al 2026-11-06)
-- **Prossima fase: F7** (invito alla lettura pubblico in `/bibliografia`, letture nella scheda
-  candidatura del comitato).
+- **Prossima fase: F8** (sfogliare i materiali): è una decisione, non codice da subito.
+  Chiedere all'utente 2–3 file veri (un PDF, un PPTX, un ODP) e se sul server CNR si può
+  installare LibreOffice; poi prototipo delle opzioni a/b/c della sezione F8.
+- F7: nessuna migrazione. Il filtro per sezione ora include le sottosezioni (prima la
+  collezione di un'edizione mostrava solo i record della radice). Nel DB locale nessuna
+  copertina è ancora scaricata (serve una lettura approvata con copertina): la rotta è
+  verificata solo dai test.
 - F6 (decisioni dell'utente, 2026-11-06): caricano dopo la scuola le candidature `ammessa` di
   edizioni `chiusa | conclusa` (borsisti e uditori); materiali dei docenti pubblici di default;
   `/area/materiali/nuovo` senza `?lezione=` né `?candidatura=` risponde 404 (lo staff carica
@@ -30,7 +35,7 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 - Zotero: Edizione → «Relatori» e «Docenti» (niente collezioni per lezione: lezione e UD le
   conosce il sito). Letture dei docenti: revisione del comitato. Letture dei relatori: dirette.
 - Git: repository **locale**, senza remote (creato il 2026-11-06). Un commit per fase,
-  `Co-Authored-By` in coda. Ultimo: F6.
+  `Co-Authored-By` in coda. Ultimo: F7.
 - Database locale: migrazioni fino a `388437ba29c9`; backup prima di ogni fase in
   `instance/backup/`. Edizioni: 2026 (chiusa), 2027 (aperta, creata dall'utente per le prove).
 - Note pratiche emerse provando:

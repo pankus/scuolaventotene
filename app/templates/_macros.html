@@ -18,6 +18,15 @@
 </form>
 {% endmacro %}
 
+{% macro voce_biblio(i) %}
+<li{% if i.copertina_path %} class="con-copertina"{% endif %}>
+  {%- if i.copertina_path %}<img src="{{ url_for('bibliografia.copertina', key=i.key) }}" alt="" loading="lazy">{% endif %}
+  {% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}{% if i.autori %}, {% endif %}<em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
+  {% if i.isbn %}<small class="isbn">ISBN {{ i.isbn }}</small>{% endif %}
+  {% if i.doi %}<a href="https://doi.org/{{ i.doi }}" target="_blank" rel="noopener">DOI</a>{% elif i.url %}<a href="{{ i.url }}" target="_blank" rel="noopener">{{ 'sito' if i.tipo == 'webpage' else 'link' }}</a>{% endif %}
+</li>
+{%- endmacro %}
+
 {% macro stato(s, etichette) %}<span class="badge badge-{{ s }}">{{ etichette.get(s, s) }}</span>{% endmacro %}
 
 {# Passi della candidatura: 1 profilo · 2 proposta UD · 3 invito alla lettura · 4 riepilogo e invio #}

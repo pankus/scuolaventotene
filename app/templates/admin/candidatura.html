@@ -22,6 +22,18 @@
     </dl>
     {% if c.abstract %}<h3>Abstract</h3><p>{{ c.abstract }}</p>{% endif %}
 
+    {% if c.letture %}
+    <h3>Invito alla lettura</h3>
+    <table class="tabella">
+      <tr><th>Lettura</th><th>Momento</th><th>Stato</th></tr>
+      {% for l in c.letture %}<tr>
+        <td>{% if c.stato != 'bozza' %}<a href="{{ url_for('admin.lettura', pid=l.id) }}">{{ l.titolo }}</a>{% else %}{{ l.titolo }}{% endif %}
+          <small>{{ TIPI_LETTURA.get(l.tipo, l.tipo) }}</small></td>
+        <td>{{ MOMENTI_PROPOSTA.get(l.momento, l.momento) }}</td><td>{{ stato(l.stato, STATI_PROPOSTA) }}</td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
     <h3>Valutazioni del comitato</h3>
     <table class="tabella">
       <tr><th>Valutatore</th><th>Orig.</th><th>Pot.</th><th>Fonti</th><th>Tot.</th><th>Note</th></tr>

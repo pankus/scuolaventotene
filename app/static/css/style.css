@@ -225,6 +225,9 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .biblio li::before { counter-increment: b; content: counter(b, decimal-leading-zero); position: absolute; left: 0; top: .95rem; font-family: var(--mono); font-size: .7rem; color: var(--inchiostro-lo); }
 .biblio .csl-bib-body, .biblio .csl-entry { display: inline; }
 .biblio a { font-family: var(--mono); font-size: .7rem; margin-left: .4rem; }
+.biblio li.con-copertina { display: flow-root; }
+.biblio img { float: right; width: 3.2rem; height: auto; margin: 0 0 .4rem 1rem; border: 1px solid var(--linea-lo); }
+.biblio .isbn { font-family: var(--mono); font-size: .7rem; color: var(--inchiostro-md); margin-left: .4rem; }
 .elenco-edizioni { list-style: none; padding: 0; }
 .elenco-edizioni li { border-bottom: 1px solid var(--linea); }
 .elenco-edizioni a { display: flex; gap: 1.5rem; padding: .9rem 0; color: var(--inchiostro); text-decoration: none; }

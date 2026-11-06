@@ -194,6 +194,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
   nel payload Zotero), copertine, merge `dc:replaces`.
 - `test_dopo_scuola.py`: `Candidatura.dopo_la_scuola`, materiali del modulo (solo la propria
   candidatura ammessa, niente upload libero), archivio, letture `post_scuola`.
+- `test_bibliografia.py`: sezioni con sottosezioni, copertine (solo item vivi), ISBN e link,
+  nessun dato del docente, letture nella scheda candidatura del comitato.
 
 Per i test di rotta usare un client per utente (`client_di` in `test_rotte.py`). La fixture
 azzera `g._login_user` a ogni richiesta: l'app context resta aperto per tutto il test e
@@ -214,8 +216,8 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
 4. Opzionale: registrazione presenze, export iscritti e uditori.
 
 **In corso: [PIANO_LETTURE.md](PIANO_LETTURE.md)**: invito alla lettura, Zotero in lettura e
-scrittura, ricerca dei libri, relatori, materiali dopo la scuola. Fatte F1–F6 e R1–R3; prossima
-**F7**. Una fase per sessione: leggere la sezione «Riprendere da qui» e la tabella di stato in cima
+scrittura, ricerca dei libri, relatori, materiali dopo la scuola. Fatte F1–F7 e R1–R3; prossima
+**F8** (da decidere con l'utente, con prototipo). Una fase per sessione: leggere la sezione «Riprendere da qui» e la tabella di stato in cima
 al piano, fare la prima fase "da fare", aggiornare tabella e «Riprendere da qui», un commit per
 fase (repository git locale, senza remote).
 

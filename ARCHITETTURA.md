@@ -34,7 +34,8 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /archivio                 elenco delle edizioni
 /archivio/<anno>          materiali (PDF/PPT) dell'edizione, filtrati per visibilità
 /materiali/<id>/scarica   download controllato
-/bibliografia             invito alla lettura (Zotero): ricerca, sezioni, tag
+/bibliografia             invito alla lettura (Zotero): ricerca, sezioni (con le sottosezioni), tag
+/bibliografia/copertine/<key>   copertina locale di un item non nel cestino
 /contatti  /privacy
 /registrati  /accedi  /esci
 /verifica/<token>         conferma dell'email (link inviato alla registrazione; /verifica/reinvia per un nuovo link)
@@ -98,7 +99,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - Il comando `flask zotero-sync` gira in cron (per esempio ogni ora) e si può lanciare anche dal cruscotto.
 - La sincronizzazione è incrementale: usa `since=<versione>` per collezioni e record e `/deleted` per le rimozioni. La sincronizzazione completa con `--completa` riallinea tutto.
 - Le citazioni arrivano già formattate dall'API (`include=bib`, stile CSL `chicago-author-date`, locale `it-IT`, entrambi configurabili).
-- Le collezioni del gruppo diventano le "sezioni" della bibliografia. Ogni edizione può essere collegata a una collezione, che compare come invito alla lettura nella pagina dell'edizione.
+- Le collezioni del gruppo diventano le "sezioni" della bibliografia; filtrare per una sezione include le sottosezioni (l'edizione mostra anche «Relatori» e «Docenti»). Ogni voce (macro `voce_biblio`, anche nella pagina dell'edizione) ha citazione, ISBN, link e la copertina locale se c'è, servita da `/bibliografia/copertine/<key>`; nessun dato del docente né motivazione. La scheda della candidatura del comitato elenca le letture con il link alla revisione. Ogni edizione può essere collegata a una collezione, che compare come invito alla lettura nella pagina dell'edizione.
 - La chiave API deve avere il permesso di scrittura sul gruppo (controllo: `flask zotero-verifica`); per la sola lettura basta una chiave in lettura, o nessuna se il gruppo è pubblico.
 
 **Struttura del gruppo Zotero**: una collezione per edizione (scelta da elenco in Modifica edizione, tra le collezioni radice sincronizzate); dentro due sottocollezioni, «Relatori» e «Docenti»; «Docenti» la crea il sito alla prima lettura approvata (`Edizione.zotero_docenti_key`). Lezione e unità didattica di ogni lettura le conosce solo il sito (`PropostaLettura`), che le raggruppa. La pagina pubblica dell'edizione mostra l'invito alla lettura come sotto-albero: prima i record della radice, poi una sezione per sottocollezione (anche le vecchie per lezione, come nel 2024), per ultima «Docenti». Le letture dei relatori entrano subito in «Relatori» (`Edizione.zotero_relatori_key`), senza tag e senza revisione; se ci sono possibili doppioni il relatore sceglie prima il record. Nella pagina dell'edizione «Relatori» è divisa per lezione (il legame lo conosce il sito); i record aggiunti a mano in Zotero restano sotto «Relatori». Togliere una lettura dal sito non la elimina da Zotero.

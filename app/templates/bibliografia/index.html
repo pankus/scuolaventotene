@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import voce_biblio %}
 {% block title %}Invito alla lettura{% endblock %}
 {% block content %}
 <h1>Invito alla lettura</h1>
@@ -9,7 +10,7 @@
 <form class="filtri" method="get">
   <input type="search" name="q" value="{{ q }}" placeholder="Cerca autore, titolo, abstract">
   <select name="collezione">
-    <option value="">Tutte le sezioni</option>
+    <option value="">Tutte le sezioni</option>{# una sezione include le sue sottosezioni #}
     {% for c, lv in collezioni %}<option value="{{ c.key }}" {% if c.key == col %}selected{% endif %}>{{ '— ' * lv }}{{ c.nome }}</option>{% endfor %}
   </select>
   {% if tag %}<input type="hidden" name="tag" value="{{ tag }}">{% endif %}
@@ -20,10 +21,7 @@
 
 <p class="nota">{{ pagina.total }} titoli</p>
 <ol class="biblio">
-{% for i in pagina.items %}
-  <li>{% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}, <em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
-    {% if i.doi %}<a href="https://doi.org/{{ i.doi }}" target="_blank" rel="noopener">DOI</a>{% elif i.url %}<a href="{{ i.url }}" target="_blank" rel="noopener">link</a>{% endif %}
-  </li>
+{% for i in pagina.items %}{{ voce_biblio(i) }}
 {% else %}<li>Nessun titolo{% if not ultima_sync %}: la bibliografia non è ancora stata sincronizzata{% endif %}.</li>{% endfor %}
 </ol>
 {% if pagina.pages > 1 %}
