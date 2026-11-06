@@ -117,3 +117,4 @@ sync_stato (versione libreria Zotero, data ultima sync)
 2. Caricamento delle edizioni 2023–2025 e dei relativi materiali.
 3. Attestati di frequenza in PDF generati dal sito (borsisti e uditori).
 4. Opzionale: campi per la registrazione delle presenze, export degli iscritti e degli uditori.
+5. In corso, a fasi: [PIANO_LETTURE.md](PIANO_LETTURE.md) (invito alla lettura, Zotero, relatori, materiali dopo la scuola). Stato e punto di ripresa in cima al file.

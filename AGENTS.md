@@ -209,10 +209,11 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
 3. Attestati di frequenza in PDF generati dal sito (borsisti e uditori).
 4. Opzionale: registrazione presenze, export iscritti e uditori.
 
-**In corso: [PIANO_LETTURE.md](PIANO_LETTURE.md)**: invito alla lettura nella candidatura,
-Zotero in lettura e scrittura (porta da `~/gitrepo/itinera/app/biblio/`), lookup dei libri,
-materiali dopo la scuola. Una fase per sessione: leggere il piano, fare la prima fase "da fare",
-aggiornare la tabella di stato in cima al file.
+**In corso: [PIANO_LETTURE.md](PIANO_LETTURE.md)**: invito alla lettura, Zotero in lettura e
+scrittura, ricerca dei libri, relatori, materiali dopo la scuola. Fatte F1–F5 e R1–R3; prossima
+**F6**. Una fase per sessione: leggere la sezione «Riprendere da qui» e la tabella di stato in cima
+al piano, fare la prima fase "da fare", aggiornare tabella e «Riprendere da qui», un commit per
+fase (repository git locale, senza remote).
 
 ## Come lavorare
 

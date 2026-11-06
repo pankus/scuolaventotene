@@ -16,6 +16,33 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F7 Invito alla lettura pubblico | da fare |
 | F8 Sfogliare i materiali | da decidere |
 
+## Riprendere da qui (stato al 2026-11-06)
+- **Prossima fase: F6.** Prima domanda da fare all'utente: chi può caricare dopo la scuola?
+  Proposta: candidature `ammessa` di edizioni `chiusa | conclusa`.
+- Ruoli: **docente** = insegnante che si candida; **relatore** = storico che tiene una lezione
+  (account proprio, ruolo assegnato dall'admin, collegato alla lezione). Vedi «Struttura Zotero
+  e relatori» qui sotto.
+- Zotero: Edizione → «Relatori» e «Docenti» (niente collezioni per lezione: lezione e UD le
+  conosce il sito). Letture dei docenti: revisione del comitato. Letture dei relatori: dirette.
+- Git: repository **locale**, senza remote (creato il 2026-11-06). Un commit per fase,
+  `Co-Authored-By` in coda. Ultimo: R3.
+- Database locale: migrazioni fino a `43ca587c6fc1`; backup prima di ogni fase in
+  `instance/backup/`. Edizioni: 2026 (chiusa), 2027 (aperta, creata dall'utente per le prove).
+- Note pratiche emerse provando:
+  - dopo una modifica al `.env` il server di sviluppo va **riavviato** a mano (il reloader di
+    `--debug` eredita le variabili vecchie);
+  - Google Books senza `GOOGLE_BOOKS_API_KEY` risponde quasi sempre 429: resta Open Library;
+  - per approvare letture l'edizione deve avere la collezione Zotero (Modifica edizione, elenco
+    delle collezioni radice sincronizzate): crearla in Zotero e sincronizzare;
+  - la collezione 2024 ha ancora una sottocollezione per lezione (struttura vecchia): la pagina
+    dell'edizione la mostra lo stesso; riorganizzarla in Zotero è facoltativo;
+  - slug numerici delle edizioni ("2027"): la candidatura sta in
+    `/area/candidatura/edizione/<slug>` (prima collideva con `/area/candidatura/<id>`).
+- Da verificare con il DPO: i punti `[DA VERIFICARE]` dell'informativa, compresi i nuovi su
+  relatori, Zotero, Google Books e Open Library.
+- Non provato in un browser vero: la ricerca dei libri (`letture.js`) e i passi della
+  candidatura sono verificati solo dai test e dall'HTML generato.
+
 ## Context
 L'utente vuole questo percorso del docente:
 1. vede il bando aperto e si registra;
@@ -159,16 +186,28 @@ riorganizzata a mano in Zotero se la si vuole uniforme. Materiali dei relatori
 ## F6 — Dopo la scuola: altri libri e materiali del modulo
 - Chi: candidature `ammessa` di edizioni `chiusa | conclusa` (default; da confermare all'inizio
   della fase).
-- `Materiale.candidatura_id` (FK nullable) + migrazione; upload multiplo di PDF/PPT/PPTX/ODP dalla
-  scheda candidatura (riuso di `salva_upload`, `ESTENSIONI_MATERIALI`, stato `in_revisione`,
-  revisione esistente in `/admin/materiali`).
-- Nuove letture con `momento = post_scuola`, stessa coda F3.
+- `Materiale.candidatura_id` (FK nullable, SET NULL) + migrazione: i materiali dei docenti si
+  distinguono così da quelli dei relatori (`Materiale.lezione_id`, R2) e dello staff (nessuno dei
+  due). Upload multiplo di PDF/PPT/PPTX/ODP dalla scheda candidatura (riuso di `salva_upload`,
+  `ESTENSIONI_MATERIALI`, stato `in_revisione`, revisione esistente in `/admin/materiali`, che
+  mostra già l'origine). Riuso di `area.nuovo_materiale` con un parametro come `?lezione=`.
+- Archivio dell'edizione: oggi «Lezioni» e «Altri materiali»; aggiungere «Unità didattiche dei
+  docenti» per i materiali con `candidatura_id`.
+- Nuove letture con `momento = post_scuola` su candidature non in bozza: oggi
+  `/area/candidatura/<id>/letture` è modificabile solo in bozza; aprire l'aggiunta (non la
+  modifica delle letture già decise) per le candidature ammesse. Stessa coda del comitato (F3),
+  destinazione «Docenti».
 - Informativa privacy: aggiornare la parte "Materiali" se cambia cosa si pubblica.
 
 ## F7 — Invito alla lettura pubblico
-- `/bibliografia`: copertine (locali), filtro per edizione (collezione), sezione "Proposti dai
-  docenti" (tag), schede `book`/`webpage` con ISBN e link. Nessun nome del docente.
-- Scheda candidatura (comitato) e area docente: le letture della candidatura.
+- Già fatto altrove: la pagina dell'edizione mostra l'invito alla lettura per sezioni (radice,
+  «Relatori» per lezione, «Docenti», R1/R3); l'area docente mostra le letture della candidatura
+  con stato e nota (F5).
+- Da fare: `/bibliografia` con copertine (locali, `ZoteroItem.copertina_path`, servite con un
+  controllo come i file), filtro per edizione (collezione) e per «Relatori»/«Docenti», schede
+  `book`/`webpage` con ISBN e link; nessun nome del docente.
+- Scheda candidatura del comitato (`admin/candidatura.html`): le letture della candidatura con
+  link alla revisione.
 
 ## F8 — Sfogliare i materiali (decisione + prototipo)
 - Prototipo di 1 sessione su 2–3 file veri, poi scelta tra:
