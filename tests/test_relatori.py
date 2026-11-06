@@ -109,9 +109,10 @@ def test_archivio_separa_lezioni(app):
                                  stato="pubblicato", visibilita="pubblico"))
     db.session.commit()
     html = client_di(app).get(f"/archivio/{ed.slug}").get_data(as_text=True)
-    ordine = [html.index(t) for t in ("<h2>Lezioni</h2>", "Materiale A", "Materiale B",
+    ordine = [html.index(t) for t in ("<h2>Lezioni</h2>", f"/interventi/{ep1.id}", f"/interventi/{ep2.id}",
                                       "<h2>Altri materiali</h2>", "Bando")]
     assert ordine == sorted(ordine)
+    assert html.count("1 materiale") == 2 and "Materiale A" not in html  # sta nella pagina della lezione
 
 
 # ------------------------------------------------------------------ R3: bibliografia della lezione

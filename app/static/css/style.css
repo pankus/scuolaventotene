@@ -287,6 +287,15 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .riquadro-admin { margin-top: 1.5rem; padding: .8rem 1rem; border: 1px dashed var(--accento-bd); border-radius: var(--r); background: var(--accento-bg); font-family: var(--sans); font-size: .9rem; }
 .riquadro-admin summary { cursor: pointer; color: var(--accento-dk); }
 .riquadro-admin form { margin-top: 1rem; max-width: 38rem; }
+.indice-interventi { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--inchiostro); }
+.indice-interventi a { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 1rem; align-items: baseline; padding: .85rem 0; border-bottom: 1px solid var(--linea); color: var(--inchiostro); text-decoration: none; transition: background .15s; }
+.indice-interventi a:hover { background: var(--accento-bg); }
+.indice-interventi a:hover strong { color: var(--accento); }
+.ii-num { font-family: var(--mono); font-size: .7rem; color: var(--accento); }
+.ii-testo strong { font-weight: 400; display: block; line-height: 1.25; }
+.ii-testo small { font-family: var(--sans); font-size: .8rem; color: var(--inchiostro-md); }
+.ii-conti { font-family: var(--mono); font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; color: var(--inchiostro-lo); white-space: nowrap; }
+@media (max-width: 700px) { .indice-interventi a { grid-template-columns: 2rem minmax(0, 1fr); } .ii-conti { grid-column: 2; } }
 .programma a { color: inherit; text-decoration-color: var(--accento-bd); }
 .programma a:hover { color: var(--accento); }
 

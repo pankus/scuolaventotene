@@ -35,7 +35,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
                           materiali, letture con copertine (riquadri di caricamento per l'admin)
 /edizioni/<anno>/unita-didattiche/<id>  UD di una candidatura ammessa (nome, titolo, discipline, abstract)
 /archivio                 elenco delle edizioni
-/archivio/<anno>          materiali (PDF/PPT) dell'edizione, filtrati per visibilità
+/archivio/<anno>          indice di lezioni e UD (link alle loro pagine, con i conteggi) + altri materiali
 /materiali/<id>/scarica   download controllato
 /bibliografia             invito alla lettura (Zotero): ricerca, sezioni (con le sottosezioni), tag
 /bibliografia/copertine/<key>   copertina locale di un item non nel cestino

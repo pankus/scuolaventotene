@@ -1,5 +1,5 @@
 """Archivio delle edizioni precedenti: materiali PDF/PowerPoint."""
-from flask import Blueprint, abort, current_app, render_template, send_from_directory
+from flask import Blueprint, abort, current_app, render_template, send_from_directory, url_for
 from flask_login import current_user
 
 from ..extensions import db
@@ -26,7 +26,30 @@ def edizione(slug):
     ed = Edizione.query.filter_by(slug=slug).first_or_404()
     if ed.stato == "bozza":
         abort(404)
-    return render_template("archivio/edizione.html", ed=ed, materiali=_materiali_visibili(ed))
+    materiali = _materiali_visibili(ed)
+    n_mat = {}
+    for m in materiali:
+        chiave = ("ep", m.lezione_id) if m.lezione_id else ("c", m.candidatura_id) if m.candidatura_id else None
+        n_mat[chiave] = n_mat.get(chiave, 0) + 1
+
+    def voce(url, titolo, autore, chiave, letture):
+        return {"url": url, "titolo": titolo or "Senza titolo", "autore": autore,
+                "materiali": n_mat.get(chiave, 0),
+                "letture": sum(1 for p in letture if p.stato == "approvata" and p.zotero_key)}
+
+    eps = sorted((ep for ep in ed.persone if ep.ruolo in ("relatore", "docente")), key=lambda ep: ep.posizione)
+    lezioni = [voce(url_for("public.intervento", slug=ed.slug, epid=ep.id), ep.titolo_lezione,
+                    ep.persona.nome_completo, ("ep", ep.id), ep.letture)
+               for ep in eps if ep.ruolo == "relatore"]
+    ud = [voce(url_for("public.intervento", slug=ed.slug, epid=ep.id), ep.titolo_lezione,
+               ep.persona.nome_completo, ("ep", ep.id), ep.letture)
+          for ep in eps if ep.ruolo == "docente"]
+    ud += [voce(url_for("public.unita_didattica", slug=ed.slug, cid=c.id), c.titolo_ud,
+                c.utente.nome_completo, ("c", c.id), c.letture)
+           for c in sorted(ed.candidature, key=lambda c: c.titolo_ud or "")
+           if c.stato == "ammessa" and c.titolo_ud]
+    return render_template("archivio/edizione.html", ed=ed, lezioni=lezioni, ud=ud,
+                           altri=[m for m in materiali if not m.lezione_id and not m.candidatura_id])
 
 
 @bp.route("/materiali/<int:mid>/scarica")

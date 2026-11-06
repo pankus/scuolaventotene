@@ -146,12 +146,13 @@ diffuso. I dati personali dei docenti (email, telefono, nascita, residenza) non 
 
 ## Archivio e invito alla lettura
 
-- **Archivio**: un'edizione per riga; nella pagina dell'edizione i materiali sono divisi in
-  «Lezioni», «Unità didattiche dei docenti» e «Altri materiali». Alcuni sono visibili solo agli
-  utenti registrati.
+- **Archivio**: un'edizione per riga; la pagina dell'edizione elenca le «Lezioni» e le «Unità
+  didattiche dei docenti», con quanti materiali e letture ha ciascuna, e gli «Altri materiali»
+  (bando, locandine). Ogni lezione e UD apre la sua pagina: abstract, materiali da scaricare e
+  letture consigliate con le copertine. Alcuni materiali sono visibili solo agli utenti registrati.
 - **Invito alla lettura**: ricerca per autore, titolo o abstract, filtro per **sezione** (una
   sezione per edizione, che comprende «Relatori» e «Docenti»). Ogni voce riporta la citazione,
-  l'ISBN e il link quando ci sono, e la copertina per i libri proposti dalla scuola. La pagina
+  l'ISBN e il link quando ci sono, e la copertina dei libri (o un segnaposto se non c'è). La pagina
   di ogni edizione mostra la propria bibliografia divisa per lezione.
 
 ## Dati personali e contatti

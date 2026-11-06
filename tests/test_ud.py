@@ -174,3 +174,10 @@ def test_scarica_copertine(app):
     assert stato == {"A": "copertine/ok.jpg", "B": "", "C": None, "W": None}
     html = client_di(app).get("/bibliografia").get_data(as_text=True)
     assert "/bibliografia/copertine/A" in html and "copertina-vuota" in html
+
+
+def test_archivio_elenca_anche_le_ud_senza_materiali(app):
+    ud = crea_ud()
+    html = client_di(app).get(f"/archivio/{ud.edizione.slug}").get_data(as_text=True)
+    assert "Unità didattiche dei docenti" in html
+    assert f'href="/edizioni/{ud.edizione.slug}/interventi/{ud.id}"' in html

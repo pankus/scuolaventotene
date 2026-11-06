@@ -44,11 +44,13 @@ def test_carica_materiale_del_modulo(app):
     m = Materiale.query.one()
     assert (m.candidatura_id, m.lezione_id, m.edizione_id, m.stato, m.visibilita) == \
         (c.id, None, c.edizione_id, "in_revisione", "pubblico")
-    # pubblicato dal comitato: nell'archivio, tra le UD dei docenti
+    # pubblicato dal comitato: l'archivio conta il materiale nella UD, la pagina della UD lo mostra
     m.stato = "pubblicato"
     db.session.commit()
     html = client_di(app).get(f"/archivio/{c.edizione.slug}").get_data(as_text=True)
-    assert "Unità didattiche dei docenti" in html and "Slide del modulo" in html
+    pagina = f"/edizioni/{c.edizione.slug}/unita-didattiche/{c.id}"
+    assert "Unità didattiche dei docenti" in html and pagina in html and "1 materiale" in html
+    assert "Slide del modulo" in client_di(app).get(pagina).get_data(as_text=True)
 
 
 def test_upload_chiuso_agli_altri(app):
