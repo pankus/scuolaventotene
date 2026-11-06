@@ -17,6 +17,9 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F8 Sfogliare i materiali | da decidere |
 
 ## Riprendere da qui (stato al 2026-11-06)
+- **Nessuna fase in corso.** F1–F7 e R1–R3 fatte, F8 rimandata. Fuori dal piano, dopo F7:
+  edizioni 2023–2025 (`flask seed-precedenti`), sezione «Le edizioni» in `la_scuola.html`;
+  attestati di frequenza rimandati (domande aperte in AGENTS.md, «Lavori aperti» 3).
 - **F8 rimandata dall'utente** (2026-11-06). Quando si riprende: prototipo con file **di prova**
   generati qui (scelta dell'utente); ancora da chiedere se sul server CNR si può installare
   LibreOffice e cosa conta di più (testo selezionabile, mobile, accessibilità, nessuna
@@ -43,9 +46,11 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 - Zotero: Edizione → «Relatori» e «Docenti» (niente collezioni per lezione: lezione e UD le
   conosce il sito). Letture dei docenti: revisione del comitato. Letture dei relatori: dirette.
 - Git: repository **locale**, senza remote (creato il 2026-11-06). Un commit per fase,
-  `Co-Authored-By` in coda. Ultimo: F7.
+  `Co-Authored-By` in coda.
 - Database locale: migrazioni fino a `388437ba29c9`; backup prima di ogni fase in
-  `instance/backup/`. Edizioni: 2026 (chiusa), 2027 (aperta, creata dall'utente per le prove).
+  `instance/backup/`. Edizioni: 2023–2025 (concluse, da `seed-precedenti`; 2024 con la collezione Zotero
+  «2024»), 2026 (conclusa), 2027 (aperta, creata dall'utente per le prove). Backup prima
+  delle edizioni precedenti: `instance/backup/prima-edizioni-precedenti.db`.
 - Note pratiche emerse provando:
   - dopo una modifica al `.env` il server di sviluppo va **riavviato** a mano (il reloader di
     `--debug` eredita le variabili vecchie);

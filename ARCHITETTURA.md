@@ -119,8 +119,8 @@ sync_stato (versione libreria Zotero, data ultima sync)
 
 ## 7. Da fare (prossimi passi)
 
-1. Testi istituzionali (la scuola, storia, partner), loghi CNR-ISMed, Centro Ventotene e ANPPIA, informativa privacy.
-2. Edizioni 2023–2025 caricate (`flask seed-precedenti`); mancano i materiali di lezioni e UD.
-3. Attestati di frequenza in PDF generati dal sito (borsisti e uditori).
+1. Testi istituzionali (storia e obiettivi, enti promotori; «Le edizioni» è scritta), loghi CNR-ISMed, Centro Ventotene e ANPPIA, verifica dell'informativa privacy con il DPO.
+2. Edizioni 2023–2025 caricate (`flask seed-precedenti`, dati in `app/edizioni_precedenti.py`); mancano i materiali di lezioni e UD e gli account dei relatori.
+3. Attestati di frequenza in PDF (borsisti e uditori): rimandati. Da decidere: tecnica (carta intestata `modelli/*.docx` compilata e convertita con LibreOffice, oppure fpdf2), chi li riceve (frequenza segnata dall'admin o tutti gli ammessi), firmatario e monte ore.
 4. Opzionale: campi per la registrazione delle presenze, export degli iscritti e degli uditori.
-5. In corso, a fasi: [PIANO_LETTURE.md](PIANO_LETTURE.md) (invito alla lettura, Zotero, relatori, materiali dopo la scuola). Stato e punto di ripresa in cima al file.
+5. [PIANO_LETTURE.md](PIANO_LETTURE.md): fatte F1–F7 e R1–R3; F8 (sfogliare i materiali) rimandata. Stato e punto di ripresa in cima al file.

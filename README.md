@@ -11,6 +11,8 @@ ventotene/
 ├── pyproject.toml          dipendenze (uv)
 ├── uv.lock                 versioni bloccate: da committare
 ├── migrations/             migrazioni dello schema (Flask-Migrate): da committare
+├── guide/                  istruzioni del sito: guida.md (docenti e relatori), comitato.md
+├── modelli/                carta intestata CNR-ISMed (.docx) per gli attestati
 ├── .env.example
 ├── instance/               (creata al primo avvio) ventotene.db + uploads/
 └── app/
@@ -23,16 +25,18 @@ ventotene/
     ├── zotero_scrittura.py scrittura in Zotero (letture approvate) e controllo duplicati
     ├── ricerca_libri.py    ricerca dei libri: cache Zotero + Google Books / Open Library
     ├── posta.py            email SMTP (Infomaniak) e token
+    ├── guida.py            guide in markdown, indice, link «Guida» per pagina
+    ├── edizioni_precedenti.py  dati delle edizioni 2023–2025 (flask seed-precedenti)
     ├── cli.py              init-db, crea-admin, seed-2026, seed-precedenti, zotero-sync, zotero-verifica, prova-email
     ├── views/
-    │   ├── public.py       home, edizione, la scuola, contatti, privacy
+    │   ├── public.py       home, edizione, la scuola, contatti, privacy, guide
     │   ├── auth.py         registrazione, accesso, verifica email, reset password
-    │   ├── area.py         area docente: profilo, candidature, materiali, ricerca libri
+    │   ├── area.py         area personale: profilo, candidature, letture, materiali, lezioni dei relatori, ricerca libri
     │   ├── archivio.py     archivio edizioni e download
     │   ├── bibliografia.py invito alla lettura
     │   └── admin.py        back-office
     ├── templates/          public/ auth/ area/ archivio/ bibliografia/ admin/
-    └── static/css/style.css
+    └── static/             css/style.css, js/letture.js, js/menu.js, font locali
 ```
 
 ## Avvio in locale (uv)

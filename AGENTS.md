@@ -62,11 +62,13 @@ app/zotero_sync.py   sync Zotero → sito, verifica chiave, normalizzazione ISBN
 app/zotero_scrittura.py  crea/aggiorna item book|webpage, controllo duplicati (ISBN, firma+anno, ricerca remota)
 app/ricerca_libri.py     lookup: cache ZoteroItem + Google Books / Open Library (dal server, in parallelo, fusi per ISBN)
 app/posta.py         email SMTP (Infomaniak) e token firmati per verifica email / reset password
+app/edizioni_precedenti.py  dati delle edizioni 2023–2025 dalle pagine CNR-ISMed (flask seed-precedenti)
 app/cli.py           comandi flask
 app/views/           un blueprint per area: public, auth, area (/area), archivio, bibliografia, admin (/admin)
 app/templates/       una cartella per blueprint; base.html e _macros.html condivisi
 app/static/          css/style.css, js/letture.js, js/menu.js e font locali (ET Book, Inter, JetBrains Mono)
 guide/               istruzioni: guida.md (docenti e relatori, pubblica), comitato.md (comitato e admin)
+modelli/             carta intestata CNR-ISMed (.docx), per gli attestati (non ancora usata)
 migrations/          migrazioni Alembic (Flask-Migrate), da committare
 instance/            database e uploads/ — non versionata, non toccare a mano
 ```
@@ -216,16 +218,18 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
 
 ## Lavori aperti (da ARCHITETTURA.md §7)
 
-1. Testi istituzionali: struttura pronta in `public/la_scuola.html`, sezioni `[DA COMPLETARE]`
-   in attesa dei testi dell'utente (storia, edizioni 2023–2025, enti promotori). Loghi
-   CNR-ISMed / Centro Ventotene / ANPPIA ancora da avere.
+1. Testi istituzionali: in `public/la_scuola.html` restano `[DA COMPLETARE]` storia e obiettivi
+   e la presentazione dei tre enti promotori (testi dell'utente). «Le edizioni» è scritta
+   (2023–2026, solo fatti dalle pagine ISMed e dai dati caricati): aggiornarla a ogni nuova
+   edizione. Loghi CNR-ISMed / Centro Ventotene / ANPPIA ancora da avere.
    Informativa privacy: bozza art. 13 GDPR in `public/privacy.html` (titolare CNR via ISMed,
    server CNR, email via Infomaniak); i punti `[DA VERIFICARE]` e i tempi di conservazione
    vanno confermati con il DPO del CNR. Se cambiano i dati raccolti, i destinatari o i cookie,
    aggiornare l'informativa.
 2. Edizioni 2023–2025: caricate con `flask seed-precedenti` (programma, comitato, lezioni,
-   call e locandine in PDF; 2024 collegata alla collezione Zotero «2024»). Mancano i materiali
-   delle lezioni e delle UD (slide, testi) e i testi su queste edizioni in `la_scuola.html`.
+   call e locandine in PDF; 2024 collegata alla collezione Zotero «2024»). Nel programma le UD
+   portano il nome del docente, come sulle pagine ISMed. Mancano i materiali delle lezioni e
+   delle UD (slide, testi) e gli account dei relatori da collegare alle lezioni.
 3. Attestati di frequenza in PDF generati dal sito (borsisti e uditori): rimandati, decisioni
    aperte (tecnica: docx + LibreOffice o fpdf2; chi riceve; firmatario e ore). Carta intestata
    CNR-ISMed in `modelli/Carta_intestata_accessibile_ita.docx`.
@@ -233,7 +237,7 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
 
 **In corso: [PIANO_LETTURE.md](PIANO_LETTURE.md)**: invito alla lettura, Zotero in lettura e
 scrittura, ricerca dei libri, relatori, materiali dopo la scuola. Fatte F1–F7 e R1–R3; prossima
-**F8** (da decidere con l'utente, con prototipo). Una fase per sessione: leggere la sezione «Riprendere da qui» e la tabella di stato in cima
+**F8**, rimandata dall'utente: si riprende solo quando lo chiede (domande aperte nel piano). Una fase per sessione: leggere la sezione «Riprendere da qui» e la tabella di stato in cima
 al piano, fare la prima fase "da fare", aggiornare tabella e «Riprendere da qui», un commit per
 fase (repository git locale, senza remote).
 
