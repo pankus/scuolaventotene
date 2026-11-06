@@ -8,9 +8,8 @@
   <p class="nota">Consiglia libri e siti web utili per il tema della scuola: facoltativo ma
     raccomandato. Il comitato li rivede; quelli approvati entrano nella bibliografia
     dell'edizione, senza il tuo nome.</p>
-  {% if c.stato != 'bozza' and aperte %}<p class="nota">{% if c.modificabile %}Puoi cambiare le letture
-    {%- if ed.scadenza_candidature %} fino al {{ ed.scadenza_candidature|data_it }}{% endif %}{% else %}Dopo la scuola puoi aggiungere altre letture{% endif %}:
-    quelle già rivedute dal comitato non si modificano più.</p>{% endif %}
+  {% if c.stato != 'bozza' and aperte %}<p class="nota">Puoi aggiungere letture in qualsiasi momento,
+    fino a {{ max_letture }} in tutto, e correggere quelle che il comitato non ha ancora riveduto.</p>{% endif %}
 
   {% if c.letture %}
   <table class="tabella">

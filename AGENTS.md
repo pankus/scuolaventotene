@@ -93,9 +93,11 @@ non scrivere stringhe sparse nelle viste o nei template.
 **Regole del bando** (non cambiarle senza che lo chieda l'utente): una candidatura per docente
 per edizione (vincolo unico); proposta di UD tra `caratteri_min` e `caratteri_max` dell'edizione
 (6000–8000 nel 2026), contata spazi inclusi; data di nascita, telefono, residenza ed email confermata obbligatori
-per inviare; invio solo entro `scadenza_candidature`; dopo l'invio proposta e letture non
-ancora rivedute si modificano fino alla scadenza o all'esito (`Candidatura.modificabile`), e una
-modifica che non passa `problemi_invio` viene scartata; valutazione su tre criteri 0–25
+per inviare; invio solo entro `scadenza_candidature`; dopo l'invio la proposta si modifica
+fino alla scadenza o all'esito (`Candidatura.modificabile`), e una modifica che non passa
+`problemi_invio` viene scartata; letture del docente in qualsiasi momento, massimo 10 in tutto,
+finché la candidatura non è ritirata (`Candidatura.letture_aperte`), modificabili finché non
+rivedute; valutazione su tre criteri 0–25
 (originalità, potenzialità didattiche, valorizzazione delle fonti), massimo 75, una valutazione
 per membro del comitato, graduatoria sulla media. I controlli sul contenuto prima dell'invio
 stanno in `Candidatura.problemi_invio` (il conteggio caratteri vale solo per i .docx: per PDF/ODT

@@ -125,7 +125,7 @@ def test_limite_letture(app, bozza):
     assert len(c.letture) == MAX_LETTURE
 
 
-def test_dopo_invio_modificabile_fino_alla_scadenza(app, bozza):
+def test_letture_in_qualsiasi_momento(app, bozza):
     c, client = bozza
     client.post(url(c), data=LIBRO)
     (p,) = c.letture
@@ -139,12 +139,20 @@ def test_dopo_invio_modificabile_fino_alla_scadenza(app, bozza):
     p.stato = "approvata"
     db.session.commit()
     assert client.post(f"/area/candidatura/{c.id}/letture/{p.id}/elimina").status_code == 400
-    # scadenza passata: sola lettura
+    # scadenza passata: si aggiunge ancora (momento post_scuola), fino a MAX_LETTURE in tutto
     c.edizione.scadenza_candidature = date.today() - timedelta(days=1)
     db.session.commit()
-    client.post(url(c), data={**LIBRO, "title": "Aggiunta tardiva"})
-    assert len(c.letture) == 1
-    assert "Salva la lettura" not in client.get(url(c)).get_data(as_text=True)
+    for i in range(MAX_LETTURE):
+        client.post(url(c), data={**LIBRO, "title": f"Aggiunta tardiva {i}"})
+    assert len(c.letture) == MAX_LETTURE
+    assert {x.momento for x in c.letture[1:]} == {"post_scuola"}
+    assert "Salva la lettura" not in client.get(url(c)).get_data(as_text=True)  # limite raggiunto
+    # ritirata: chiusa
+    client.post(f"/area/candidatura/{c.id}/letture/{c.letture[-1].id}/elimina")
+    c.stato = "ritirata"
+    db.session.commit()
+    client.post(url(c), data={**LIBRO, "title": "Dopo il ritiro"})
+    assert len(c.letture) == MAX_LETTURE - 1
 
 
 @pytest.mark.parametrize("stato, scadenza, modificabile", [

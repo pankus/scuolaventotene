@@ -81,10 +81,13 @@ def test_letture_dopo_la_scuola(app):
     assert PropostaLettura.query.filter_by(momento="post_scuola").count() == 0
 
 
-def test_letture_chiuse_se_non_ammessa(app):
+def test_letture_in_qualsiasi_momento_tranne_ritirata(app):
     c = candidatura("riserva", "conclusa")
     client_di(app, c.utente).post(f"/area/candidatura/{c.id}/letture", data=LIBRO)
-    assert PropostaLettura.query.count() == 0
+    assert PropostaLettura.query.one().momento == "post_scuola"
+    r = candidatura("ritirata", "conclusa")
+    client_di(app, r.utente).post(f"/area/candidatura/{r.id}/letture", data=LIBRO)
+    assert PropostaLettura.query.count() == 1
 
 
 def test_letture_post_scuola_nella_coda_del_comitato(app):
@@ -92,4 +95,4 @@ def test_letture_post_scuola_nella_coda_del_comitato(app):
     client_di(app, c.utente).post(f"/area/candidatura/{c.id}/letture", data=LIBRO)
     html = client_di(app, crea_utente(ruolo="comitato")).get(
         f"/admin/letture?edizione={c.edizione_id}").get_data(as_text=True)
-    assert LIBRO["title"] in html and "Dopo la scuola" in html
+    assert LIBRO["title"] in html and "Dopo la scadenza" in html

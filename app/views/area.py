@@ -127,11 +127,11 @@ def _compila(p, form):
 
 @bp.route("/candidatura/<int:cid>/letture", methods=["GET", "POST"])
 def letture(cid):
-    """Passo 3: invito alla lettura (facoltativo), modificabile finché lo è la candidatura
-    (``Candidatura.modificabile``). Dopo la scuola il docente ammesso ne aggiunge altre (momento
-    post_scuola), stessa revisione."""
+    """Passo 3: invito alla lettura (facoltativo). Il docente aggiunge letture in qualsiasi
+    momento, fino a MAX_LETTURE in tutto (``Candidatura.letture_aperte``); quelle aggiunte quando
+    la candidatura non è più modificabile hanno momento post_scuola. Stessa revisione."""
     c = _mia_candidatura(cid)
-    aperte = c.modificabile or c.dopo_la_scuola
+    aperte = c.letture_aperte
     momento = "iscrizione" if c.modificabile else "post_scuola"
     p = None
     if request.values.get("p"):
@@ -140,7 +140,7 @@ def letture(cid):
     tipo = p.tipo if p else ("webpage" if request.args.get("tipo") == "webpage" else "book")
     form = LetturaDocenteForm(data={**p.campi, "motivazione": p.motivazione, "zotero_key": p.zotero_key,
                                     "copertina_url": p.copertina_url} if p else None)
-    n_letture = sum(x.momento == momento for x in c.letture)  # il limite vale per momento
+    n_letture = len(c.letture)  # il limite vale per la candidatura, in tutto
     if aperte and form.validate_on_submit():
         if p is None and n_letture >= MAX_LETTURE:
             flash(f"Puoi consigliare al massimo {MAX_LETTURE} letture.", "errore")

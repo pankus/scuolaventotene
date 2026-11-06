@@ -80,9 +80,10 @@ Facoltativo ma raccomandato: fino a **10** libri o siti web utili per il tema de
 - **Motivazione**: perché lo consigliate. Resta nel sito, non entra in Zotero.
 
 Il comitato rivede le proposte; quelle approvate entrano nella bibliografia dell'edizione
-**senza il vostro nome**. Potete modificarle o eliminarle fino alla scadenza del bando, anche
-dopo l'invio, finché il comitato non le ha rivedute; ne vedete lo stato e l'eventuale nota del
-comitato.
+**senza il vostro nome**. Potete aggiungerne **in qualsiasi momento**, anche dopo la scadenza
+o dopo la scuola, fino a 10 in tutto, e modificarle o eliminarle finché il comitato non le ha
+rivedute; ne vedete lo stato e l'eventuale nota del comitato. Si chiude solo se ritirate la
+candidatura.
 
 ### Invio, ritiro ed esito
 
@@ -91,8 +92,8 @@ documento, lunghezza fuori dai limiti): il pulsante **Invia candidatura** si att
 manca nulla. Si può inviare solo **entro la scadenza** del bando. All'invio arriva un'email di
 conferma con il riepilogo e le letture proposte.
 
-Dopo l'invio si possono ancora modificare la proposta (titolo, discipline, abstract, documento)
-e le letture **fino alla scadenza** del bando, o fino a quando arriva l'esito se viene prima:
+Dopo l'invio si può ancora modificare la proposta (titolo, discipline, abstract, documento)
+**fino alla scadenza** del bando, o fino a quando arriva l'esito se viene prima:
 nella candidatura compaiono i pulsanti **Modifica la proposta** e **Modifica le letture**. Le
 modifiche valgono subito e non serve inviare di nuovo; se però la nuova versione non rispetta il
 bando (per esempio un documento troppo corto), non viene salvata e resta quella inviata.
@@ -115,10 +116,9 @@ nell'**Archivio**, nella sezione «Unità didattiche dei docenti», con il nome 
 
 ### Altre letture
 
-**Aggiungi letture** apre di nuovo l'invito alla lettura: si possono consigliare fino a 10 nuovi
-libri o siti, che passano dalla stessa revisione del comitato. Le nuove letture si correggono o
-si eliminano finché il comitato non le ha rivedute; quelle indicate con la candidatura restano
-come sono.
+**Aggiungi letture** apre di nuovo l'invito alla lettura: si possono consigliare altri libri o
+siti, fino a 10 in tutto con quelli già indicati, che passano dalla stessa revisione del
+comitato e si correggono o si eliminano finché il comitato non li ha riveduti.
 
 ## Relatori
 

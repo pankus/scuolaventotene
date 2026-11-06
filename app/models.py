@@ -292,6 +292,12 @@ class Candidatura(db.Model):
         return self.stato in ("bozza", "inviata", "in_valutazione") and self.edizione.candidature_aperte
 
     @property
+    def letture_aperte(self):
+        """Il docente aggiunge letture in qualsiasi momento (fino a MAX_LETTURE in tutto),
+        finché la candidatura non è ritirata."""
+        return self.stato != "ritirata"
+
+    @property
     def punteggio_medio(self):
         if not self.valutazioni:
             return None
@@ -344,7 +350,9 @@ class Valutazione(db.Model):
 # --------------------------------------------------------------------------- letture
 TIPI_LETTURA = {"book": "Libro", "webpage": "Sito / pagina web"}  # tipi Zotero
 STATI_PROPOSTA = {"proposta": "Da rivedere", "approvata": "Approvata", "rifiutata": "Rifiutata"}
-MOMENTI_PROPOSTA = {"iscrizione": "Con la candidatura", "post_scuola": "Dopo la scuola"}
+# "post_scuola" = aggiunta quando la candidatura non era più modificabile (dopo la scadenza o
+# l'esito, anche dopo la scuola); la chiave resta quella storica
+MOMENTI_PROPOSTA = {"iscrizione": "Con la candidatura", "post_scuola": "Dopo la scadenza"}
 
 
 class PropostaLettura(db.Model):
@@ -383,12 +391,9 @@ class PropostaLettura(db.Model):
 
     @property
     def modificabile(self):
-        """Il docente cambia le letture non ancora riviste dal comitato: quelle dell'iscrizione
-        finché la candidatura è modificabile, quelle nuove dopo la scuola."""
+        """Il docente cambia le proprie letture finché il comitato non le ha rivedute."""
         c = self.candidatura
-        return c is not None and self.stato == "proposta" and (
-            (c.modificabile and self.momento == "iscrizione")
-            or (c.dopo_la_scuola and self.momento == "post_scuola"))
+        return c is not None and self.stato == "proposta" and c.letture_aperte
 
 
 # --------------------------------------------------------------------------- materiali
