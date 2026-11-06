@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}La scuola{% endblock %}
 {% block content %}
-{# Le parti tra [DA COMPLETARE] aspettano i testi definitivi. #}
+{# Le parti tra [DA COMPLETARE] aspettano i testi definitivi. «Le edizioni»: dai dati di
+   app/edizioni_precedenti.py e seed-2026; aggiornarla a ogni nuova edizione. #}
 <div class="stretto">
 <h1>La scuola</h1>
 <p>La Scuola di formazione di Ventotene è promossa dal CNR – Istituto di Studi sul Mediterraneo,
@@ -34,9 +35,48 @@ secondarie di primo e secondo grado, in Italia o all'estero.</p>
 </ol>
 
 <h2>Le edizioni</h2>
-<p>Temi, programmi e materiali delle edizioni passate sono nell'<a
-  href="{{ url_for('archivio.index') }}">archivio</a>.</p>
-<p class="nota">[DA COMPLETARE: breve presentazione delle edizioni 2023–2025.]</p>
+<p>Dal 2023 la scuola si tiene ogni autunno a Ventotene, negli spazi del Centro di ricerca e
+documentazione sul confino politico e la detenzione, a cavallo tra la fine di ottobre e l'inizio
+di novembre. Il tema è lo stesso, le migrazioni politiche, affrontato in chiave storica e
+didattica: al mattino le lezioni di studiose e studiosi, al pomeriggio la presentazione e la
+discussione delle unità didattiche dei docenti selezionati; l'ultimo giorno una visita
+sull'isola, luogo di confino. Programmi, comitati e materiali di ogni edizione sono
+nell'<a href="{{ url_for('archivio.index') }}">archivio</a>.</p>
+
+<h3><a href="{{ url_for('public.edizione', slug='2023') }}">I edizione · 2023</a></h3>
+<p><em>Le migrazioni politiche nell'Italia contemporanea: definizioni, confini, proposte
+didattiche</em>, 29 ottobre – 1 novembre 2023. La prima edizione nasce nell'ambito del progetto
+«Un partito in movimento: il Pci e le migrazioni dalla nascita allo scioglimento», con il
+contributo della Struttura di missione per la valorizzazione degli anniversari nazionali della
+Presidenza del Consiglio dei Ministri, ed è organizzata dal CNR-ISMed con l'Osservatorio Placido
+Rizzotto e il Centro di Ventotene. Le lezioni vanno dall'esilio risorgimentale all'asilo
+nell'Italia repubblicana fino all'uccisione di Jerry Masslo, passando per l'emigrazione delle
+donne, la mobilità degli studenti internazionali e la «profughizzazione» del lavoro migrante.
+Dieci docenti, selezionati con una call, presentano le loro unità didattiche.</p>
+
+<h3><a href="{{ url_for('public.edizione', slug='2024') }}">II edizione · 2024</a></h3>
+<p>Stesso titolo, 31 ottobre – 3 novembre 2024. Le lezioni attraversano l'Italia liberale, le
+mobilità (post)coloniali tra Africa e Italia, la nascita della questione sarda, l'emigrazione
+nella ricostruzione postbellica e l'immigrazione straniera in agricoltura; una lezione è
+dedicata alla didattica della storia del colonialismo attraverso la letteratura e la scrittura.
+Due docenti della prima edizione, Arianna Onidi e Caterina Inesi, tornano come relatrici e
+membri del comitato scientifico. Sei unità didattiche, dalla graphic novel all'informazione
+visiva e alla comunicazione politica, fino a Ventotene tra confino e partecipazione.</p>
+
+<h3><a href="{{ url_for('public.edizione', slug='2025') }}">III edizione · 2025</a></h3>
+<p>Stesso titolo, 30 ottobre – 2 novembre 2025, con un comitato scientifico allargato
+all'Università di Palermo. Al centro le politiche migratorie e il diritto d'asilo, il confino
+politico e comune tra fascismo e Italia repubblicana, i circuiti punitivi e le forme di
+resistenza, il diritto alla città nell'Europa degli anni Cinquanta, lo sfruttamento lavorativo
+e la mobilitazione dei migranti in agricoltura. Otto unità didattiche, tra esilio, scrittura,
+migrazioni femminili e ambiente.</p>
+
+<h3><a href="{{ url_for('public.edizione', slug='2026') }}">IV edizione · 2026</a></h3>
+<p><em>Le migrazioni politiche nella storia contemporanea</em>, 29 ottobre – 1 novembre 2026. Lo
+sguardo si allarga oltre l'Italia, al contesto globale da metà Ottocento a oggi: l'asilo
+politico, l'emigrazione palestinese, il colonialismo italiano in Africa e la sua memoria,
+Giuseppe Di Vittorio e la mobilità del lavoro, e una lezione sulla mappatura delle mobilità
+politiche con l'intelligenza artificiale.</p>
 
 <h2>Gli enti promotori</h2>
 <h3>CNR – Istituto di Studi sul Mediterraneo (ISMed)</h3>
