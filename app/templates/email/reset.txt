@@ -1,0 +1,9 @@
+Gentile {{ u.nome }},
+
+abbiamo ricevuto una richiesta di nuova password per il tuo account. Per sceglierla apri questo
+link (valido un'ora, utilizzabile una sola volta):
+
+{{ url_for('auth.reimposta_password', token=token, _external=True) }}
+
+Se non l'hai chiesta tu, ignora questo messaggio: la password attuale resta valida.
+{% include "email/_firma.txt" %}

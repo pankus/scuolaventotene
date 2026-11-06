@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Archivio{% endblock %}
+{% block content %}
+<h1>Archivio delle edizioni</h1>
+<div class="griglia-3">
+{% for e in edizioni %}
+  <a class="scheda scheda-link" href="{{ url_for('archivio.edizione', slug=e.slug) }}">
+    <span class="occhiello">{{ e.numero }}ª edizione · {{ e.anno }}</span>
+    <h3>{{ e.titolo }}</h3>
+    <span class="nota">{{ conteggi[e.id] }} materiali</span>
+  </a>
+{% else %}<p>Nessuna edizione in archivio.</p>{% endfor %}
+</div>
+{% endblock %}

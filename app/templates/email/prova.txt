@@ -1,0 +1,1 @@
+Email di prova dal sito della Scuola di formazione di Ventotene: la configurazione SMTP funziona.

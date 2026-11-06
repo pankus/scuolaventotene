@@ -1,0 +1,8 @@
+Gentile {{ c.utente.nome }},
+
+la valutazione delle candidature per la {{ c.edizione.numero }}ª edizione della Scuola
+({{ c.edizione.titolo }}) è conclusa. Esito della tua candidatura: {{ esito }}.
+
+Trovi i dettagli nell'area personale:
+{{ url_for('area.dettaglio', cid=c.id, _external=True) }}
+{% include "email/_firma.txt" %}

@@ -1,0 +1,8 @@
+Nuova candidatura per la {{ c.edizione.numero }}ª edizione ({{ c.edizione.anno }}).
+
+Candidato: {{ c.utente.nome_completo }}
+Tipo: {{ c.tipo }}
+{% if c.titolo_ud %}Unità didattica: {{ c.titolo_ud }}
+{% endif %}
+Scheda nel back-office:
+{{ url_for('admin.candidatura', cid=c.id, _external=True) }}

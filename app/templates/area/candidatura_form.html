@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_auto %}
+{% block title %}Candidatura {{ ed.anno }}{% endblock %}
+{% block content %}
+<div class="stretto">
+  <h1>Candidatura · {{ ed.numero }}ª edizione</h1>
+  <p><em>{{ ed.titolo }}</em> — scadenza {{ ed.scadenza_candidature|data_it }}</p>
+  <p class="nota">I borsisti devono allegare una proposta di unità didattica su un tema di storia
+    delle migrazioni politiche, declinata sulle proprie discipline ({{ ed.caratteri_min }}–{{ ed.caratteri_max }}
+    caratteri spazi inclusi). Per i file .docx il conteggio è automatico.</p>
+  {% if cand and cand.file_nome %}<p>File attuale: <strong>{{ cand.file_nome }}</strong>
+    {% if cand.n_caratteri %}({{ cand.n_caratteri }} caratteri){% endif %} — caricane uno nuovo per sostituirlo.</p>{% endif %}
+  {{ form_auto(form, "Salva bozza") }}
+</div>
+{% endblock %}

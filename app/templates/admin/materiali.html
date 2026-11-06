@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_auto, stato %}
+{% block title %}Materiali{% endblock %}
+{% block content %}
+<h1>Materiali dell'archivio</h1>
+{% include "admin/_nav.html" %}
+<table class="tabella">
+  <tr><th>Edizione</th><th>Titolo</th><th>Caricato da</th><th>File</th><th>Stato / visibilità</th><th></th></tr>
+  {% for m in materiali %}
+  <tr><td>{{ m.edizione.anno }}</td><td><strong>{{ m.titolo }}</strong><br><small>{{ m.autori or '' }} · {{ TIPI_MATERIALE.get(m.tipo) }}</small></td>
+    <td>{{ m.caricato_da.nome_completo if m.caricato_da else '' }}</td>
+    <td>{% if m.file_path %}<a href="{{ url_for('archivio.scarica', mid=m.id) }}">{{ m.file_nome }}</a> ({{ m.dimensione|dimensione }}){% elif m.url %}<a href="{{ m.url }}">link</a>{% endif %}</td>
+    <td>{% if current_user.is_admin %}
+      <form method="post" action="{{ url_for('admin.aggiorna_materiale', mid=m.id) }}" class="in-linea">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="stato">{% for k, v in STATI_MATERIALE.items() %}<option value="{{ k }}" {% if k == m.stato %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+        <select name="visibilita">{% for k, v in VISIBILITA.items() %}<option value="{{ k }}" {% if k == m.visibilita %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+        <button class="btn btn-piccolo">OK</button>
+        <button class="link-pericolo" name="azione" value="elimina" onclick="return confirm('Eliminare definitivamente?')">elimina</button>
+      </form>
+      {% else %}{{ stato(m.stato, STATI_MATERIALE) }} · {{ VISIBILITA[m.visibilita] }}{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6">Nessun materiale.</td></tr>{% endfor %}
+</table>
+
+{% if current_user.is_admin %}
+<h2>Carica un materiale</h2>
+<div class="stretto">{{ form_auto(form, "Pubblica") }}</div>
+{% endif %}
+{% endblock %}

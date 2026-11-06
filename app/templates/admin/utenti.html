@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Utenti{% endblock %}
+{% block content %}
+<h1>Utenti</h1>
+{% include "admin/_nav.html" %}
+<table class="tabella">
+  <tr><th>Nome</th><th>Email</th><th>Scuola</th><th>Registrato</th><th>Ruolo / stato</th></tr>
+  {% for u in utenti %}
+  <tr><td>{{ u.cognome }} {{ u.nome }}</td><td>{{ u.email }}</td><td>{{ u.scuola or '' }}</td><td>{{ u.creato_il|data_it }}</td>
+    <td><form method="post" action="{{ url_for('admin.aggiorna_utente', uid=u.id) }}" class="in-linea">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <select name="ruolo">{% for k, v in RUOLI.items() %}<option value="{{ k }}" {% if k == u.ruolo %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+      <label><input type="checkbox" name="attivo" value="1" {% if u.attivo %}checked{% endif %}> attivo</label>
+      <button class="btn btn-piccolo">OK</button></form></td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

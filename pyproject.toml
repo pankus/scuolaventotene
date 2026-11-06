@@ -1,0 +1,29 @@
+[project]
+name = "scuola-ventotene"
+version = "0.1.0"
+description = "Sito della Scuola di formazione di Ventotene (CNR-ISMed, Centro Ventotene e Santo Stefano, ANPPIA)"
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "flask>=3.0",
+    "flask-sqlalchemy>=3.1",
+    "flask-login>=0.6",
+    "flask-wtf>=1.2",
+    "email-validator>=2.0",
+    "python-dotenv>=1.0",
+    "markdown>=3.5",
+    "pyzotero>=1.5",
+    "python-docx>=1.1",
+    "flask-migrate>=4.1.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+# Applicazione, non libreria: uv installa solo le dipendenze, non il progetto come pacchetto
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]  # package=false: serve per importare app e config

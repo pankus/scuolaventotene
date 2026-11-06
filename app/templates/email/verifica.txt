@@ -1,0 +1,9 @@
+Gentile {{ u.nome }},
+
+per completare la registrazione al sito della Scuola di formazione di Ventotene conferma il tuo
+indirizzo email aprendo questo link (valido 7 giorni):
+
+{{ url_for('auth.verifica', token=token, _external=True) }}
+
+Senza la conferma non potrai inviare la candidatura. Se non ti sei registrato tu, ignora questo messaggio.
+{% include "email/_firma.txt" %}

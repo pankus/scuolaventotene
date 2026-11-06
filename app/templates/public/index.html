@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+{% if corrente %}
+<section class="eroe">
+ <div class="eroe-griglia">
+ <div>
+  <p class="occhiello">{{ corrente.numero }}ª edizione · {{ corrente.luogo }} · {{ corrente.data_inizio|data_it('%d.%m') }} – {{ corrente.data_fine|data_it('%d.%m.%Y') }}</p>
+  <h1>{{ corrente.titolo }}{% if corrente.sottotitolo %} <span class="accento">{{ corrente.sottotitolo }}</span>{% endif %}</h1>
+  <p class="domanda">Una scuola di formazione per insegnanti delle secondarie, in Italia e all'estero.</p>
+  <p class="lead">Quattro giorni sull'isola del confino: al mattino le lezioni di storici e storiche delle
+    migrazioni, al pomeriggio le unità didattiche proposte dai docenti, discusse insieme.</p>
+  <div class="azioni">
+    {% if corrente.candidature_aperte %}
+      <a class="btn" href="{{ url_for('area.candidatura', slug=corrente.slug) }}">Candidati entro il {{ corrente.scadenza_candidature|data_it }}</a>
+    {% endif %}
+    <a class="btn btn-secondario" href="{{ url_for('public.edizione', slug=corrente.slug) }}">Programma e bando</a>
+  </div>
+ </div>
+  <aside class="scheda">
+    <p class="etichetta">{{ corrente.anno }} · date chiave</p>
+    <ul class="date">
+      {% if corrente.scadenza_candidature %}<li><span>Candidature</span><strong>{{ corrente.scadenza_candidature|data_it }}</strong></li>{% endif %}
+      {% if corrente.data_esiti %}<li><span>Esiti entro</span><strong>{{ corrente.data_esiti|data_it }}</strong></li>{% endif %}
+      <li><span>Scuola</span><strong>{{ corrente.data_inizio|data_it('%d.%m') }} – {{ corrente.data_fine|data_it('%d.%m') }}</strong></li>
+      <li><span>Luogo</span><strong>{{ corrente.luogo }}</strong></li>
+    </ul>
+    {% if not corrente.candidature_aperte %}<span class="badge badge-{{ corrente.stato }}">{{ STATI_EDIZIONE[corrente.stato] }}</span>{% endif %}
+  </aside>
+ </div>
+  <ul class="pillole">
+    <li><a href="{{ url_for('public.edizione', slug=corrente.slug) }}#programma">Programma</a></li>
+    <li><a href="{{ url_for('public.edizione', slug=corrente.slug) }}#come">Come partecipare</a></li>
+    <li><a href="{{ url_for('public.edizione', slug=corrente.slug) }}#comitato">Comitato scientifico</a></li>
+    <li><a href="{{ url_for('archivio.index') }}">Archivio</a></li>
+    <li><a href="{{ url_for('bibliografia.index') }}">Invito alla lettura</a></li>
+  </ul>
+</section>
+
+<div class="cifre">
+  <div class="cifra"><strong>{{ corrente.posti_borsisti }}</strong><span>borse di mezza pensione</span></div>
+  <div class="cifra"><strong>75<span class="accento"> pt</span></strong><span>originalità · didattica · fonti</span></div>
+  <div class="cifra"><strong>20<span class="accento"> min</span></strong><span>per presentare la propria UD</span></div>
+  <div class="cifra"><strong>{{ corrente.caratteri_min // 1000 }}–{{ corrente.caratteri_max // 1000 }}<span class="accento">k</span></strong><span>caratteri della proposta</span></div>
+</div>
+{% endif %}
+
+<section class="sezione">
+  <span class="num">§ 1</span>
+  <h2>Una scuola, tre strumenti</h2>
+  <p class="tesi">Formazione in presenza, materiali che restano, letture che continuano.</p>
+  <div class="griglia-3">
+    <div>
+      <p class="etichetta">La scuola</p>
+      <h3>Lezioni e laboratori</h3>
+      <p>Relazioni di studiosi al mattino, discussione delle unità didattiche al pomeriggio, visita dell'isola.</p>
+      <a href="{{ url_for('public.la_scuola') }}">Come funziona →</a>
+    </div>
+    <div>
+      <p class="etichetta">Archivio</p>
+      <h3>Le edizioni precedenti</h3>
+      <p>Slide, relazioni e unità didattiche, liberamente consultabili.</p>
+      <a href="{{ url_for('archivio.index') }}">Sfoglia l'archivio →</a>
+    </div>
+    <div>
+      <p class="etichetta">Invito alla lettura</p>
+      <h3>Una bibliografia viva</h3>
+      <p>Curata dal comitato scientifico nel gruppo Zotero della scuola, sempre aggiornata.</p>
+      <a href="{{ url_for('bibliografia.index') }}">Vai alla bibliografia →</a>
+    </div>
+  </div>
+</section>
+
+{% if precedenti %}
+<section class="sezione">
+  <span class="num">§ 2</span>
+  <h2>Edizioni precedenti</h2>
+  <ul class="elenco-edizioni">
+  {% for e in precedenti %}
+    <li><a href="{{ url_for('public.edizione', slug=e.slug) }}"><span class="anno">{{ e.anno }}</span><span>{{ e.titolo }}</span></a></li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

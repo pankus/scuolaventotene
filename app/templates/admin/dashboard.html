@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stato %}
+{% block title %}Gestione{% endblock %}
+{% block content %}
+<h1>Gestione della scuola</h1>
+{% include "admin/_nav.html" %}
+
+<div class="griglia-4">
+  <div class="scheda numero"><strong>{{ da_valutare }}</strong><span>candidature da valutare</span></div>
+  <div class="scheda numero"><strong>{{ materiali_revisione }}</strong><span>materiali in revisione</span></div>
+  <div class="scheda numero"><strong>{{ n_utenti }}</strong><span>utenti registrati</span></div>
+  <div class="scheda numero"><strong>{{ n_biblio }}</strong><span>titoli in bibliografia</span></div>
+</div>
+
+<h2>Edizioni</h2>
+<table class="tabella">
+  <tr><th>N.</th><th>Anno</th><th>Titolo</th><th>Stato</th><th>Candidature</th><th></th></tr>
+  {% for e in edizioni %}
+  <tr><td>{{ e.numero }}</td><td>{{ e.anno }}</td><td>{{ e.titolo }}</td>
+      <td>{{ stato(e.stato, STATI_EDIZIONE) }}</td>
+      <td><a href="{{ url_for('admin.candidature', eid=e.id) }}">{{ e.candidature|rejectattr('stato','equalto','bozza')|list|length }} inviate</a></td>
+      <td>{% if current_user.is_admin %}<a href="{{ url_for('admin.modifica_edizione', eid=e.id) }}">Modifica</a>{% endif %}</td></tr>
+  {% endfor %}
+</table>
+
+{% if current_user.is_admin %}
+<h2>Bibliografia Zotero</h2>
+<p>Ultima sincronizzazione: {{ ultima_sync or 'mai' }}</p>
+<form method="post" action="{{ url_for('admin.zotero_sync') }}" class="azioni">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn" name="completa" value="0">Sincronizza modifiche</button>
+  <button class="btn btn-secondario" name="completa" value="1">Sincronizzazione completa</button>
+</form>
+{% endif %}
+{% endblock %}

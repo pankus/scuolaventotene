@@ -1,0 +1,20 @@
+{% macro campo(f) %}
+<div class="campo{% if f.errors %} campo-errore{% endif %}">
+  {% if f.type == 'BooleanField' %}
+    <label class="spunta">{{ f(**kwargs) }} {{ f.label.text }}</label>
+  {% else %}
+    {{ f.label }} {{ f(**kwargs) }}
+  {% endif %}
+  {% for e in f.errors %}<small class="err">{{ e }}</small>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro form_auto(form, submit="Salva", action="") %}
+<form method="post" enctype="multipart/form-data" {% if action %}action="{{ action }}"{% endif %} class="modulo">
+  {{ form.hidden_tag() }}
+  {% for f in form if f.type not in ('CSRFTokenField', 'HiddenField') %}{{ campo(f) }}{% endfor %}
+  <button class="btn" type="submit">{{ submit }}</button>
+</form>
+{% endmacro %}
+
+{% macro stato(s, etichette) %}<span class="badge badge-{{ s }}">{{ etichette.get(s, s) }}</span>{% endmacro %}

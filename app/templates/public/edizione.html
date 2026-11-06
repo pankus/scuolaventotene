@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ ed.titolo }} · {{ ed.anno }}{% endblock %}
+{% block content %}
+<section class="eroe">
+  <p class="occhiello">{{ ed.numero }}ª edizione · {{ ed.luogo }} · {{ ed.data_inizio|data_it('%d.%m') }} – {{ ed.data_fine|data_it('%d.%m.%Y') }}</p>
+  <h1>{{ ed.titolo }}{% if ed.sottotitolo %} <span class="accento">{{ ed.sottotitolo }}</span>{% endif %}</h1>
+  <ul class="pillole">
+    <li><a href="#presentazione">Presentazione</a></li>
+    {% if ed.programma %}<li><a href="#programma">Programma</a></li>{% endif %}
+    <li><a href="#come">Come partecipare</a></li>
+    <li><a href="#comitato">Comitato scientifico</a></li>
+    {% if letture %}<li><a href="#letture">Invito alla lettura</a></li>{% endif %}
+    <li><a href="{{ url_for('archivio.edizione', slug=ed.slug) }}">Materiali</a></li>
+  </ul>
+</section>
+
+{% set n = namespace(i=0) %}
+<div class="due-colonne">
+  <div>
+    {% set n.i = n.i + 1 %}
+    <section class="sezione" id="presentazione" style="margin-top:0">
+      <span class="num">§ {{ n.i }}</span>
+      <h2>Presentazione</h2>
+      <div class="misura">{{ ed.descrizione|markdown }}</div>
+      {% if ed.sede %}<p class="nota">Sede: {{ ed.sede }}</p>{% endif %}
+    </section>
+  </div>
+  <aside class="scheda">
+    <p class="etichetta">Date chiave</p>
+    <ul class="date">
+      {% if ed.scadenza_candidature %}<li><span>Candidature entro</span><strong>{{ ed.scadenza_candidature|data_it }}</strong></li>{% endif %}
+      {% if ed.data_esiti %}<li><span>Esiti entro</span><strong>{{ ed.data_esiti|data_it }}</strong></li>{% endif %}
+      <li><span>Scuola</span><strong>{{ ed.data_inizio|data_it('%d.%m') }} – {{ ed.data_fine|data_it('%d.%m') }}</strong></li>
+      <li><span>Posti borsisti</span><strong>{{ ed.posti_borsisti }}</strong></li>
+    </ul>
+    <div class="azioni">
+      {% if ed.candidature_aperte %}<a class="btn" href="{{ url_for('area.candidatura', slug=ed.slug) }}">Candidati</a>
+      {% else %}<span class="badge badge-{{ ed.stato }}">{{ STATI_EDIZIONE[ed.stato] }}</span>{% endif %}
+      {% if ed.bando_path %}<a class="btn btn-secondario btn-piccolo" href="{{ url_for('public.bando', slug=ed.slug) }}">Bando (PDF)</a>{% endif %}
+    </div>
+  </aside>
+</div>
+
+{% if ed.programma %}
+{% set n.i = n.i + 1 %}
+<section class="sezione" id="programma">
+  <span class="num">§ {{ n.i }}</span>
+  <h2>Programma</h2>
+  <p class="tesi">Lezioni al mattino, unità didattiche al pomeriggio.</p>
+  <div class="misura" style="max-width:52rem">
+  {% for giorno, voci in ed.programma_per_giorno() %}
+    <h3 class="giorno">{{ giorno|giorno_it }}</h3>
+    <table class="programma">
+    {% for v in voci %}
+      <tr class="tipo-{{ v.tipo }}"><td class="ora">{{ v.ora }}</td>
+        <td>{% if v.relatori %}<span class="relatori">{{ v.relatori }}</span>{% endif %}{{ v.titolo }}</td></tr>
+    {% endfor %}
+    </table>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% set n.i = n.i + 1 %}
+<section class="sezione" id="come">
+  <span class="num">§ {{ n.i }}</span>
+  <h2>Come partecipare</h2>
+  <div class="griglia-3">
+    <div><p class="etichetta">01 · Proposta</p><p>Un'unità didattica sulla storia delle migrazioni politiche, declinata sulle proprie discipline:
+      {{ ed.caratteri_min }}–{{ ed.caratteri_max }} caratteri spazi inclusi.</p></div>
+    <div><p class="etichetta">02 · Valutazione</p><p>Il comitato assegna fino a 75 punti: originalità, potenzialità didattiche, valorizzazione delle fonti.</p></div>
+    <div><p class="etichetta">03 · A Ventotene</p><p>{{ ed.posti_borsisti }} docenti con mezza pensione rimborsata presentano la propria UD in 20 minuti.
+      {% if ed.ammessi_uditori %}Sono ammessi uditori.{% endif %}</p></div>
+  </div>
+</section>
+
+{% set comitato = ed.persone_con_ruolo('comitato') %}
+{% if comitato %}
+{% set n.i = n.i + 1 %}
+<section class="sezione" id="comitato">
+  <span class="num">§ {{ n.i }}</span>
+  <h2>Comitato scientifico</h2>
+  <ul class="persone">{% for p in comitato %}<li><strong>{{ p.nome_completo }}</strong><small>{{ p.affiliazione }}</small></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if letture %}
+{% set n.i = n.i + 1 %}
+<section class="sezione" id="letture">
+  <span class="num">§ {{ n.i }}</span>
+  <h2>Invito alla lettura</h2>
+  <ol class="biblio">{% for i in letture %}<li>{{ i.citazione_html|safe if i.citazione_html else i.titolo }}</li>{% endfor %}</ol>
+</section>
+{% endif %}
+{% endblock %}

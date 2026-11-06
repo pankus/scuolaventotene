@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stato %}
+{% block title %}Area personale{% endblock %}
+{% block content %}
+<h1>Ciao {{ current_user.nome }}</h1>
+<p><a href="{{ url_for('area.profilo') }}">Modifica il profilo</a></p>
+
+{% if not current_user.email_verificata %}
+<div class="avviso avviso-info">
+  Conferma il tuo indirizzo email ({{ current_user.email }}) con il link che ti abbiamo inviato:
+  senza conferma non puoi inviare la candidatura.
+  <form method="post" action="{{ url_for('auth.reinvia_verifica') }}" style="display:inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-piccolo" type="submit">Reinvia il link</button>
+  </form>
+</div>
+{% endif %}
+
+{% for e in aperte %}
+<div class="avviso avviso-info">
+  Candidature aperte per la {{ e.numero }}ª edizione (<em>{{ e.titolo }}</em>) fino al {{ e.scadenza_candidature|data_it }}.
+  <a class="btn btn-piccolo" href="{{ url_for('area.candidatura', slug=e.slug) }}">Candidati</a>
+</div>
+{% endfor %}
+
+<h2>Le mie candidature</h2>
+{% if candidature %}
+<table class="tabella">
+  <tr><th>Edizione</th><th>Tipo</th><th>Unità didattica</th><th>Stato</th><th></th></tr>
+  {% for c in candidature %}
+  <tr><td>{{ c.edizione.anno }}</td><td>{{ c.tipo }}</td><td>{{ c.titolo_ud or '—' }}</td>
+      <td>{{ stato(c.stato, STATI_CANDIDATURA) }}</td>
+      <td><a href="{{ url_for('area.dettaglio', cid=c.id) }}">Apri</a></td></tr>
+  {% endfor %}
+</table>
+{% else %}<p>Nessuna candidatura.</p>{% endif %}
+
+<h2>I miei materiali</h2>
+<p><a class="btn btn-secondario" href="{{ url_for('area.nuovo_materiale') }}">Invia un materiale</a></p>
+{% if materiali %}
+<table class="tabella">
+  <tr><th>Titolo</th><th>Edizione</th><th>Stato</th></tr>
+  {% for m in materiali %}<tr><td>{{ m.titolo }}</td><td>{{ m.edizione.anno }}</td><td>{{ stato(m.stato, STATI_MATERIALE) }}</td></tr>{% endfor %}
+</table>
+{% endif %}
+{% endblock %}

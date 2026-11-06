@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_auto, stato %}
+{% block title %}Candidatura{% endblock %}
+{% block content %}
+<p class="occhiello"><a href="{{ url_for('admin.candidature', eid=c.edizione_id) }}">← Candidature {{ c.edizione.anno }}</a></p>
+<h1>{{ c.utente.nome_completo }} {{ stato(c.stato, STATI_CANDIDATURA) }}</h1>
+{% include "admin/_nav.html" %}
+<div class="due-colonne">
+  <div>
+    <dl class="dati">
+      <dt>Email</dt><dd>{{ c.utente.email }}</dd>
+      <dt>Telefono</dt><dd>{{ c.utente.telefono or '—' }}</dd>
+      <dt>Nascita / residenza</dt><dd>{{ c.utente.data_nascita|data_it }} · {{ c.utente.residenza or '—' }}</dd>
+      <dt>Scuola</dt><dd>{{ c.utente.scuola or '—' }} ({{ c.utente.grado or '?' }} grado, {{ c.utente.tipo_contratto or '—' }}, {{ c.utente.paese or '' }})</dd>
+      <dt>Materie</dt><dd>{{ c.utente.materie or '—' }}</dd>
+      <dt>Tipo</dt><dd>{{ TIPI_CANDIDATURA[c.tipo] }}</dd>
+      <dt>Unità didattica</dt><dd><strong>{{ c.titolo_ud or '—' }}</strong></dd>
+      <dt>Discipline</dt><dd>{{ c.discipline or '—' }}</dd>
+      <dt>Proposta</dt><dd>{% if c.file_path %}<a href="{{ url_for('area.file_candidatura', cid=c.id) }}">{{ c.file_nome }}</a>
+        {% if c.n_caratteri %}({{ c.n_caratteri }} caratteri){% endif %}{% else %}—{% endif %}</dd>
+      <dt>Inviata il</dt><dd>{{ c.inviata_il|data_it('%d/%m/%Y %H:%M') }}</dd>
+    </dl>
+    {% if c.abstract %}<h3>Abstract</h3><p>{{ c.abstract }}</p>{% endif %}
+
+    <h3>Valutazioni del comitato</h3>
+    <table class="tabella">
+      <tr><th>Valutatore</th><th>Orig.</th><th>Pot.</th><th>Fonti</th><th>Tot.</th><th>Note</th></tr>
+      {% for v in c.valutazioni %}<tr><td>{{ v.valutatore.nome_completo }}</td><td>{{ v.originalita }}</td>
+        <td>{{ v.potenzialita }}</td><td>{{ v.fonti }}</td><td><strong>{{ v.totale }}</strong></td><td>{{ v.note or '' }}</td></tr>
+      {% else %}<tr><td colspan="6">Nessuna valutazione.</td></tr>{% endfor %}
+      {% if c.punteggio_medio is not none %}<tr><td colspan="4">Media</td><td colspan="2"><strong>{{ c.punteggio_medio }}</strong> / 75</td></tr>{% endif %}
+    </table>
+  </div>
+  <aside>
+    <div class="scheda">
+      <h3>La mia valutazione</h3>
+      {{ form_auto(vform, "Salva valutazione") }}
+    </div>
+    {% if current_user.is_admin %}
+    <div class="scheda">
+      <h3>Esito</h3>
+      {{ form_auto(sform, "Aggiorna stato", url_for('admin.stato_candidatura', cid=c.id)) }}
+    </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

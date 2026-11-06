@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#cf3f02">
+  <title>{% block title %}Scuola di formazione di Ventotene{% endblock %}</title>
+  <link rel="preload" href="{{ url_for('static', filename='fonts/etbook-roman.woff') }}" as="font" type="font/woff" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="testata">
+  <div class="contenitore testata-riga">
+    <a class="marchio" href="{{ url_for('public.index') }}">
+      <span class="marchio-titolo">Scuola di <b>Ventotene</b></span>
+      <span class="marchio-sotto">Formazione docenti · storia delle migrazioni</span>
+    </a>
+    <nav class="menu" aria-label="Navigazione principale">
+      <a href="{{ url_for('public.la_scuola') }}">La scuola</a>
+      <a href="{{ url_for('archivio.index') }}">Archivio</a>
+      <a href="{{ url_for('bibliografia.index') }}">Invito alla lettura</a>
+      <a href="{{ url_for('public.contatti') }}">Contatti</a>
+      {% if current_user.is_authenticated %}
+        {% if current_user.is_comitato %}<a href="{{ url_for('admin.dashboard') }}">Gestione</a>{% endif %}
+        <a href="{{ url_for('area.dashboard') }}">Area personale</a>
+        <a href="{{ url_for('auth.logout') }}">Esci</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">Accedi</a>
+        <a class="btn btn-piccolo" href="{{ url_for('auth.registrati') }}">Registrati</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+<main class="contenitore">
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, m in msgs %}<div class="avviso avviso-{{ cat }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="piede">
+  <div class="contenitore">
+    <div class="promotori">
+      <div><span>Promotore</span>CNR – Istituto di Studi sul Mediterraneo</div>
+      <div><span>Promotore</span>Centro di ricerca e documentazione sul confino politico e la detenzione Isole di Ventotene e Santo Stefano</div>
+      <div><span>Promotore</span>ANPPIA – Associazione Nazionale Perseguitati Politici Italiani Antifascisti</div>
+    </div>
+    <p><a href="{{ url_for('public.privacy') }}">Privacy</a> · <a href="{{ url_for('public.contatti') }}">Contatti</a></p>
+    <p class="colofone">Composto in ET Book, Inter e JetBrains Mono · nessun tracciamento · nessuna richiesta esterna</p>
+  </div>
+</footer>
+</body>
+</html>

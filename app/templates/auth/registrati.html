@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_auto %}
+{% block title %}Registrati{% endblock %}
+{% block content %}
+<div class="stretto">
+  <h1>Registrati</h1>
+  <p>L'account serve per candidarsi alle edizioni della scuola e inviare materiali.
+     Leggi l'<a href="{{ url_for('public.privacy') }}">informativa privacy</a>.</p>
+  {{ form_auto(form, "Crea account") }}
+</div>
+{% endblock %}

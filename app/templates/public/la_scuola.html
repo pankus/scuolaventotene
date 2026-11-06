@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}La scuola{% endblock %}
+{% block content %}
+{# Le parti tra [DA COMPLETARE] aspettano i testi definitivi. #}
+<div class="stretto">
+<h1>La scuola</h1>
+<p>La Scuola di formazione di Ventotene è promossa dal CNR – Istituto di Studi sul Mediterraneo,
+dal Centro di ricerca e documentazione sul confino politico e la detenzione Isole di Ventotene e
+Santo Stefano e dall'ANPPIA. È dedicata a insegnanti in servizio, precari o di ruolo, delle scuole
+secondarie di primo e secondo grado, in Italia o all'estero.</p>
+
+<h2>Storia e obiettivi</h2>
+<p class="nota">[DA COMPLETARE: come e quando nasce la scuola, perché a Ventotene, obiettivi
+  didattici e di ricerca.]</p>
+
+<h2>Chi può partecipare</h2>
+<ul>
+  <li><strong>Borsisti</strong>: docenti selezionati sulla base di una proposta di unità didattica
+      (originalità, potenzialità didattiche, valorizzazione delle fonti; max 75 punti).</li>
+  <li><strong>Uditori</strong>: partecipano senza rimborso.</li>
+</ul>
+
+<h2>Come candidarsi</h2>
+<ol>
+  <li><a href="{{ url_for('auth.registrati') }}">Registrati</a>, conferma l'indirizzo email e
+      completa il profilo (data di nascita, telefono, residenza).</li>
+  <li>Quando il bando è aperto, carica la proposta dalla tua area personale.</li>
+  <li>Invia la candidatura entro la scadenza: riceverai l'esito entro la data indicata nel bando.</li>
+</ol>
+
+<h2>Le edizioni</h2>
+<p>Temi, programmi e materiali delle edizioni passate sono nell'<a
+  href="{{ url_for('archivio.index') }}">archivio</a>.</p>
+<p class="nota">[DA COMPLETARE: breve presentazione delle edizioni 2023–2025.]</p>
+
+<h2>Gli enti promotori</h2>
+<h3>CNR – Istituto di Studi sul Mediterraneo (ISMed)</h3>
+<p class="nota">[DA COMPLETARE: presentazione e link al sito.]</p>
+<h3>Centro di ricerca e documentazione sul confino politico e la detenzione Isole di Ventotene e Santo Stefano</h3>
+<p class="nota">[DA COMPLETARE: presentazione e link al sito.]</p>
+<h3>ANPPIA – Associazione Nazionale Perseguitati Politici Italiani Antifascisti</h3>
+<p class="nota">[DA COMPLETARE: presentazione e link al sito.]</p>
+</div>
+{% endblock %}

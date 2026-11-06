@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stato %}
+{% block title %}Candidature {{ ed.anno }}{% endblock %}
+{% block content %}
+<h1>Candidature · {{ ed.numero }}ª edizione ({{ ed.anno }})</h1>
+{% include "admin/_nav.html" %}
+<p>Posti borsisti: <strong>{{ ed.posti_borsisti }}</strong> · Griglia: originalità, potenzialità didattiche,
+  valorizzazione delle fonti (25 punti ciascuno, max 75).
+  <a class="btn btn-piccolo btn-secondario" href="{{ url_for('admin.candidature_csv', eid=ed.id) }}">Esporta graduatoria CSV</a></p>
+<table class="tabella">
+  <tr><th>#</th><th>Docente</th><th>Tipo</th><th>Unità didattica</th><th>Media /75</th><th>Valutazioni</th><th>Stato</th><th></th></tr>
+  {% for c in candidature %}
+  <tr class="{% if c.tipo == 'borsista' and loop.index <= ed.posti_borsisti %}in-graduatoria{% endif %}">
+    <td>{{ loop.index }}</td><td>{{ c.utente.cognome }} {{ c.utente.nome }}<br><small>{{ c.utente.scuola or '' }}</small></td>
+    <td>{{ c.tipo }}</td><td>{{ c.titolo_ud or '—' }}</td>
+    <td>{{ c.punteggio_medio if c.punteggio_medio is not none else '—' }}</td>
+    <td>{{ c.valutazioni|length }}</td><td>{{ stato(c.stato, STATI_CANDIDATURA) }}</td>
+    <td><a href="{{ url_for('admin.candidatura', cid=c.id) }}">Apri</a></td></tr>
+  {% else %}<tr><td colspan="8">Nessuna candidatura inviata.</td></tr>{% endfor %}
+</table>
+{% endblock %}

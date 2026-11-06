@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Privacy{% endblock %}
+{% block content %}
+{# I punti [DA VERIFICARE] vanno confermati con il Responsabile della protezione dei dati del CNR.
+   Togliere l'avviso iniziale quando il testo è approvato. #}
+<div class="stretto">
+<h1>Informativa sul trattamento dei dati personali</h1>
+<p class="nota">ai sensi dell'art. 13 del Regolamento (UE) 2016/679 (GDPR) · ultimo aggiornamento:
+  <span class="nota">[DA VERIFICARE: data di approvazione]</span></p>
+
+<div class="avviso avviso-info">Bozza in attesa di verifica da parte del Responsabile della
+  protezione dei dati del CNR.</div>
+
+<h2>1. Titolare del trattamento</h2>
+<p>Titolare del trattamento è il <strong>Consiglio Nazionale delle Ricerche (CNR)</strong>,
+  Piazzale Aldo Moro 7, 00185 Roma, che opera per questo sito attraverso l'Istituto di Studi sul
+  Mediterraneo (CNR-ISMed), struttura che organizza la Scuola di formazione di Ventotene insieme
+  al Centro di ricerca e documentazione sul confino politico e la detenzione Isole di Ventotene e
+  Santo Stefano e all'ANPPIA.
+  <span class="nota">[DA VERIFICARE: PEC del titolare, sede e referente di CNR-ISMed]</span></p>
+<p>Per domande sulla scuola e sul sito puoi scrivere a
+  {% for e in config.EMAIL_CONTATTI %}<a href="mailto:{{ e }}">{{ e }}</a>{{ ", " if not loop.last }}{% endfor %}.</p>
+
+<h2>2. Responsabile della protezione dei dati</h2>
+<p>Il CNR ha nominato un Responsabile della protezione dei dati (RPD/DPO), che puoi contattare
+  per ogni questione sul trattamento dei tuoi dati e sull'esercizio dei tuoi diritti.
+  <span class="nota">[DA VERIFICARE: indirizzo email e PEC del RPD del CNR]</span></p>
+
+<h2>3. Quali dati trattiamo</h2>
+<ul>
+  <li><strong>Dati dell'account</strong>: nome, cognome, indirizzo email, password (conservata
+    solo in forma cifrata con hash, non leggibile da nessuno), data del consenso alla presa
+    visione dell'informativa, conferma dell'indirizzo email.</li>
+  <li><strong>Dati del profilo</strong>, richiesti dal bando per candidarsi: data di nascita,
+    telefono, residenza, scuola di servizio, grado di scuola, tipo di contratto (di ruolo o
+    precario), paese, materie insegnate.</li>
+  <li><strong>Dati della candidatura</strong>: tipo di partecipazione (borsista o uditore),
+    titolo e discipline dell'unità didattica, abstract, documento con la proposta, data di
+    invio, stato ed esito.</li>
+  <li><strong>Valutazioni</strong>: punteggi e note espressi dal comitato scientifico sulla
+    proposta.</li>
+  <li><strong>Materiali</strong> che carichi per l'archivio della scuola (presentazioni, testi,
+    unità didattiche), con titolo, autori e descrizione.</li>
+  <li><strong>Dati tecnici</strong>: indirizzo IP, data e ora delle richieste e pagine visitate,
+    registrati dal server per sicurezza e per risolvere malfunzionamenti.</li>
+</ul>
+<p>Non chiediamo e non trattiamo dati appartenenti a categorie particolari (art. 9 GDPR).</p>
+
+<h2>4. Perché li trattiamo e su quale base giuridica</h2>
+<table class="tabella">
+  <tr><th>Finalità</th><th>Base giuridica</th></tr>
+  <tr><td>Creare e gestire il tuo account, permetterti di accedere e di recuperare la password</td>
+      <td>Esecuzione di misure richieste dall'interessato (art. 6.1.b)</td></tr>
+  <tr><td>Ricevere, valutare e selezionare le candidature secondo il bando; formare la graduatoria
+      e comunicarti l'esito</td>
+      <td>Esecuzione di un compito di interesse pubblico connesso alle attività di formazione del
+      CNR (art. 6.1.e) e misure precontrattuali su tua richiesta (art. 6.1.b)
+      <span class="nota">[DA VERIFICARE]</span></td></tr>
+  <tr><td>Organizzare la scuola: rimborsi ai borsisti, attestati di frequenza, comunicazioni
+      logistiche</td>
+      <td>Art. 6.1.e e, per gli aspetti contabili, obblighi di legge (art. 6.1.c)</td></tr>
+  <tr><td>Pubblicare nell'archivio i materiali che carichi, con il nome degli autori, dopo la
+      revisione del comitato</td>
+      <td>Tua richiesta di pubblicazione al momento del caricamento
+      <span class="nota">[DA VERIFICARE: consenso o altra base]</span></td></tr>
+  <tr><td>Proteggere il sito da abusi e garantirne il funzionamento</td>
+      <td>Art. 6.1.e</td></tr>
+</table>
+<p>I dati del profilo e della candidatura sono necessari per partecipare: senza di essi non è
+  possibile inviare la candidatura. Non prendiamo decisioni basate unicamente su trattamenti
+  automatizzati: la valutazione è fatta dai membri del comitato scientifico.</p>
+
+<h2>5. Chi può vedere i tuoi dati</h2>
+<ul>
+  <li>Il personale di CNR-ISMed che gestisce la scuola e il sito (amministratori), autorizzato
+    al trattamento.</li>
+  <li>I membri del comitato scientifico dell'edizione, che valutano le candidature; tra loro
+    possono esserci studiosi di università ed enti diversi dal CNR, tenuti alla riservatezza.
+    <span class="nota">[DA VERIFICARE: nomina dei membri esterni come autorizzati o responsabili]</span></li>
+  <li>Gli altri enti promotori (Centro di ricerca e documentazione sul confino politico e la
+    detenzione Isole di Ventotene e Santo Stefano, ANPPIA) per i soli dati necessari
+    all'organizzazione della scuola.
+    <span class="nota">[DA VERIFICARE]</span></li>
+  <li><strong>Infomaniak Network SA</strong> (Ginevra, Svizzera), che fornisce il servizio di posta
+    usato per inviare le email del sito (conferma dell'indirizzo, recupero della password,
+    conferma della candidatura, esito), come responsabile del trattamento. La Svizzera è
+    riconosciuta dalla Commissione europea come paese con un livello di protezione adeguato.
+    <span class="nota">[DA VERIFICARE: accordo ex art. 28 GDPR]</span></li>
+</ul>
+<p>Il sito e il database sono ospitati su server del CNR. I dati non sono venduti né usati per
+  fini commerciali. Sono pubblici solo i materiali dell'archivio di cui sei autore, quando li
+  carichi e il comitato li pubblica.</p>
+
+<h2>6. Per quanto tempo li conserviamo</h2>
+<ul>
+  <li><strong>Account e profilo</strong>: finché l'account resta attivo; puoi chiederne la
+    cancellazione in qualsiasi momento.
+    <span class="nota">[DA VERIFICARE: cancellazione degli account inattivi dopo N anni]</span></li>
+  <li><strong>Candidature, proposte e valutazioni</strong>: per
+    <span class="nota">[DA VERIFICARE: proposta 5 anni]</span> dalla conclusione dell'edizione,
+    salvo obblighi di conservazione previsti dalla legge per gli atti della selezione e i
+    rimborsi.</li>
+  <li><strong>Materiali pubblicati nell'archivio</strong>: finché l'archivio resta online, salvo
+    tua richiesta di rimozione.</li>
+  <li><strong>Dati tecnici del server</strong>:
+    <span class="nota">[DA VERIFICARE: durata dei log sui server CNR]</span>.</li>
+</ul>
+
+<h2>7. Cookie</h2>
+<p>Il sito usa solo cookie tecnici, necessari al funzionamento: un cookie di sessione, che ti
+  mantiene collegato e protegge i moduli, e, se scegli «Ricordami» all'accesso, un cookie che ti
+  riconosce alle visite successive. Non usiamo cookie di profilazione né strumenti di
+  statistica di terze parti; per i cookie tecnici non è richiesto il consenso. Font e risorse
+  grafiche sono serviti dal sito stesso, senza collegamenti a servizi esterni.</p>
+
+<h2>8. I tuoi diritti</h2>
+<p>Puoi chiedere in qualsiasi momento l'accesso ai tuoi dati, la rettifica, la cancellazione,
+  la limitazione del trattamento e la portabilità, e opporti al trattamento (artt. 15–22 GDPR).
+  Molti dati puoi correggerli da solo nell'<a href="{{ url_for('area.profilo') }}">area
+  personale</a>; per il resto scrivi ai contatti indicati sopra o al Responsabile della
+  protezione dei dati. Hai inoltre diritto di proporre reclamo al Garante per la protezione dei
+  dati personali (<a href="https://www.garanteprivacy.it">www.garanteprivacy.it</a>).</p>
+</div>
+{% endblock %}

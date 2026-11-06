@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Invito alla lettura{% endblock %}
+{% block content %}
+<h1>Invito alla lettura</h1>
+<p>Bibliografia curata dal comitato scientifico nel gruppo Zotero della scuola
+  {% if url_gruppo %}(<a href="{{ url_gruppo }}" target="_blank" rel="noopener">apri su Zotero</a>){% endif %}.
+  {% if ultima_sync %}<span class="nota">Aggiornata al {{ ultima_sync.replace('T', ' ') }} UTC.</span>{% endif %}</p>
+
+<form class="filtri" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Cerca autore, titolo, abstract">
+  <select name="collezione">
+    <option value="">Tutte le sezioni</option>
+    {% for c, lv in collezioni %}<option value="{{ c.key }}" {% if c.key == col %}selected{% endif %}>{{ '— ' * lv }}{{ c.nome }}</option>{% endfor %}
+  </select>
+  {% if tag %}<input type="hidden" name="tag" value="{{ tag }}">{% endif %}
+  <button class="btn btn-piccolo">Filtra</button>
+  {% if q or col or tag %}<a href="{{ url_for('bibliografia.index') }}">Azzera</a>{% endif %}
+</form>
+{% if tag %}<p>Tag: <strong>{{ tag }}</strong></p>{% endif %}
+
+<p class="nota">{{ pagina.total }} titoli</p>
+<ol class="biblio">
+{% for i in pagina.items %}
+  <li>{% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}, <em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
+    {% if i.doi %}<a href="https://doi.org/{{ i.doi }}" target="_blank" rel="noopener">DOI</a>{% elif i.url %}<a href="{{ i.url }}" target="_blank" rel="noopener">link</a>{% endif %}
+  </li>
+{% else %}<li>Nessun titolo{% if not ultima_sync %}: la bibliografia non è ancora stata sincronizzata{% endif %}.</li>{% endfor %}
+</ol>
+{% if pagina.pages > 1 %}
+<nav class="paginazione">
+  {% if pagina.has_prev %}<a href="{{ url_for('bibliografia.index', page=pagina.prev_num, q=q, collezione=col, tag=tag) }}">← precedenti</a>{% endif %}
+  <span>pagina {{ pagina.page }} di {{ pagina.pages }}</span>
+  {% if pagina.has_next %}<a href="{{ url_for('bibliografia.index', page=pagina.next_num, q=q, collezione=col, tag=tag) }}">successivi →</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

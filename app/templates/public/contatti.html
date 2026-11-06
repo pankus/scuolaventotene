@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Contatti{% endblock %}
+{% block content %}
+<h1>Contatti</h1>
+<ul>{% for e in config.EMAIL_CONTATTI %}<li><a href="mailto:{{ e }}">{{ e }}</a></li>{% endfor %}</ul>
+{% endblock %}
