@@ -336,13 +336,25 @@ def lettura(pid):
         flash("Proposta rifiutata.", "ok")
         return redirect(url_for("admin.letture", edizione=ed.id))
 
+    scelte = None
     if azione == "approva" and form.validate_on_submit():
         p.campi = {k: (form[k].data or "").strip() for k in CAMPI_MODULO[p.tipo]}
+        scelta = request.form.get("zotero_key", "")
+        nuovi = []
+        if zot is not None and not scelta:
+            # "crea nuovo": si ricontrolla ora, perché dall'apertura della pagina un altro
+            # membro del comitato può aver approvato lo stesso libro (o la scheda è cambiata)
+            scelte = _scelte_zotero(p, zot)
+            visti = set(request.form.get("visti", "").split(","))
+            nuovi = [k for k, _ in scelte if k not in visti]
+            if nuovi:
+                flash("Ci sono possibili doppioni che la pagina non mostrava: controlla e conferma.",
+                      "errore")
         if zot is None:
             flash("Zotero non è configurato (.env).", "errore")
-        else:
+        elif not nuovi:
             try:
-                avviso = salva_lettura(zot, p, ed, "docenti", request.form.get("zotero_key", ""))
+                avviso = salva_lettura(zot, p, ed, "docenti", scelta)
             except ErroreScrittura as e:
                 db.session.rollback()
                 flash(str(e), "errore")
@@ -358,7 +370,8 @@ def lettura(pid):
                 flash("Lettura approvata e salvata in Zotero.", "ok")
                 return redirect(url_for("admin.letture", edizione=ed.id))
 
-    scelte = _scelte_zotero(p, zot) if p.stato != "approvata" else []
+    if scelte is None:
+        scelte = _scelte_zotero(p, zot) if p.stato != "approvata" else []
     radice = ed.zotero_collection_key and db.session.get(ZoteroCollezione, ed.zotero_collection_key)
     destinazione = f"{radice.nome if radice else ed.zotero_collection_key} › {SOTTOCOLLEZIONI['docenti'][0]}" \
         if ed.zotero_collection_key else None

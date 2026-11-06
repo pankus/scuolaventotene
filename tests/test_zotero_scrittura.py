@@ -4,7 +4,7 @@ import pytest
 from app.extensions import db
 from app.models import ZoteroCollezione, ZoteroItem
 from app.zotero_scrittura import (ErroreScrittura, aggiorna_item, candidati_duplicati, crea_item,
-                                  parse_autori)
+                                  parse_autori, scelte_duplicati)
 from app.zotero_sync import sincronizza
 
 
@@ -83,5 +83,15 @@ def test_duplicati_remoti(app, fake_zot):
     fake_zot.metti_item("C", "Ventotene dopo la sync")
     fake_zot.metti_item("D", "Ventotene articolo", tipo="journalArticle")
 
-    _, remoti = candidati_duplicati(fake_zot, "book", {"title": "Ventotene"})
+    locali, remoti = candidati_duplicati(fake_zot, "book", {"title": "Ventotene"})
     assert [r["key"] for r in remoti] == ["C"]
+    assert [z.key for z in locali] == ["A"]  # in cache: tra i locali, non scartato
+
+
+def test_titolo_simile_gia_in_cache(app, fake_zot):
+    """Regressione: firma diversa, niente ISBN; la ricerca remota lo trova ed era scartato
+    perché già in cache, quindi nessun doppione segnalato."""
+    fake_zot.metti_item("ESIST", "Il confino fascista. Storia e memoria", date="2019")
+    sincronizza(zot=fake_zot)
+    scelte, _ = scelte_duplicati(fake_zot, "book", {"title": "Il confino fascista", "date": "2019"})
+    assert [k for k, _ in scelte] == ["ESIST"]

@@ -20,6 +20,11 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 - **Prossima fase: F8** (sfogliare i materiali): è una decisione, non codice da subito.
   Chiedere all'utente 2–3 file veri (un PDF, un PPTX, un ODP) e se sul server CNR si può
   installare LibreOffice; poi prototipo delle opzioni a/b/c della sezione F8.
+- Doppioni (dopo F7, 2026-11-06): la ricerca remota per titolo ora tiene anche i record già in
+  cache (prima scartati: un titolo simile ma non uguale passava senza avviso); all'approvazione
+  con «crea nuovo» il comitato rivede la scheda se è comparso un doppione non mostrato (campo
+  `visti`). Restano: titoli molto diversi senza ISBN (decide il comitato), item nel cestino non
+  proposti, con Zotero giù solo la cache.
 - F7: nessuna migrazione. Il filtro per sezione ora include le sottosezioni (prima la
   collezione di un'edizione mostrava solo i record della radice). Nel DB locale nessuna
   copertina è ancora scaricata (serve una lettura approvata con copertina): la rotta è

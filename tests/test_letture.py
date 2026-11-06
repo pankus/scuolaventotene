@@ -253,3 +253,28 @@ def test_pagina_edizione_sotto_albero(app, zot):
                                       "Proposto da un docente")]
     assert ordine == sorted(ordine)
     assert html.count("Libro lezione due") == 1  # una volta sola
+
+
+def test_doppione_comparso_dopo_apertura(app, zot):
+    """Regressione: due schede aperte prima di approvare; la seconda creava un doppione."""
+    p1, p2 = crea_proposta(), crea_proposta()
+    a, b = client_di(app, crea_utente(ruolo="comitato")), client_di(app, crea_utente(ruolo="comitato"))
+    assert 'name="visti" value=""' in b.get(f"/admin/letture/{p2.id}").get_data(as_text=True)
+    approva(a, p1, zotero_key="", visti="")
+    r = approva(b, p2, zotero_key="", visti="")  # form di b generato quando non c'era nulla
+    key = db.session.get(PropostaLettura, p1.id).zotero_key
+    assert len(zot.creati) == 1 and db.session.get(PropostaLettura, p2.id).stato == "proposta"
+    html = r.get_data(as_text=True)
+    assert "possibili doppioni" in html and f'value="{key}" checked' in html
+    # visto il doppione, il comitato può collegarlo...
+    approva(b, p2, zotero_key=key, visti=key)
+    assert len(zot.creati) == 1 and db.session.get(PropostaLettura, p2.id).zotero_key == key
+
+
+def test_crea_nuovo_confermato(app, zot):
+    """Doppione già mostrato e scartato dal comitato: si crea il nuovo record senza altri passi."""
+    zot.metti_item("ESIST", "Il confino fascista", date="2019")
+    sincronizza(zot=zot)
+    p = crea_proposta()
+    approva(client_di(app, crea_utente(ruolo="comitato")), p, zotero_key="", visti="ESIST")
+    assert len(zot.creati) == 1 and db.session.get(PropostaLettura, p.id).stato == "approvata"

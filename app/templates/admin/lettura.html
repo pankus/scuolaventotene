@@ -32,6 +32,7 @@
       {% for nome in campi %}{% if nome == 'title' and p.tipo == 'book' %}{{ campo(form[nome], data_ricerca_url=url_for('area.cerca_letture')) }}{% else %}{{ campo(form[nome]) }}{% endif %}{% endfor %}
       <fieldset>
         <legend>Già in Zotero?</legend>
+        <input type="hidden" name="visti" value="{{ scelte|map('first')|join(',') }}">
         {% for key, descr in scelte %}
         <label class="spunta"><input type="radio" name="zotero_key" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ descr }}</label>
         {% endfor %}

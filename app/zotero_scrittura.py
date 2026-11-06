@@ -172,8 +172,8 @@ def candidati_duplicati(zot, tipo, campi):
     """Possibili doppioni di un item da creare: ``(locali, remoti)``.
 
     locali = ``ZoteroItem`` con lo stesso ISBN, oppure stessa firma e anno compatibile (anche
-    quelli nel cestino); remoti = ricerca per titolo in Zotero, esclusi quelli già in cache
-    (creati dopo l'ultima sync).
+    quelli nel cestino), più quelli in cache trovati dalla ricerca per titolo in Zotero (titolo
+    simile ma non uguale); remoti = trovati dalla ricerca ma non ancora sincronizzati.
     """
     locali = {}
     isbn = normalizza_isbn(campi.get("ISBN"))
@@ -192,7 +192,12 @@ def candidati_duplicati(zot, tipo, campi):
     if zot is not None and titolo:
         for it in zot.items(q=titolo, limit=5):
             d = it.get("data", it)
-            if d.get("itemType") in TIPI and not db.session.get(ZoteroItem, d["key"]):
+            if d.get("itemType") not in TIPI:
+                continue
+            zi = db.session.get(ZoteroItem, d["key"])
+            if zi:
+                locali.setdefault(zi.key, zi)
+            else:
                 remoti.append({"key": d["key"], "titolo": d.get("title"), "tipo": d.get("itemType")})
     return list(locali.values()), remoti
 
