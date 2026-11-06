@@ -142,6 +142,22 @@ def collega_item(zot, key, collezioni=()):
     return _aggiorna_cache(zot, key)
 
 
+def crea_collezione(zot, nome, parent=None):
+    """Crea la collezione in Zotero e la aggiunge alla cache (flush; commit del chiamante)."""
+    try:
+        res = zot.create_collections([{"name": nome, "parentCollection": parent or False}])
+    except ze.PyZoteroError as e:
+        raise ErroreScrittura(f"Zotero ha rifiutato la collezione «{nome}»: {e}") from e
+    ok = (res.get("successful") or {}).get("0")
+    if not ok:
+        raise ErroreScrittura(f"Zotero ha rifiutato la collezione «{nome}»: {res.get('failed')}")
+    col = ZoteroCollezione(key=ok["key"], nome=nome, parent_key=parent,
+                           version=(ok.get("data") or {}).get("version"))
+    db.session.add(col)
+    db.session.flush()
+    return col
+
+
 def _anni_compatibili(a, b):
     """Stesso anno, oppure uno dei due manca."""
     return not a or not b or a == b

@@ -153,6 +153,15 @@ class FakeZot:
             res["success"][str(i)] = key
         return res
 
+    def create_collections(self, lista):
+        res = {"successful": {}, "success": {}, "unchanged": {}, "failed": {}}
+        for i, d in enumerate(lista):
+            key = f"COLN{len(self.collezioni) + 1:04d}"
+            self.metti_collezione(key, d["name"], d.get("parentCollection") or None)
+            res["successful"][str(i)] = {"key": key, "data": dict(self.collezioni[key])}
+            res["success"][str(i)] = key
+        return res
+
     def item(self, key, **_kw):
         it = self.record[key]
         return {**it, "key": key, "version": it["data"]["version"], "data": dict(it["data"])}

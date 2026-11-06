@@ -143,7 +143,9 @@ Citazioni già formattate (`include=bib`). La chiave ha permesso di scrittura (c
 `flask zotero-verifica`); la scrittura è in `app/zotero_scrittura.py` (`crea_item` con tag `ZOTERO_TAG_PROPOSTE`,
 `aggiorna_item` con 412 → `ErroreScrittura`, `candidati_duplicati`): solo campi bibliografici,
 mai dati del docente; la usa la revisione del comitato (`/admin/letture`, `collega_item` per i
-record già presenti). Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
+record già presenti), che scrive nella sottocollezione «Proposte dei docenti» dell'edizione
+(`crea_collezione`, `Edizione.zotero_proposte_key`). Struttura del gruppo e ruolo relatore in
+PIANO_LETTURE.md (R1–R3): docente = insegnante candidato, relatore = storico delle lezioni. Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
 nei redirect, solo immagini, max 2 MB). Ricerca dei libri in `app/ricerca_libri.py`
 (`/area/letture/cerca`): le API esterne si chiamano solo dal server, il browser non carica
 immagini esterne (nei risultati solo testo). Nei test solo `FakeZot`

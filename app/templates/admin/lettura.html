@@ -26,6 +26,9 @@
     <form method="post" class="modulo scheda">
       {{ form.hidden_tag() }}
       <h3>Scheda da salvare in Zotero</h3>
+      <p class="nota">{% if destinazione %}Destinazione: <strong>{{ destinazione }}</strong>, con il tag
+        «{{ config.ZOTERO_TAG_PROPOSTE }}».{% else %}Manca la collezione Zotero dell'edizione: sceglila in
+        {% if current_user.is_admin %}<a href="{{ url_for('admin.modifica_edizione', eid=ed.id) }}">Modifica edizione</a>{% else %}Modifica edizione (admin){% endif %}.{% endif %}</p>
       {% for nome in campi %}{% if nome == 'title' and p.tipo == 'book' %}{{ campo(form[nome], data_ricerca_url=url_for('area.cerca_letture')) }}{% else %}{{ campo(form[nome]) }}{% endif %}{% endfor %}
       <fieldset>
         <legend>Già in Zotero?</legend>

@@ -112,8 +112,10 @@ class EdizioneForm(FlaskForm):
     stato = SelectField("Stato", choices=_scelte(STATI_EDIZIONE))
     descrizione = TextAreaField("Presentazione (Markdown)", validators=[Optional()],
                                 render_kw={"rows": 12})
-    zotero_collection_key = StringField("Collezione Zotero «invito alla lettura» (key)",
-                                        validators=[Optional(), Length(max=20)])
+    # scelte: collezioni radice della cache Zotero (admin._form_edizione)
+    zotero_collection_key = SelectField(
+        "Collezione Zotero dell'edizione",
+        description="Se manca: creala in Zotero (es. «2027») e sincronizza dal cruscotto.")
     bando = FileField("Bando (PDF)", validators=[FileAllowed(["pdf", "docx"])])
 
 

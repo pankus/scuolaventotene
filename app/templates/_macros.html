@@ -5,6 +5,7 @@
   {% else %}
     {{ f.label }} {{ f(**kwargs) }}
   {% endif %}
+  {% if f.description %}<small class="nota">{{ f.description }}</small>{% endif %}
   {% for e in f.errors %}<small class="err">{{ e }}</small>{% endfor %}
 </div>
 {% endmacro %}

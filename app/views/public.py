@@ -28,13 +28,39 @@ def edizione(slug):
     ed = Edizione.query.filter_by(slug=slug).first_or_404()
     if ed.stato == "bozza":
         abort(404)
-    letture = []
-    if ed.zotero_collection_key:
-        col = db.session.get(ZoteroCollezione, ed.zotero_collection_key)
-        if col:
-            letture = sorted((i for i in col.items if not i.eliminato),
-                             key=lambda i: (i.primo_autore or "", i.anno or ""))
-    return render_template("public/edizione.html", ed=ed, letture=letture)
+    return render_template("public/edizione.html", ed=ed, letture=_letture_edizione(ed))
+
+
+def _letture_edizione(ed):
+    """Invito alla lettura: [(titolo sezione o None, item)] dal sotto-albero della collezione
+    dell'edizione. Prima i record della radice, poi una sezione per sottocollezione (le lezioni,
+    in ordine di nome), per ultime le proposte dei docenti. Un item compare una volta sola."""
+    radice = ed.zotero_collection_key and db.session.get(ZoteroCollezione, ed.zotero_collection_key)
+    if not radice:
+        return []
+    figli = {}
+    for c in ZoteroCollezione.query.all():
+        figli.setdefault(c.parent_key, []).append(c)
+
+    def discendenti(c):
+        out = [c]
+        for f in figli.get(c.key, []):
+            out += discendenti(f)
+        return out
+
+    sezioni = [(None, [radice])]
+    for c in sorted(figli.get(radice.key, []),
+                    key=lambda c: (c.key == ed.zotero_proposte_key, c.nome.lower())):
+        sezioni.append((c.nome, discendenti(c)))
+    visti, out = set(), []
+    for titolo, cols in sezioni:
+        items = sorted({i.key: i for c in cols for i in c.items
+                        if not i.eliminato and i.key not in visti}.values(),
+                       key=lambda i: (i.primo_autore or "", i.anno or ""))
+        visti |= {i.key for i in items}
+        if items:
+            out.append((titolo, items))
+    return out
 
 
 @bp.route("/edizioni/<slug>/bando")

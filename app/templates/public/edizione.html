@@ -89,7 +89,10 @@
 <section class="sezione" id="letture">
   <span class="num">§ {{ n.i }}</span>
   <h2>Invito alla lettura</h2>
-  <ol class="biblio">{% for i in letture %}<li>{{ i.citazione_html|safe if i.citazione_html else i.titolo }}</li>{% endfor %}</ol>
+  {% for titolo, items in letture %}
+  {% if titolo %}<h3>{{ titolo }}</h3>{% endif %}
+  <ol class="biblio">{% for i in items %}<li>{{ i.citazione_html|safe if i.citazione_html else i.titolo }}</li>{% endfor %}</ol>
+  {% endfor %}
 </section>
 {% endif %}
 {% endblock %}

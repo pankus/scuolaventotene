@@ -69,13 +69,16 @@ def test_approva_crea_in_zotero(app, zot):
     assert p.stato == "approvata" and p.zotero_key and p.deciso_da_id
     assert p.campi["title"] == "Il confino fascista (1926-1943)"
     inviato = zot.creati[0]
-    assert inviato["collections"] == ["COL26"]
+    ed = p.candidatura.edizione
+    assert inviato["collections"] == [ed.zotero_proposte_key]
+    assert zot.collezioni[ed.zotero_proposte_key]["name"] == "Proposte dei docenti"
+    assert zot.collezioni[ed.zotero_proposte_key]["parentCollection"] == "COL26"
     assert inviato["tags"] == [{"tag": "proposta-docenti"}]
     testo = repr(inviato)
     for privato in (docente.nome_completo, docente.email, docente.cognome, "La uso in classe"):
         assert privato not in testo
     zi = db.session.get(ZoteroItem, p.zotero_key)
-    assert zi.isbn == "9780306406157" and [k.key for k in zi.collezioni] == ["COL26"]
+    assert zi.isbn == "9780306406157" and [k.key for k in zi.collezioni] == [ed.zotero_proposte_key]
 
 
 def test_approva_collega_esistente(app, zot):
@@ -91,7 +94,8 @@ def test_approva_collega_esistente(app, zot):
     assert not zot.creati
     assert db.session.get(PropostaLettura, p.id).zotero_key == "ESIST"
     data = zot.record["ESIST"]["data"]
-    assert "COL26" in data["collections"] and {"tag": "proposta-docenti"} in data["tags"]
+    ed = db.session.get(PropostaLettura, p.id).candidatura.edizione
+    assert ed.zotero_proposte_key in data["collections"] and {"tag": "proposta-docenti"} in data["tags"]
 
 
 def test_approva_senza_collezione(app, zot):
@@ -181,3 +185,69 @@ def test_merge_sposta_proposte(app, zot):
     sincronizza(zot=zot)
     assert db.session.get(PropostaLettura, p.id).zotero_key == "NUOVO"
     assert db.session.get(ZoteroItem, "NUOVO").copertina_path == "copertine/v.jpg"
+
+
+# ------------------------------------------------------------------ struttura Zotero dell'edizione
+def test_sottocollezione_creata_una_volta(app, zot):
+    sincronizza(zot=zot)
+    p1 = crea_proposta()
+    ed = p1.candidatura.edizione
+    p2 = PropostaLettura(candidatura=p1.candidatura, tipo="book", campi={"title": "Secondo libro"})
+    db.session.add(p2)
+    db.session.commit()
+    c = client_di(app, crea_utente(ruolo="comitato"))
+    assert "Invito alla lettura 2026 › Proposte dei docenti" in c.get(f"/admin/letture/{p1.id}").get_data(as_text=True)
+    approva(c, p1)
+    approva(c, p2)
+    proposte = [k for k, d in zot.collezioni.items() if d["name"] == "Proposte dei docenti"]
+    assert proposte == [ed.zotero_proposte_key]
+    assert all(d["collections"] == proposte for d in zot.creati)
+
+
+def test_sottocollezione_gia_in_zotero(app, zot):
+    """Se "Proposte dei docenti" c'è già (creata a mano e sincronizzata) si riusa."""
+    zot.metti_collezione("ESISTE", "Proposte dei docenti", parent="COL26")
+    sincronizza(zot=zot)
+    p = crea_proposta()
+    approva(client_di(app, crea_utente(ruolo="comitato")), p)
+    assert p.candidatura.edizione.zotero_proposte_key == "ESISTE"
+    assert zot.creati[0]["collections"] == ["ESISTE"]
+
+
+def test_scelta_collezione_edizione(app, zot):
+    zot.metti_collezione("COL27", "2027")
+    zot.metti_collezione("SUB", "01) Rossi - Lezione", parent="COL27")
+    sincronizza(zot=zot)
+    ed = crea_edizione()
+    ed.zotero_proposte_key = "VECCHIA"
+    db.session.commit()
+    c = client_di(app, crea_utente(ruolo="admin"))
+    html = c.get(f"/admin/edizioni/{ed.id}").get_data(as_text=True)
+    assert '<option value="COL27">2027</option>' in html and "01) Rossi" not in html  # solo radici
+    dati = {"numero": ed.numero, "anno": ed.anno, "slug": ed.slug, "titolo": ed.titolo, "stato": "aperta",
+            "zotero_collection_key": "COL27"}
+    c.post(f"/admin/edizioni/{ed.id}", data=dati)
+    db.session.refresh(ed)
+    assert (ed.zotero_collection_key, ed.zotero_proposte_key) == ("COL27", None)
+    c.post(f"/admin/edizioni/{ed.id}", data={**dati, "zotero_collection_key": ""})
+    db.session.refresh(ed)
+    assert ed.zotero_collection_key is None
+
+
+def test_pagina_edizione_sotto_albero(app, zot):
+    zot.metti_collezione("SUB2", "02) Bianchi - Seconda", parent="COL26")
+    zot.metti_collezione("SUB1", "01) Rossi - Prima", parent="COL26")
+    zot.metti_collezione("PROP", "Proposte dei docenti", parent="COL26")
+    zot.metti_item("R", "Nella radice", collezioni=["COL26"])
+    zot.metti_item("L1", "Libro lezione uno", collezioni=["SUB1"])
+    zot.metti_item("L2", "Libro lezione due", collezioni=["SUB2", "COL26"])  # anche in radice
+    zot.metti_item("P", "Proposto da un docente", collezioni=["PROP"])
+    sincronizza(zot=zot)
+    ed = crea_edizione()
+    ed.zotero_collection_key, ed.zotero_proposte_key = "COL26", "PROP"
+    db.session.commit()
+    html = client_di(app).get(f"/edizioni/{ed.slug}").get_data(as_text=True)
+    ordine = [html.index(t) for t in ("Nella radice", "01) Rossi - Prima", "Libro lezione uno",
+                                      "Proposte dei docenti", "Proposto da un docente")]
+    assert ordine == sorted(ordine)
+    assert html.count("Libro lezione due") == 1  # una volta sola
