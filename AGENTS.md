@@ -121,7 +121,10 @@ tutto, per esempio i rinomini di colonna diventano drop + add, con perdita dei d
 `uv run flask db upgrade`. `tests/test_migrazioni.py` fallisce se un modello cambia senza
 migrazione. Su SQLite le modifiche passano in modalità batch (`render_as_batch`, la tabella viene
 ricopiata) e i vincoli hanno nomi fissi (`naming_convention` in `app/extensions.py`): non
-toglierla. Non usare `db.create_all()` sui database veri (solo i test lo fanno, in memoria).
+toglierla. Le tabelle referenziate da altre (`edizioni`, `utenti`, `candidature`…) non si
+ricopiano: con le foreign key attive il DROP fallisce a metà e lascia `_alembic_tmp_<tabella>`.
+Per rinominare una colonna usare `op.execute("ALTER TABLE … RENAME COLUMN …")` (nativo SQLite,
+vedi `b7d1c2e4f901`); `add_column` non ricopia. Non usare `db.create_all()` sui database veri (solo i test lo fanno, in memoria).
 Prima di una migrazione che tocca dati esistenti, backup: `sqlite3 instance/ventotene.db
 ".backup percorso.db"`. Mai cancellare `instance/ventotene.db` senza chiedere. Mantenere
 `ondelete="CASCADE"` coerente con le relazioni esistenti.
@@ -143,8 +146,8 @@ Citazioni già formattate (`include=bib`). La chiave ha permesso di scrittura (c
 `flask zotero-verifica`); la scrittura è in `app/zotero_scrittura.py` (`crea_item` con tag `ZOTERO_TAG_PROPOSTE`,
 `aggiorna_item` con 412 → `ErroreScrittura`, `candidati_duplicati`): solo campi bibliografici,
 mai dati del docente; la usa la revisione del comitato (`/admin/letture`, `collega_item` per i
-record già presenti), che scrive nella sottocollezione «Proposte dei docenti» dell'edizione
-(`crea_collezione`, `Edizione.zotero_proposte_key`). Struttura del gruppo e ruolo relatore in
+record già presenti), che scrive nella sottocollezione «Docenti» dell'edizione
+(`crea_collezione`, `Edizione.zotero_docenti_key`); struttura: Edizione → «Relatori», «Docenti». Struttura del gruppo e ruolo relatore in
 PIANO_LETTURE.md (R1–R3): docente = insegnante candidato, relatore = storico delle lezioni. Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
 nei redirect, solo immagini, max 2 MB). Ricerca dei libri in `app/ricerca_libri.py`
 (`/area/letture/cerca`): le API esterne si chiamano solo dal server, il browser non carica

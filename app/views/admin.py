@@ -67,7 +67,7 @@ def _form_edizione(ed):
         bando = form.bando.data
         form.bando.data = None
         if (form.zotero_collection_key.data or None) != ed.zotero_collection_key:
-            ed.zotero_proposte_key = None  # la sottocollezione delle proposte si ricrea sotto la nuova
+            ed.zotero_docenti_key = None  # la sottocollezione delle proposte si ricrea sotto la nuova
         form.populate_obj(ed)
         ed.zotero_collection_key = ed.zotero_collection_key or None
         if bando:
@@ -268,17 +268,17 @@ def letture():
     return render_template("admin/letture.html", edizioni=edizioni, ed=ed, letture=elenco)
 
 
-NOME_PROPOSTE = "Proposte dei docenti"
+NOME_DOCENTI = "Docenti"
 
 
-def _collezione_proposte(zot, ed):
-    """Sottocollezione "Proposte dei docenti" dell'edizione: creata in Zotero la prima volta."""
-    col = ed.zotero_proposte_key and db.session.get(ZoteroCollezione, ed.zotero_proposte_key)
+def _collezione_docenti(zot, ed):
+    """Sottocollezione "Docenti" dell'edizione: creata in Zotero la prima volta."""
+    col = ed.zotero_docenti_key and db.session.get(ZoteroCollezione, ed.zotero_docenti_key)
     if col is None:
         col = ZoteroCollezione.query.filter_by(parent_key=ed.zotero_collection_key,
-                                               nome=NOME_PROPOSTE).first() \
-            or crea_collezione(zot, NOME_PROPOSTE, ed.zotero_collection_key)
-        ed.zotero_proposte_key = col.key
+                                               nome=NOME_DOCENTI).first() \
+            or crea_collezione(zot, NOME_DOCENTI, ed.zotero_collection_key)
+        ed.zotero_docenti_key = col.key
         db.session.commit()  # subito: se poi la scrittura dell'item fallisce, non si crea un doppione
     return col.key
 
@@ -328,7 +328,7 @@ def lettura(pid):
             flash("Zotero non è configurato (.env).", "errore")
         else:
             try:
-                destinazione = [_collezione_proposte(zot, ed)]
+                destinazione = [_collezione_docenti(zot, ed)]
                 if scelta:
                     zi = collega_item(zot, scelta, destinazione)
                 else:
@@ -355,7 +355,7 @@ def lettura(pid):
 
     scelte = _scelte_zotero(p, zot) if p.stato != "approvata" else []
     radice = ed.zotero_collection_key and db.session.get(ZoteroCollezione, ed.zotero_collection_key)
-    destinazione = f"{radice.nome if radice else ed.zotero_collection_key} › {NOME_PROPOSTE}" \
+    destinazione = f"{radice.nome if radice else ed.zotero_collection_key} › {NOME_DOCENTI}" \
         if ed.zotero_collection_key else None
     return render_template("admin/lettura.html", p=p, ed=ed, form=form, scelte=scelte,
                            destinazione=destinazione,

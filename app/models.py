@@ -115,10 +115,10 @@ class Edizione(db.Model):
     descrizione = db.Column(db.Text)  # markdown
     stato = db.Column(db.String(20), nullable=False, default="bozza")
     bando_path = db.Column(db.String(255))
-    # Zotero: collezione dell'anno (sottocollezioni = lezioni dei relatori) e, sotto di essa,
-    # "Proposte dei docenti", creata dal sito alla prima lettura approvata
+    # Zotero: collezione dell'edizione, con dentro "Relatori" e "Docenti"; "Docenti" la crea
+    # il sito alla prima lettura approvata. Lezione e UD di ogni lettura stanno solo nel sito.
     zotero_collection_key = db.Column(db.String(20))
-    zotero_proposte_key = db.Column(db.String(20))
+    zotero_docenti_key = db.Column(db.String(20))
 
     programma = db.relationship("ProgrammaVoce", back_populates="edizione",
                                 cascade="all, delete-orphan",

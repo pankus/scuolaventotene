@@ -33,8 +33,9 @@ def edizione(slug):
 
 def _letture_edizione(ed):
     """Invito alla lettura: [(titolo sezione o None, item)] dal sotto-albero della collezione
-    dell'edizione. Prima i record della radice, poi una sezione per sottocollezione (le lezioni,
-    in ordine di nome), per ultime le proposte dei docenti. Un item compare una volta sola."""
+    dell'edizione. Prima i record della radice, poi una sezione per sottocollezione in ordine di
+    nome ("Relatori"; nelle edizioni vecchie una per lezione), per ultima "Docenti". Un item
+    compare una volta sola."""
     radice = ed.zotero_collection_key and db.session.get(ZoteroCollezione, ed.zotero_collection_key)
     if not radice:
         return []
@@ -50,7 +51,7 @@ def _letture_edizione(ed):
 
     sezioni = [(None, [radice])]
     for c in sorted(figli.get(radice.key, []),
-                    key=lambda c: (c.key == ed.zotero_proposte_key, c.nome.lower())):
+                    key=lambda c: (c.key == ed.zotero_docenti_key, c.nome.lower())):
         sezioni.append((c.nome, discendenti(c)))
     visti, out = set(), []
     for titolo, cols in sezioni:

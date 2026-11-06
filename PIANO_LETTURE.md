@@ -9,7 +9,7 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F3 Proposte di lettura e revisione del comitato | **fatta** (2026-11-06): `PropostaLettura` + migrazione, `/admin/letture` (collega o crea, rifiuta), `collega_item`, copertine con host ammessi, merge `dc:replaces` nella sync |
 | F4 Lookup durante la digitazione | **fatta** (2026-11-06): `app/ricerca_libri.py`, `/area/letture/cerca`, `static/js/letture.js` (già attivo nella revisione del comitato); `GOOGLE_BOOKS_API_KEY` facoltativa (senza: 429 frequenti, resta Open Library); niente miniature esterne nel browser |
 | F5 Flusso di iscrizione | **fatta** (2026-11-06): passi 1–4 (macro `passi`), `/area/candidatura/<id>/letture` (aggiungi/modifica/elimina in bozza, max 10, ricerca attiva), avviso nel riepilogo, letture nell'email di conferma, `la_scuola` e informativa aggiornate (Zotero, Google Books, Open Library senza dati personali) |
-| R1 Struttura Zotero dell'edizione | **fatta** (2026-11-06): collezione dell'edizione scelta da elenco, sottocollezione «Proposte dei docenti» creata dal sito (`zotero_proposte_key`), pagina edizione con il sotto-albero |
+| R1 Struttura Zotero dell'edizione | **fatta** (2026-11-06): collezione dell'edizione scelta da elenco, sottocollezione «Docenti» creata dal sito (`zotero_docenti_key`), pagina edizione con il sotto-albero; struttura semplificata su richiesta (Edizione → Relatori, Docenti) |
 | R2 Ruolo relatore e lezioni | da fare |
 | R3 Bibliografia della lezione e UD per i relatori | da fare |
 | F6 Dopo la scuola: altri libri e materiali | da fare |
@@ -124,30 +124,33 @@ esterne" di AGENTS.md).
 
 ## Struttura Zotero e relatori (R1–R3, decise il 2026-11-06)
 Ruoli: **docente** = insegnante che si candida; **relatore** = storico che tiene una lezione, con
-account proprio. Il gruppo Zotero segue la struttura già usata nel 2024:
+account proprio. Struttura del gruppo Zotero (scelta dell'utente: semplice, niente
+sottocollezioni per lezione):
 ```
-2026                              collezione dell'edizione (Edizione.zotero_collection_key)
-├─ 01) Rossi – Titolo lezione     una per lezione: i nomi dei relatori sono pubblici
-├─ 02) Bianchi – …
-└─ Proposte dei docenti           creata dal sito (Edizione.zotero_proposte_key), nessun nome,
-                                  tag ZOTERO_TAG_PROPOSTE
+Edizione 2026          collezione dell'edizione (Edizione.zotero_collection_key)
+├─ Relatori            letture dei relatori (Edizione.zotero_relatori_key, R3)
+└─ Docenti             letture dei docenti approvate (Edizione.zotero_docenti_key),
+                       nessun nome, tag ZOTERO_TAG_PROPOSTE
 ```
-Nel sito: chi ha proposto cosa (PropostaLettura); materiali dei relatori (`Materiale.lezione_id`,
-R2) distinti da quelli dei docenti (`Materiale.candidatura_id`, F6).
+Lezione e unità didattica di ogni lettura le conosce solo il sito (`PropostaLettura.lezione_id` /
+`candidatura_id`): è il sito a raggrupparle. La collezione 2024 ha ancora una sottocollezione per
+lezione: la pagina dell'edizione la mostra lo stesso (una sezione per sottocollezione); va
+riorganizzata a mano in Zotero se la si vuole uniforme. Materiali dei relatori
+(`Materiale.lezione_id`, R2) distinti da quelli dei docenti (`Materiale.candidatura_id`, F6).
 
 ### R2 — Ruolo relatore e lezioni
 - `RUOLI["relatore"]`, `Utente.is_relatore`; `Persona.utente_id` (FK nullable, unica, SET NULL):
   l'admin assegna il ruolo in `/admin/utenti` e collega la persona nella scheda dell'edizione.
-- `EdizionePersona` (ruolo relatore) = la lezione: `titolo_lezione`, `ordine`,
-  `zotero_collection_key` (sottocollezione «NN) Cognome – Titolo», creata dal sito con
-  `crea_collezione`).
+- `EdizionePersona` (ruolo relatore) = la lezione: `titolo_lezione`, `ordine` (niente
+  collezione Zotero per lezione).
 - Materiali della lezione: `Materiale.lezione_id` (FK SET NULL), caricamento dall'area del
   relatore, revisione esistente in `/admin/materiali`.
 
 ### R3 — Bibliografia della lezione e UD per i relatori
 - `PropostaLettura` con `candidatura_id` **oppure** `lezione_id` (CHECK: esattamente uno); il
-  relatore propone con la stessa ricerca (F4); stessa coda `/admin/letture`, destinazione la
-  sottocollezione della lezione.
+  relatore propone con la stessa ricerca (F4); stessa coda `/admin/letture` (da confermare: o
+  approvazione diretta), destinazione la sottocollezione «Relatori» (`Edizione.zotero_relatori_key`,
+  creata come «Docenti»). Nel sito le letture si raggruppano per lezione.
 - Il relatore vede le candidature **ammesse** delle proprie edizioni: titolo, discipline,
   abstract, file della UD; mai email, telefono, nascita, residenza. `file_candidatura` esteso.
 - Informativa privacy: i relatori vedono nome e UD dei docenti ammessi.
