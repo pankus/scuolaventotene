@@ -49,7 +49,7 @@ uv run flask init-db          # applica le migrazioni (= flask db upgrade)
 uv run flask seed-2026        # IV edizione dai dati del bando
 uv run flask seed-precedenti  # edizioni 2023–2025 dalle pagine CNR-ISMed (scarica call e locandine)
 uv run flask ud-dal-programma # UD dei docenti dalle voci del programma (idempotente; già in seed-precedenti)
-uv run flask zotero-copertine # copertine dei libri con ISBN (Open Library, Google Books)
+uv run flask zotero-copertine # copertine dei libri con ISBN (Open Library, Amazon, Google Books)
 uv run flask crea-admin tuo@ismed.cnr.it
 uv run flask --debug run
 ```
@@ -116,7 +116,7 @@ l'utente del deploy, gruppo `www-data`; non va mai in git (è già nel `.gitigno
 L'utente di Apache deve poter scrivere in `instance/` (database, file WAL, uploads).
 
 Ricerca dei libri: il server chiama `www.googleapis.com` e `openlibrary.org` (e scarica le
-copertine da Google Books, Open Library e archive.org): servono le uscite HTTPS verso questi
+copertine da Google Books, Open Library, archive.org e Amazon images-na.ssl-images-amazon.com): servono le uscite HTTPS verso questi
 host. `GOOGLE_BOOKS_API_KEY` è facoltativa ma consigliata: senza chiave Google risponde spesso
 429 e restano solo i risultati di Open Library.
 

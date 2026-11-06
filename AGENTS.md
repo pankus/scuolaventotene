@@ -182,7 +182,7 @@ record già presenti), che scrive nella sottocollezione «Docenti» dell'edizion
 Logica comune in `zotero_scrittura.py`: `sottocollezione_edizione`, `scelte_duplicati`,
 `salva_lettura` (docenti con il tag, relatori senza, subito in «Relatori»). Struttura del gruppo e ruolo relatore in
 PIANO_LETTURE.md (R1–R3): docente = insegnante candidato, relatore = storico delle lezioni. Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
-nei redirect, solo immagini, max 2 MB) o `carica_copertina()` (file dell'admin, firma del
+nei redirect, solo immagini tra 1 KB e 2 MB; fonti per ISBN in `ricerca_libri._copertine_per_isbn`: Open Library, Amazon per ISBN-10, Google Books, ognuna isolata) o `carica_copertina()` (file dell'admin, firma del
 formato controllata), sostituite con `sostituisci_copertina()`; `copertina_path=""` = nessuna,
 da non cercare più. L'admin corregge una voce da `/admin/bibliografia/<key>` (`aggiorna_item`). Ricerca dei libri in `app/ricerca_libri.py`
 (`/area/letture/cerca`): le API esterne si chiamano solo dal server, il browser non carica

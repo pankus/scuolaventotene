@@ -130,6 +130,8 @@ def test_copertina_scaricata(app, zot, monkeypatch):
     ("https://covers.openlibrary.org/b/isbn/1-L.jpg", True),
     ("https://ia800100.us.archive.org/x.jpg", True),
     ("https://books.google.com/books/content?id=1", True),
+    ("https://images-na.ssl-images-amazon.com/images/P/8833142582.01.LZZZZZZZ.jpg", True),
+    ("https://amazon.com.evil.it/x.jpg", False),
     ("http://covers.openlibrary.org/b/isbn/1-L.jpg", False),   # solo https
     ("https://evilarchive.org/x.jpg", False),
     ("https://127.0.0.1/x.jpg", False),
@@ -154,7 +156,8 @@ class _Risposta(io.BytesIO):
 
 
 @pytest.mark.parametrize("tipo, dati, errore", [
-    ("image/jpeg", b"\xff\xd8 jpeg", None),
+    ("image/jpeg", b"\xff\xd8" + b"x" * 2000, None),
+    ("image/gif", b"GIF89a" + b"\x00" * 37, "segnaposto"),  # 1×1 di Amazon quando manca
     ("text/html", b"<html>", "immagine"),
     ("image/png", b"x" * (utils.MAX_COPERTINA + 1), "grande"),
 ])

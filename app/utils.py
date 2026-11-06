@@ -67,9 +67,10 @@ def elimina_upload(rel):
 
 # copertine: solo dalle fonti del lookup (anche dopo i redirect), solo immagini piccole
 HOST_COPERTINE = ("books.google.com", "books.googleusercontent.com", "covers.openlibrary.org",
-                  "archive.org")
+                  "archive.org", "images-na.ssl-images-amazon.com", "m.media-amazon.com")
 TIPI_COPERTINA = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}
 MAX_COPERTINA = 2 * 1024 * 1024
+MIN_COPERTINA = 1000  # sotto: segnaposto (Amazon risponde 200 con una GIF 1×1 da 43 byte)
 
 
 def copertina_ammessa(url):
@@ -97,6 +98,8 @@ def salva_copertina(url):
         dati = r.read(MAX_COPERTINA + 1)
     if len(dati) > MAX_COPERTINA:
         raise ValueError("copertina troppo grande")
+    if len(dati) < MIN_COPERTINA:
+        raise ValueError("copertina non disponibile (immagine segnaposto)")
     fs = FileStorage(io.BytesIO(dati), filename=f"copertina.{ext}")
     return salva_upload(fs, "copertine", set(TIPI_COPERTINA.values()))["file_path"]
 

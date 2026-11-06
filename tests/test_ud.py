@@ -155,14 +155,14 @@ def test_scarica_copertine(app):
     db.session.add(ZoteroItem(key="W", tipo="webpage", titolo="sito", eliminato=False))
     db.session.commit()
 
-    def candidati(isbn):
+    def candidati(isbn, errori):
         if isbn.endswith("586"):
             yield "https://non-ammesso.example/x.jpg"
             yield "https://covers.openlibrary.org/ok.jpg"
         elif isbn.endswith("165"):
             yield "https://covers.openlibrary.org/manca.jpg"
         else:
-            raise OSError("quota esaurita")
+            errori.append("Google Books (troppe richieste)")
 
     def salva(url):
         if "ok" not in url:
@@ -181,3 +181,31 @@ def test_archivio_elenca_anche_le_ud_senza_materiali(app):
     html = client_di(app).get(f"/archivio/{ud.edizione.slug}").get_data(as_text=True)
     assert "Unità didattiche dei docenti" in html
     assert f'href="/edizioni/{ud.edizione.slug}/interventi/{ud.id}"' in html
+
+
+def test_isbn10():
+    from app.ricerca_libri import isbn10
+    assert isbn10("9788833142586") == "8833142582"
+    assert isbn10("9780306406157") == "0306406152"
+    assert isbn10("9788800000005")[-1] in "0123456789X"
+    assert isbn10("9791032305690") is None and isbn10(None) is None
+
+
+def test_una_fonte_giu_non_ferma_le_altre(app, monkeypatch):
+    import urllib.error
+    from app import ricerca_libri
+
+    def quota(*a, **k):
+        raise urllib.error.HTTPError("u", 429, "Too Many Requests", {}, None)
+    monkeypatch.setattr(ricerca_libri, "open_library", quota)
+    monkeypatch.setattr(ricerca_libri, "google_books", quota)
+    errori = []
+    urls = list(ricerca_libri._copertine_per_isbn("9788833142586", None, errori))
+    assert urls[0].startswith("https://covers.openlibrary.org/")
+    assert urls[1] == "https://images-na.ssl-images-amazon.com/images/P/8833142582.01.LZZZZZZZ.jpg"
+    assert errori == ["Open Library (troppe richieste)", "Google Books (troppe richieste)"]
+    # scheda admin: si prende Amazon; se nessuno ha la copertina il messaggio dice chi non ha risposto
+    assert ricerca_libri.cerca_copertina(
+        "9788833142586", salva=lambda u: "copertine/a.jpg" if "amazon" in u else 1 / 0) == "copertine/a.jpg"
+    with pytest.raises(ValueError, match="Google Books \\(troppe richieste\\).*GOOGLE_BOOKS_API_KEY"):
+        ricerca_libri.cerca_copertina("9788833142586", salva=lambda u: 1 / 0)

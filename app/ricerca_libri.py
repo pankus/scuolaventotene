@@ -7,6 +7,7 @@ I risultati online si fondono per ISBN. Le copertine restano URL: si scaricano i
 quando il comitato approva la lettura (``utils.salva_copertina``).
 """
 import json
+import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -15,7 +16,7 @@ from flask import current_app
 from sqlalchemy import or_
 
 from .models import ZoteroItem
-from .zotero_sync import normalizza_isbn, piega
+from .zotero_sync import _cifra10, normalizza_isbn, piega
 
 TIMEOUT = 5
 MAX_RISULTATI = 6
@@ -120,37 +121,71 @@ def cerca(q, isbn_testo=None):
 
 
 # --------------------------------------------------------------------------- copertine della bibliografia
-def _copertine_per_isbn(isbn, chiave_google=None):
-    """URL candidati della copertina: Open Library (diretto per ISBN, 404 se manca, poi ricerca),
-    poi Google Books. Un errore di rete o di quota si propaga: il libro si riprova al giro dopo."""
+def isbn10(isbn13):
+    """ISBN-10 di un ISBN-13 978- (Amazon indicizza le immagini così); None per i 979-."""
+    if not isbn13 or len(isbn13) != 13 or not isbn13.startswith("978"):
+        return None
+    return isbn13[3:12] + _cifra10(isbn13[3:12])
+
+
+def _motivo(e):
+    if isinstance(e, urllib.error.HTTPError) and e.code == 429:
+        return "troppe richieste"
+    return str(e) or e.__class__.__name__
+
+
+def _copertine_per_isbn(isbn, chiave_google=None, errori=None):
+    """URL candidati della copertina, fonte per fonte e solo quando servono: Open Library
+    (diretto per ISBN, 404 se manca; poi ricerca), Amazon per ISBN-10, Google Books per ultima
+    (quota). Una fonte che non risponde (429, rete) si annota in ``errori`` e si passa alla
+    successiva."""
+    errori = [] if errori is None else errori
     yield f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg?default=false"
-    for fonte in (lambda: open_library(None, isbn), lambda: google_books(None, isbn, chiave_google)):
-        for r in fonte():
-            if r.get("copertina_url"):
-                yield r["copertina_url"]
+    i10 = isbn10(isbn)
+    fonti = [
+        ("Open Library", lambda: [r["copertina_url"] for r in open_library(None, isbn)]),
+        # ponytail: endpoint immagini di Amazon non documentato; se sparisce resta Google Books
+        ("Amazon", lambda: [f"https://images-na.ssl-images-amazon.com/images/P/{i10}.01.LZZZZZZZ.jpg"]
+         if i10 else []),
+        ("Google Books", lambda: [r["copertina_url"] for r in google_books(None, isbn, chiave_google)]),
+    ]
+    for nome, fonte in fonti:
+        try:
+            urls = fonte()
+        except Exception as e:  # noqa: BLE001  (quota, rete, JSON inatteso: fonte successiva)
+            errori.append(f"{nome} ({_motivo(e)})")
+            continue
+        yield from (u for u in urls if u)
 
 
 def cerca_copertina(isbn, salva=None):
     """Prima copertina scaricabile per l'ISBN (pulsante dell'admin): percorso o ValueError."""
     from .utils import salva_copertina
-    for url in _copertine_per_isbn(isbn, current_app.config.get("GOOGLE_BOOKS_API_KEY")):
+    errori = []
+    for url in _copertine_per_isbn(isbn, current_app.config.get("GOOGLE_BOOKS_API_KEY"), errori):
         try:
             return (salva or salva_copertina)(url)
-        except Exception:  # noqa: BLE001  (404, non immagine: si prova la fonte dopo)
+        except Exception:  # noqa: BLE001  (404, segnaposto, non immagine: si prova il candidato dopo)
             continue
-    raise ValueError("nessuna copertina trovata per questo ISBN")
+    messaggio = "nessuna copertina trovata per questo ISBN"
+    if errori:
+        messaggio += "; non hanno risposto: " + ", ".join(errori)
+        if any(e.startswith("Google Books") for e in errori) and not current_app.config.get("GOOGLE_BOOKS_API_KEY"):
+            messaggio += " (per Google Books configura GOOGLE_BOOKS_API_KEY)"
+    raise ValueError(messaggio)
 
 
 def scarica_copertine(limite=50, salva=None, candidati=None):
     """Copertine in locale per i libri con ISBN che non ne hanno una (``flask zotero-copertine``,
-    in cron dopo il sync). Un libro senza copertina trovata resta con ``copertina_path=""`` e non
-    si riprova. ``salva(url) -> percorso`` e ``candidati(isbn)`` si sostituiscono nei test.
+    in cron dopo il sync). Un libro per cui tutte le fonti hanno risposto senza copertina resta
+    con ``copertina_path=""`` e non si riprova. ``salva(url) -> percorso`` e
+    ``candidati(isbn, errori)`` si sostituiscono nei test.
     Restituisce (scaricate, non trovate); i libri con una fonte giù restano da riprovare."""
     from .extensions import db
     from .utils import salva_copertina
     salva = salva or salva_copertina
     chiave = current_app.config.get("GOOGLE_BOOKS_API_KEY")
-    candidati = candidati or (lambda isbn: _copertine_per_isbn(isbn, chiave))
+    candidati = candidati or (lambda isbn, errori: _copertine_per_isbn(isbn, chiave, errori))
     # ponytail: un libro alla volta, in serie; ``limite`` per giro tiene basso il carico sulle fonti
     libri = (ZoteroItem.query.filter(ZoteroItem.eliminato.is_(False), ZoteroItem.tipo == "book",
                                      ZoteroItem.isbn.isnot(None), ZoteroItem.copertina_path.is_(None))
@@ -158,17 +193,19 @@ def scarica_copertine(limite=50, salva=None, candidati=None):
     scaricate = 0
     senza = 0
     for zi in libri:
+        errori = []
         try:
-            for url in candidati(zi.isbn):
+            for url in candidati(zi.isbn, errori):
                 try:
                     zi.copertina_path = salva(url)
                     scaricate += 1
                     break
-                except Exception:  # noqa: BLE001  (404, host non ammesso, non immagine, troppo grande)
+                except Exception:  # noqa: BLE001  (404, segnaposto, host non ammesso, troppo grande)
                     continue
-            else:
-                zi.copertina_path, senza = "", senza + 1
-        except Exception:  # noqa: BLE001  (fonte giù o quota esaurita: resta None, si riprova)
-            pass
+        except Exception as e:  # noqa: BLE001
+            errori.append(str(e))
+        if zi.copertina_path is None and not errori:
+            zi.copertina_path, senza = "", senza + 1  # tutte le fonti hanno risposto: non c'è
+        # con una fonte giù (quota, rete) resta None e si riprova al giro dopo
         db.session.commit()
     return scaricate, senza

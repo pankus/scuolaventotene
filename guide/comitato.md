@@ -187,8 +187,9 @@ Solo admin. In **Invito alla lettura** e nelle pagine di lezioni e UD ogni voce 
   anno, editore, ISBN… **Salva in Zotero** scrive nel gruppo e aggiorna il sito con la risposta
   di Zotero. Se intanto qualcuno ha cambiato la voce in Zotero, il salvataggio si ferma: ricarica
   la pagina e ripeti. Gli altri tipi (articoli, capitoli…) si correggono in Zotero.
-- **Copertina** (solo sul sito, non va in Zotero): **Cerca per ISBN** (Open Library, poi Google
-  Books), **Scarica dall'indirizzo** (solo immagini di Open Library, Google Books o archive.org),
+- **Copertina** (solo sul sito, non va in Zotero): **Cerca per ISBN** (Open Library, poi Amazon,
+  per ultimo Google Books; una fonte che non risponde si salta e il messaggio dice quale),
+  **Scarica dall'indirizzo** (solo immagini di Open Library, Google Books, archive.org o Amazon),
   **Carica l'immagine** (jpg, png, webp o gif, massimo 2 MB) oppure **togli la copertina**: una
   copertina tolta non viene più cercata dal comando automatico. Le copertine dei libri con ISBN
   si cercano anche da sole, ogni ora, con `flask zotero-copertine`.
