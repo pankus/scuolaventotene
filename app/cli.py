@@ -51,6 +51,14 @@ def register_cli(app):
         for a in s["avvisi"]:
             click.echo(f"ATTENZIONE: {a}")
 
+    @app.cli.command("zotero-copertine")
+    @click.option("--limite", default=50, show_default=True, help="Libri da controllare per giro")
+    def zotero_copertine(limite):
+        """Scarica in locale le copertine dei libri con ISBN (Open Library, Google Books)."""
+        from .ricerca_libri import scarica_copertine
+        fatte, senza = scarica_copertine(limite)
+        click.echo(f"Copertine scaricate: {fatte}  non trovate: {senza}")
+
     @app.cli.command("zotero-verifica")
     def zotero_verifica():
         """Controlla chiave e gruppo Zotero: connessione, contenuto, permesso di scrittura."""
@@ -63,6 +71,16 @@ def register_cli(app):
                      None: "non verificabile (chiave assente o non valida)"}[v["scrittura"]]
         click.echo(f"Gruppo {app.config['ZOTERO_LIBRARY_ID']}: {v['item']} record, "
                    f"versione {v['versione']}, scrittura: {scrittura}")
+
+    @app.cli.command("ud-dal-programma")
+    def ud_programma():
+        """Crea le UD dei docenti dalle voci «unità didattiche» del programma (idempotente)."""
+        from .edizioni_precedenti import ud_dal_programma
+        for ed in Edizione.query.order_by(Edizione.anno).all():
+            n = ud_dal_programma(ed)
+            if n:
+                click.echo(f"{ed.anno}: {n} UD create.")
+        db.session.commit()
 
     @app.cli.command("seed-precedenti")
     def seed_precedenti():

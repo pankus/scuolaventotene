@@ -4,11 +4,12 @@
 <p class="occhiello"><a href="{{ url_for('archivio.index') }}">Archivio</a> · {{ ed.numero }}ª edizione</p>
 <h1>{{ ed.titolo }} ({{ ed.anno }})</h1>
 <p><a href="{{ url_for('public.edizione', slug=ed.slug) }}">Programma dell'edizione →</a></p>
-{% macro tabella(elenco, colonna_lezione=False) %}
+{% macro tabella(elenco, colonna=None) %}
 <table class="tabella">
-  <tr>{% if colonna_lezione %}<th>Lezione</th>{% endif %}<th>Tipo</th><th>Titolo</th><th>Autori</th><th></th></tr>
+  <tr>{% if colonna %}<th>{{ colonna }}</th>{% endif %}<th>Tipo</th><th>Titolo</th><th>Autori</th><th></th></tr>
   {% for m in elenco %}
-  <tr>{% if colonna_lezione %}<td>{{ m.lezione.nome_lezione }}</td>{% endif %}<td>{{ TIPI_MATERIALE.get(m.tipo, m.tipo) }}</td>
+  <tr>{% if colonna %}<td>{% if m.lezione %}<a href="{{ url_for('public.intervento', slug=ed.slug, epid=m.lezione.id) }}">{{ m.lezione.nome_lezione }}</a>
+      {%- elif m.candidatura.stato == 'ammessa' %}<a href="{{ url_for('public.unita_didattica', slug=ed.slug, cid=m.candidatura.id) }}">{{ m.candidatura.utente.nome_completo }} – {{ m.candidatura.titolo_ud }}</a>{% endif %}</td>{% endif %}<td>{{ TIPI_MATERIALE.get(m.tipo, m.tipo) }}</td>
       <td><strong>{{ m.titolo }}</strong>{% if m.descrizione %}<br><small>{{ m.descrizione }}</small>{% endif %}</td>
       <td>{{ m.autori or '' }}</td>
       <td>{% if m.file_path %}<a href="{{ url_for('archivio.scarica', mid=m.id) }}">{{ m.file_nome.rsplit('.',1)[-1]|upper }} · {{ m.dimensione|dimensione }}</a>
@@ -17,11 +18,13 @@
 </table>
 {% endmacro %}
 {% if materiali %}
-{% set delle_lezioni = materiali|selectattr('lezione')|sort(attribute='lezione.posizione')|list %}
+{% set delle_lezioni = materiali|selectattr('lezione')|selectattr('lezione.ruolo', 'equalto', 'relatore')|sort(attribute='lezione.posizione')|list %}
+{% set delle_ud = materiali|selectattr('lezione')|selectattr('lezione.ruolo', 'equalto', 'docente')|sort(attribute='lezione.posizione')|list %}
 {% set dei_docenti = materiali|rejectattr('lezione')|selectattr('candidatura')|list %}
+{% set dei_docenti = delle_ud + dei_docenti %}
 {% set altri = materiali|rejectattr('lezione')|rejectattr('candidatura')|list %}
-{% if delle_lezioni %}<h2>Lezioni</h2>{{ tabella(delle_lezioni, True) }}{% endif %}
-{% if dei_docenti %}<h2>Unità didattiche dei docenti</h2>{{ tabella(dei_docenti) }}{% endif %}
+{% if delle_lezioni %}<h2>Lezioni</h2>{{ tabella(delle_lezioni, "Lezione") }}{% endif %}
+{% if dei_docenti %}<h2>Unità didattiche dei docenti</h2>{{ tabella(dei_docenti, "Unità didattica") }}{% endif %}
 {% if altri %}{% if delle_lezioni or dei_docenti %}<h2>Altri materiali</h2>{% endif %}{{ tabella(altri) }}{% endif %}
 {% else %}
 <p>Nessun materiale disponibile{% if not current_user.is_authenticated %} pubblicamente — alcuni materiali sono riservati agli utenti registrati{% endif %}.</p>

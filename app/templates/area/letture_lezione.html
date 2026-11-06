@@ -3,11 +3,13 @@
 {% block title %}Bibliografia della lezione{% endblock %}
 {% block content %}
 <div class="stretto">
-  <p class="occhiello"><a href="{{ url_for('area.dashboard') }}">← Area personale</a></p>
-  <h1>Bibliografia della lezione</h1>
-  <p><strong>{{ ep.titolo_lezione or 'Lezione senza titolo' }}</strong> · {{ ep.edizione.anno }}</p>
+  <p class="occhiello"><a href="{{ url_for('public.intervento', slug=ep.edizione.slug, epid=ep.id) }}">← Pagina {{ 'della UD' if ep.ruolo == 'docente' else 'della lezione' }}</a>
+    · <a href="{{ url_for('area.dashboard') }}">Area personale</a></p>
+  <h1>Bibliografia {{ 'della UD' if ep.ruolo == 'docente' else 'della lezione' }}</h1>
+  <p><strong>{{ ep.titolo_lezione or 'senza titolo' }}</strong> · {{ ep.persona.nome_completo }} · {{ ep.edizione.anno }}</p>
   <p class="nota">Ogni lettura entra subito nella bibliografia della scuola (Zotero, collezione
-    «Relatori» dell'edizione) e compare nella pagina dell'edizione sotto la tua lezione.</p>
+    «{{ 'Docenti' if ep.ruolo == 'docente' else 'Relatori' }}» dell'edizione) e compare nella pagina
+    {{ 'della UD' if ep.ruolo == 'docente' else 'della lezione' }}.</p>
 
   {% if ep.letture %}
   <table class="tabella">

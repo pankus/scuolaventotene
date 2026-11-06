@@ -160,6 +160,7 @@ def register_template_utils(app):
             "TIPI_MATERIALE": models.TIPI_MATERIALE,
             "TIPI_CANDIDATURA": models.TIPI_CANDIDATURA,
             "TIPI_PROGRAMMA": models.TIPI_PROGRAMMA,
+            "RUOLI_EDIZIONE": models.RUOLI_EDIZIONE,
             "VISIBILITA": models.VISIBILITA,
             "RUOLI": models.RUOLI,
         }

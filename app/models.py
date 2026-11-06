@@ -202,6 +202,11 @@ class Persona(db.Model):
         return f"{self.nome} {self.cognome}"
 
 
+# ruoli di una persona in un'edizione; "docente" = UD senza candidatura (edizioni passate,
+# dal programma), collegabile a un account più avanti come le lezioni dei relatori
+RUOLI_EDIZIONE = {"comitato": "Comitato scientifico", "relatore": "Relatore", "docente": "Docente (UD)"}
+
+
 class EdizionePersona(db.Model):
     __tablename__ = "edizioni_persone"
     __table_args__ = (db.UniqueConstraint("edizione_id", "persona_id", "ruolo"),)
@@ -209,9 +214,10 @@ class EdizionePersona(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     edizione_id = db.Column(db.Integer, db.ForeignKey("edizioni.id", ondelete="CASCADE"), nullable=False)
     persona_id = db.Column(db.Integer, db.ForeignKey("persone.id", ondelete="CASCADE"), nullable=False)
-    ruolo = db.Column(db.String(20), nullable=False, default="comitato")  # comitato | relatore
-    # solo per i relatori: la lezione
+    ruolo = db.Column(db.String(20), nullable=False, default="comitato")  # RUOLI_EDIZIONE
+    # relatori: la lezione; docenti: la UD
     titolo_lezione = db.Column(db.String(255))
+    descrizione = db.Column(db.Text)  # abstract (markdown), scritto dall'admin
     ordine = db.Column(db.Integer, default=0)
 
     edizione = db.relationship("Edizione", back_populates="persone")

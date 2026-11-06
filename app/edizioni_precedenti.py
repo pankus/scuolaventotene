@@ -189,6 +189,7 @@ def carica(scarica=_scarica, avviso=print):
                     nome, cognome = _dividi(nome_completo, e["comitato"])
                     ed.persone.append(EdizionePersona(persona=_persona(nome, cognome), ruolo="relatore",
                                                       titolo_lezione=titolo, ordine=n_lezione))
+        ud_dal_programma(ed, e["comitato"])
         for titolo, url in e["allegati"]:
             try:
                 dati = scarica(url)
@@ -205,6 +206,30 @@ def carica(scarica=_scarica, avviso=print):
         db.session.commit()
         caricate.append(e["anno"])
     return caricate
+
+
+def ud_dal_programma(ed, comitato=()):
+    """Una UD (EdizionePersona con ruolo docente) per ogni voce «unità didattiche» del programma
+    con il nome del docente, se manca. Restituisce quante ne ha create (senza commit)."""
+    db.session.flush()
+    esistenti = {(ep.persona_id, ep.titolo_lezione) for ep in ed.persone if ep.ruolo == "docente"}
+    nuove = 0
+    for v in sorted(ed.programma, key=lambda v: (v.ordine or 0, v.id or 0)):
+        if v.tipo != "unita_didattiche" or not v.relatori:
+            continue
+        for nome_completo in v.relatori.split(", "):
+            p = _persona(*_dividi(nome_completo.strip(), comitato))
+            db.session.flush()
+            if (p.id, v.titolo) in esistenti:
+                continue
+            if any(ep.persona_id == p.id for ep in ed.persone if ep.ruolo == "docente"):
+                continue  # ponytail: una UD per docente per edizione (vincolo unico di edizioni_persone)
+            ed.persone.append(EdizionePersona(persona=p, ruolo="docente", titolo_lezione=v.titolo,
+                                              ordine=v.ordine or 0))
+            db.session.flush()
+            esistenti.add((p.id, v.titolo))
+            nuove += 1
+    return nuove
 
 
 def _dividi(nome_completo, comitato):

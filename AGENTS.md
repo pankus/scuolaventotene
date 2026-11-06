@@ -37,7 +37,9 @@ uv run flask seed-2026                   # IV edizione dai dati del bando
 uv run flask seed-precedenti             # edizioni 2023–2025 (app/edizioni_precedenti.py)
 uv run flask crea-admin email@ismed.cnr.it
 uv run flask prova-email tuo@indirizzo.it   # controlla la configurazione SMTP
+uv run flask ud-dal-programma            # UD dei docenti delle edizioni passate dal programma
 uv run flask zotero-sync [--completa]    # bibliografia (in produzione gira in cron)
+uv run flask zotero-copertine            # copertine per ISBN (in cron dopo il sync)
 uv run flask zotero-verifica              # chiave, gruppo, permesso di scrittura
 uv run flask --debug run                 # server di sviluppo
 uv run pytest                            # test (cartella tests/)
@@ -103,6 +105,12 @@ comitato; il relatore non entra nel back-office). Docente = insegnante che si ca
 storico che tiene una lezione: le sue lezioni sono `Utente.lezioni()` (via `Persona.utente_id`),
 e ogni accesso a una lezione passa da lì. Il relatore vede le UD solo dei docenti **ammessi**
 nelle edizioni in cui insegna (`area._relatore_di`), mai email, telefono, nascita, residenza.
+UD senza candidatura (edizioni passate) = `EdizionePersona` con ruolo `docente` (`RUOLI_EDIZIONE`),
+create dal programma (`ud_dal_programma`); l'account collegato per ora non dà permessi.
+Pagina pubblica di lezione/UD: `public.intervento` (EP) e `public.unita_didattica` (solo
+candidature ammesse, niente dati personali, abstract del docente come testo, mai `markdown`);
+l'admin vi carica materiali e abstract (`admin.materiale_intervento`, `materiale_candidatura`,
+`descrizione_intervento`) e apre le letture di ogni EP (`area._mia_lezione`).
 Il docente carica materiali solo dalla propria candidatura dopo la scuola
 (`Candidatura.dopo_la_scuola`), il relatore dalla propria lezione, lo staff da `/admin/materiali`.
 Proteggere le viste con `@login_required`, `@comitato_required` o `@admin_required`
@@ -208,6 +216,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
   nel payload Zotero), copertine, merge `dc:replaces`.
 - `test_dopo_scuola.py`: `Candidatura.dopo_la_scuola`, materiali del modulo (solo la propria
   candidatura ammessa, niente upload libero), archivio, letture `post_scuola`.
+- `test_ud.py`: UD dal programma, pagine di lezione/UD (permessi, 404, niente dati personali),
+  materiali e abstract caricati dall'admin, copertine per ISBN (`scarica_copertine` con fonti finte).
 - `test_bibliografia.py`: sezioni con sottosezioni, copertine (solo item vivi), ISBN e link,
   nessun dato del docente, letture nella scheda candidatura del comitato.
 

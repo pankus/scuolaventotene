@@ -5,7 +5,7 @@ from wtforms import (BooleanField, DateField, EmailField, HiddenField, IntegerFi
 from wtforms.validators import (URL, DataRequired, Email, EqualTo, Length, NumberRange,
                                 Optional)
 
-from .models import (STATI_CANDIDATURA, STATI_EDIZIONE, TIPI_CANDIDATURA, TIPI_MATERIALE,
+from .models import (RUOLI_EDIZIONE, STATI_CANDIDATURA, STATI_EDIZIONE, TIPI_CANDIDATURA, TIPI_MATERIALE,
                      TIPI_PROGRAMMA, VISIBILITA)
 
 GRADI = [("", "—"), ("I", "Secondaria di I grado"), ("II", "Secondaria di II grado")]
@@ -81,6 +81,15 @@ class MaterialeAdminForm(MaterialeForm):
     visibilita = SelectField("Visibilità", choices=_scelte(VISIBILITA))
 
 
+class MaterialeUDForm(MaterialeAdminForm):
+    """Materiale caricato dall'admin dentro una lezione o UD: l'edizione è già quella."""
+    edizione_id = None
+
+
+class DescrizioneForm(FlaskForm):
+    descrizione = TextAreaField("Abstract (markdown)", validators=[Optional()])
+
+
 class ValutazioneForm(FlaskForm):
     originalita = IntegerField("Originalità (0–25)", validators=[NumberRange(0, 25)])
     potenzialita = IntegerField("Potenzialità didattiche (0–25)", validators=[NumberRange(0, 25)])
@@ -132,8 +141,8 @@ class PersonaEdizioneForm(FlaskForm):
     nome = StringField("Nome", validators=[DataRequired()])
     cognome = StringField("Cognome", validators=[DataRequired()])
     affiliazione = StringField("Affiliazione", validators=[Optional()])
-    ruolo = SelectField("Ruolo", choices=[("comitato", "Comitato scientifico"), ("relatore", "Relatore")])
-    titolo_lezione = StringField("Titolo della lezione (relatori)", validators=[Optional(), Length(max=255)])
+    ruolo = SelectField("Ruolo", choices=_scelte(RUOLI_EDIZIONE))
+    titolo_lezione = StringField("Titolo della lezione o della UD", validators=[Optional(), Length(max=255)])
 
 
 class LezioneForm(FlaskForm):

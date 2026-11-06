@@ -27,7 +27,7 @@ ventotene/
     ├── posta.py            email SMTP (Infomaniak) e token
     ├── guida.py            guide in markdown, indice, link «Guida» per pagina
     ├── edizioni_precedenti.py  dati delle edizioni 2023–2025 (flask seed-precedenti)
-    ├── cli.py              init-db, crea-admin, seed-2026, seed-precedenti, zotero-sync, zotero-verifica, prova-email
+    ├── cli.py              init-db, crea-admin, seed-2026, seed-precedenti, ud-dal-programma, zotero-sync, zotero-copertine, zotero-verifica, prova-email
     ├── views/
     │   ├── public.py       home, edizione, la scuola, contatti, privacy, guide
     │   ├── auth.py         registrazione, accesso, verifica email, reset password
@@ -48,6 +48,8 @@ export FLASK_APP=app:create_app
 uv run flask init-db          # applica le migrazioni (= flask db upgrade)
 uv run flask seed-2026        # IV edizione dai dati del bando
 uv run flask seed-precedenti  # edizioni 2023–2025 dalle pagine CNR-ISMed (scarica call e locandine)
+uv run flask ud-dal-programma # UD dei docenti dalle voci del programma (idempotente; già in seed-precedenti)
+uv run flask zotero-copertine # copertine dei libri con ISBN (Open Library, Google Books)
 uv run flask crea-admin tuo@ismed.cnr.it
 uv run flask --debug run
 ```
@@ -130,4 +132,5 @@ Cron per la bibliografia:
 
 ```
 0 * * * *  cd /srv/ventotene && .venv/bin/flask --app app:create_app zotero-sync >> instance/zotero.log 2>&1
+15 * * * * cd /srv/ventotene && .venv/bin/flask --app app:create_app zotero-copertine >> instance/zotero.log 2>&1
 ```

@@ -18,12 +18,22 @@
 </form>
 {% endmacro %}
 
+{# Copertina locale o, se manca, un segnaposto tipografico: il browser non carica immagini esterne #}
+{% macro copertina(i) -%}
+{% if i.copertina_path %}<img class="copertina" src="{{ url_for('bibliografia.copertina', key=i.key) }}" alt="Copertina: {{ i.titolo }}" loading="lazy">
+{%- else %}<span class="copertina copertina-vuota{% if i.tipo == 'webpage' %} copertina-web{% endif %}" aria-hidden="true">
+  <span class="cv-autore">{{ (i.primo_autore or ('sito web' if i.tipo == 'webpage' else ''))|truncate(28, True, '…') }}</span>
+  <span class="cv-titolo">{{ (i.titolo or '')|striptags|truncate(60, True, '…') }}</span></span>{% endif %}
+{%- endmacro %}
+
 {% macro voce_biblio(i) %}
-<li{% if i.copertina_path %} class="con-copertina"{% endif %}>
-  {%- if i.copertina_path %}<img src="{{ url_for('bibliografia.copertina', key=i.key) }}" alt="" loading="lazy">{% endif %}
+<li class="con-copertina">
+  {{ copertina(i) }}
+  <div>
   {% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}{% if i.autori %}, {% endif %}<em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
   {% if i.isbn %}<small class="isbn">ISBN {{ i.isbn }}</small>{% endif %}
   {% if i.doi %}<a href="https://doi.org/{{ i.doi }}" target="_blank" rel="noopener">DOI</a>{% elif i.url %}<a href="{{ i.url }}" target="_blank" rel="noopener">{{ 'sito' if i.tipo == 'webpage' else 'link' }}</a>{% endif %}
+  </div>
 </li>
 {%- endmacro %}
 

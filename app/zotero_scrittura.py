@@ -235,15 +235,15 @@ def scelte_duplicati(zot, tipo, campi):
     return scelte, avviso
 
 
-def salva_lettura(zot, p, ed, quale, scelta=""):
+def salva_lettura(zot, p, ed, quale, scelta="", tag_proposte=None):
     """Scrive in Zotero la lettura ``p`` nella sottocollezione ``quale`` dell'edizione:
     collegando il record ``scelta`` se indicato, altrimenti creandone uno nuovo. Imposta
     ``p.zotero_key`` e scarica la copertina. Restituisce un avviso sulla copertina o None.
-    Commit del chiamante."""
+    Commit del chiamante. Tag delle proposte: per default solo in «Docenti»."""
     if not ed.zotero_collection_key:
         raise ErroreScrittura("Manca la collezione Zotero dell'edizione (Modifica edizione).")
     destinazione = [sottocollezione_edizione(zot, ed, quale)]
-    tag = quale == "docenti"
+    tag = quale == "docenti" if tag_proposte is None else tag_proposte
     if scelta:
         zi = collega_item(zot, scelta, destinazione, tag_proposte=tag)
     else:

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% from "_macros.html" import copertina, campo %}
+{% set tipo_nome = 'Unità didattica' if ud else 'Lezione' %}
+{% block title %}{{ titolo }} · {{ ed.anno }}{% endblock %}
+{% block content %}
+<section class="eroe intervento-eroe">
+  <p class="occhiello"><a href="{{ url_for('public.edizione', slug=ed.slug) }}">{{ ed.numero }}ª edizione · {{ ed.anno }}</a>
+    · {{ tipo_nome }}</p>
+  <div class="eroe-griglia">
+    <div>
+      <h1>{{ titolo }}</h1>
+      <p class="firma-intervento">{{ autore }}{% if affiliazione %} <small>{{ affiliazione }}</small>{% endif %}</p>
+      {% if voce %}<p class="colofone-eroe">{{ voce.giorno|giorno_it }}{% if voce.ora %} · ore {{ voce.ora }}{% endif %} · {{ ed.luogo }}</p>{% endif %}
+    </div>
+    <aside class="scheda">
+      <p class="etichetta">In breve</p>
+      <ul class="date">
+        <li><span>Tipo</span><strong>{{ tipo_nome }}</strong></li>
+        {% if discipline %}<li><span>Discipline</span><strong>{{ discipline }}</strong></li>{% endif %}
+        <li><span>Materiali</span><strong>{{ materiali|length }}</strong></li>
+        <li><span>Letture consigliate</span><strong>{{ letture|length }}</strong></li>
+      </ul>
+      <p class="nota" style="margin:0"><a href="{{ url_for('public.edizione', slug=ed.slug) }}#programma">Programma dell'edizione →</a></p>
+    </aside>
+  </div>
+</section>
+
+{% set n = namespace(i=0) %}
+{% if abstract or form_descrizione %}
+{% set n.i = n.i + 1 %}
+<section class="sezione" id="abstract">
+  <span class="num">§ {{ n.i }}</span>
+  <h2>{{ "L'unità didattica" if ud else 'La lezione' }}</h2>
+  {% if abstract %}
+    {# l'abstract delle candidature è scritto dal docente: testo semplice, mai HTML #}
+    <div class="misura">{% if ep %}{{ abstract|markdown }}{% else %}<p>{{ abstract }}</p>{% endif %}</div>
+  {% else %}<p class="nota">Abstract non ancora inserito.</p>{% endif %}
+  {% if form_descrizione %}
+  <details class="riquadro-admin">
+    <summary>Modifica l'abstract (admin)</summary>
+    <form method="post" action="{{ url_for('admin.descrizione_intervento', epid=ep.id) }}" class="modulo">
+      {{ form_descrizione.hidden_tag() }}{{ campo(form_descrizione.descrizione, rows=8) }}
+      <button class="btn btn-piccolo">Salva abstract</button>
+    </form>
+  </details>
+  {% endif %}
+</section>
+{% endif %}
+
+{% set n.i = n.i + 1 %}
+<section class="sezione" id="materiali">
+  <span class="num">§ {{ n.i }}</span>
+  <h2>Materiali</h2>
+  {% if materiali %}
+  <ul class="materiali">
+    {% for m in materiali %}
+    {% set url = url_for('archivio.scarica', mid=m.id) if m.file_path else m.url %}
+    <li><a class="foglio" href="{{ url }}"{% if not m.file_path %} target="_blank" rel="noopener"{% endif %}>
+      <span class="foglio-formato">{{ m.file_nome.rsplit('.', 1)[-1]|upper if m.file_path else 'LINK' }}</span>
+      <span class="foglio-tipo">{{ TIPI_MATERIALE.get(m.tipo, m.tipo) }}</span>
+      <strong>{{ m.titolo }}</strong>
+      {% if m.descrizione %}<span class="foglio-desc">{{ m.descrizione }}</span>{% endif %}
+      <span class="foglio-piede">{% if m.autori %}{{ m.autori }} · {% endif %}{{ m.dimensione|dimensione if m.file_path else 'apri il link' }}
+        {% if m.visibilita != 'pubblico' %} · {{ VISIBILITA[m.visibilita] }}{% endif %}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="nota">Nessun materiale disponibile{% if not current_user.is_authenticated %} pubblicamente: alcuni sono riservati agli utenti registrati{% endif %}.</p>
+  {% endif %}
+  {% if form %}
+  <details class="riquadro-admin"{% if form.errors %} open{% endif %}>
+    <summary>Carica un materiale in questa {{ 'UD' if ud else 'lezione' }} (admin)</summary>
+    <form method="post" enctype="multipart/form-data" class="modulo"
+          action="{{ url_for('admin.materiale_intervento', epid=ep.id) if ep else url_for('admin.materiale_candidatura', cid=c.id) }}">
+      {{ form.hidden_tag() }}
+      {% for f in form if f.type not in ('CSRFTokenField', 'HiddenField') %}{{ campo(f) }}{% endfor %}
+      <button class="btn btn-piccolo">Pubblica</button>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
+{% if letture or (form and ep) %}
+{% set n.i = n.i + 1 %}
+<section class="sezione" id="letture">
+  <span class="num">§ {{ n.i }}</span>
+  <h2>Letture consigliate</h2>
+  {% if letture %}
+  <ul class="scaffale">
+    {% for i, motivazione in letture %}
+    <li>
+      {{ copertina(i) }}
+      <div class="scaffale-testo">
+        {% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}{% if i.autori %}, {% endif %}<em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
+        {% if motivazione %}<p class="motivazione">{{ motivazione }}</p>{% endif %}
+        {% if i.url %}<a class="nota" href="{{ i.url }}" target="_blank" rel="noopener">{{ 'sito' if i.tipo == 'webpage' else 'link' }}</a>{% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="nota">Nessuna lettura ancora.</p>{% endif %}
+  {% if form and ep %}<p class="nota"><a href="{{ url_for('area.letture_lezione', epid=ep.id) }}">Aggiungi letture (admin) →</a></p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

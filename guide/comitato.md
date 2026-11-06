@@ -57,6 +57,21 @@ Per collegare l'account: il relatore si registra dal sito, l'admin gli dà il ru
 *Relatore* in **Utenti**, poi lo sceglie nella lezione e **Salva lezione**. Da quel momento il
 relatore carica i materiali e la bibliografia della lezione e vede le UD dei docenti ammessi.
 
+Ruolo **Docente (UD)**: l'unità didattica di un docente senza candidatura sul sito (edizioni
+2023–2025, create dal programma con `flask ud-dal-programma`). Titolo e ordine si correggono
+come per le lezioni; l'account del docente si può già collegare, ma per ora non gli dà accesso.
+
+### Completare le edizioni passate
+
+Ogni lezione e ogni UD ha la sua **pagina pubblica** (link dai titoli del programma
+dell'edizione, dall'archivio e dall'elenco delle persone qui sopra): abstract, materiali e
+letture consigliate con le copertine. L'admin, aperta la pagina, trova tre riquadri:
+**Modifica l'abstract** (markdown), **Carica un materiale** (PDF, PowerPoint o link, già
+pubblicato, con la visibilità scelta) e **Aggiungi letture**, che apre la stessa ricerca dei
+libri dei relatori: le letture entrano subito in Zotero, in «Relatori» o «Docenti»
+dell'edizione, senza il tag delle proposte. Per le UD delle candidature ammesse la pagina
+mostra titolo, nome, discipline e abstract del docente, e l'admin può caricarvi i materiali.
+
 ### Collezione Zotero dell'edizione
 
 Nella scheda dell'edizione si sceglie la **collezione Zotero** tra le collezioni radice
@@ -134,7 +149,8 @@ sito controlla solo la copia locale e lo segnala.
 docente e unità didattica, o staff). L'admin sceglie per ciascuno **stato** (*in revisione*,
 *pubblicato*, *rifiutato*) e **visibilità** (*pubblico*, *solo utenti registrati*, *solo
 comitato*) e può eliminarlo. Sotto l'elenco l'admin carica direttamente i materiali dello
-staff, già pubblicati.
+staff, già pubblicati. Il materiale di una lezione o di una UD si carica invece dalla sua
+pagina (vedi *Completare le edizioni passate*).
 
 ## Utenti e ruoli
 

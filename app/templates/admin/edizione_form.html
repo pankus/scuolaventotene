@@ -24,21 +24,24 @@
   <button class="btn btn-piccolo">Aggiungi voce</button>
 </form>
 
-<h2 id="persone">Comitato scientifico e relatori</h2>
+<h2 id="persone">Comitato scientifico, relatori e UD dei docenti</h2>
 <p class="nota">Il relatore si registra dal sito; poi in <a href="{{ url_for('admin.utenti') }}">Utenti</a> gli dai
-  il ruolo «Relatore» e qui colleghi il suo account alla lezione: potrà caricarne i materiali.</p>
+  il ruolo «Relatore» e qui colleghi il suo account alla lezione: potrà caricarne i materiali.
+  Le UD «Docente» sono quelle delle edizioni passate (create dal programma): materiali, abstract e
+  letture si aggiungono dalla loro pagina; l'account del docente si può già collegare, ma per ora
+  non gli dà accesso alla UD.</p>
 <ul class="persone">
   {% for ep in ed.persone %}
-  <li>{{ ep.persona.nome_completo }} · {{ ep.persona.affiliazione or '' }} <em>({{ ep.ruolo }})</em>
-    {% if ep.ruolo == 'relatore' %}<small>{{ ep.titolo_lezione or 'lezione senza titolo' }} ·
+  <li>{{ ep.persona.nome_completo }} · {{ ep.persona.affiliazione or '' }} <em>({{ RUOLI_EDIZIONE.get(ep.ruolo, ep.ruolo) }})</em>
+    {% if ep.ruolo != 'comitato' %}<small><a href="{{ url_for('public.intervento', slug=ed.slug, epid=ep.id) }}">{{ ep.titolo_lezione or 'senza titolo' }}</a> ·
       {{ 'account: ' ~ ep.persona.utente.email if ep.persona.utente else 'nessun account collegato' }}</small>{% endif %}
     <form method="post" action="{{ url_for('admin.elimina_persona', epid=ep.id) }}" style="display:inline">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo">rimuovi</button></form>
-    {% if ep.ruolo == 'relatore' %}{% set lf = lezione_forms[ep.id] %}
+    {% if ep.ruolo != 'comitato' %}{% set lf = lezione_forms[ep.id] %}
     <form method="post" action="{{ url_for('admin.aggiorna_lezione', epid=ep.id) }}" class="modulo modulo-riga">
       {{ lf.hidden_tag() }}
       {{ campo(lf.titolo_lezione) }}{{ campo(lf.ordine) }}{{ campo(lf.utente_id) }}
-      <button class="btn btn-piccolo">Salva lezione</button>
+      <button class="btn btn-piccolo">Salva</button>
     </form>{% endif %}</li>
   {% endfor %}
 </ul>

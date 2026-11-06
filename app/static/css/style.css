@@ -256,10 +256,40 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .biblio li { padding: .7rem 0 .7rem 2.6rem; border-bottom: 1px solid var(--linea-lo); position: relative; text-indent: 0; }
 .biblio li::before { counter-increment: b; content: counter(b, decimal-leading-zero); position: absolute; left: 0; top: .95rem; font-family: var(--mono); font-size: .7rem; color: var(--inchiostro-lo); }
 .biblio .csl-bib-body, .biblio .csl-entry { display: inline; }
+.csl-bib-body, .csl-entry { padding-left: 0 !important; text-indent: 0 !important; }  /* rientro di Zotero: qui c'è la copertina */
 .biblio a { font-family: var(--mono); font-size: .7rem; margin-left: .4rem; }
-.biblio li.con-copertina { display: flow-root; }
-.biblio img { float: right; width: 3.2rem; height: auto; margin: 0 0 .4rem 1rem; border: 1px solid var(--linea-lo); }
+.biblio li.con-copertina { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 1.1rem; align-items: start; }
+
+/* copertine: immagine locale o segnaposto tipografico (proporzione di un libro) */
+.copertina { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border: 1px solid var(--linea); border-radius: 2px; background: var(--carta-2); box-shadow: 0 1px 2px rgba(5, 28, 44, .08); }
+.copertina-vuota { position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: .5em .45em .55em; border-left: 3px solid var(--accento); font-size: .42rem; line-height: 1.2; color: var(--inchiostro); }
+.copertina-vuota .cv-autore { font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--inchiostro-md); }
+.copertina-vuota .cv-titolo { font-family: var(--serif); font-size: 1.45em; font-style: italic; overflow-wrap: anywhere; hyphens: auto; }
+.copertina-web { border-left-color: var(--inchiostro-lo); }
 .biblio .isbn { font-family: var(--mono); font-size: .7rem; color: var(--inchiostro-md); margin-left: .4rem; }
+/* ------------------------------------------------------------------ pagina di lezione / UD */
+.firma-intervento { font-size: 1.5rem; font-style: italic; margin: 0; }
+.firma-intervento small { display: block; font-family: var(--sans); font-style: normal; font-size: .8rem; color: var(--inchiostro-md); margin-top: .3rem; }
+.materiali { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1.2rem; }
+.foglio { display: flex; flex-direction: column; gap: .35rem; height: 100%; padding: 1.2rem 1.3rem 1.1rem; border: 1px solid var(--linea); border-top: 3px solid var(--inchiostro); border-radius: var(--r); color: var(--inchiostro); text-decoration: none; transition: border-color .15s, background .15s; }
+.foglio:hover { border-color: var(--accento); background: var(--accento-bg); color: var(--inchiostro); }
+.foglio strong { font-weight: 400; font-size: 1.25rem; line-height: 1.2; }
+.foglio-formato { font-family: var(--mono); font-size: 1.6rem; color: var(--accento); line-height: 1; }
+.foglio-tipo, .foglio-piede { font-family: var(--mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--inchiostro-md); }
+.foglio-desc { font-family: var(--sans); font-size: .85rem; color: var(--inchiostro-md); }
+.foglio-piede { margin-top: auto; padding-top: .6rem; color: var(--inchiostro-lo); }
+.scaffale { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 2rem 2.5rem; }
+.scaffale li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+.scaffale .copertina-vuota { font-size: .62rem; }
+.scaffale-testo { font-size: 1.05rem; }
+.scaffale-testo .csl-bib-body, .scaffale-testo .csl-entry { display: inline; }
+.motivazione { font-style: italic; color: var(--inchiostro-md); border-left: 2px solid var(--accento-bd); padding-left: .8rem; margin: .6rem 0 .4rem; }
+.riquadro-admin { margin-top: 1.5rem; padding: .8rem 1rem; border: 1px dashed var(--accento-bd); border-radius: var(--r); background: var(--accento-bg); font-family: var(--sans); font-size: .9rem; }
+.riquadro-admin summary { cursor: pointer; color: var(--accento-dk); }
+.riquadro-admin form { margin-top: 1rem; max-width: 38rem; }
+.programma a { color: inherit; text-decoration-color: var(--accento-bd); }
+.programma a:hover { color: var(--accento); }
+
 .elenco-edizioni { list-style: none; padding: 0; }
 .elenco-edizioni li { border-bottom: 1px solid var(--linea); }
 .elenco-edizioni a { display: flex; gap: 1.5rem; padding: .9rem 0; color: var(--inchiostro); text-decoration: none; }

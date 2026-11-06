@@ -1,11 +1,12 @@
 """Sito pubblico: home, pagina edizione, la scuola, contatti, privacy, guide."""
-from flask import Blueprint, abort, current_app, render_template, send_from_directory
+from flask import Blueprint, abort, current_app, render_template, send_from_directory, url_for
 from flask_login import current_user
 
 from ..guida import GUIDE, leggi
 
 from ..extensions import db
-from ..models import Edizione, EdizionePersona, PropostaLettura, ZoteroCollezione
+from ..forms import DescrizioneForm, MaterialeUDForm
+from ..models import Candidatura, Edizione, EdizionePersona, PropostaLettura, ZoteroCollezione, ZoteroItem
 
 bp = Blueprint("public", __name__)
 
@@ -31,7 +32,69 @@ def edizione(slug):
     ed = Edizione.query.filter_by(slug=slug).first_or_404()
     if ed.stato == "bozza":
         abort(404)
-    return render_template("public/edizione.html", ed=ed, letture=_letture_edizione(ed))
+    return render_template("public/edizione.html", ed=ed, letture=_letture_edizione(ed),
+                           pagine=pagine_interventi(ed))
+
+
+def pagine_interventi(ed):
+    """Titolo → URL della pagina di lezioni e UD dell'edizione (per i link del programma)."""
+    out = {ep.titolo_lezione: url_for("public.intervento", slug=ed.slug, epid=ep.id)
+           for ep in ed.persone if ep.ruolo in ("relatore", "docente") and ep.titolo_lezione}
+    out.update({c.titolo_ud: url_for("public.unita_didattica", slug=ed.slug, cid=c.id)
+                for c in ed.candidature if c.stato == "ammessa" and c.titolo_ud})
+    return out
+
+
+def _edizione_pubblica(slug):
+    ed = Edizione.query.filter_by(slug=slug).first_or_404()
+    if ed.stato == "bozza":
+        abort(404)
+    return ed
+
+
+def _letture_consigliate(letture):
+    """[(ZoteroItem, motivazione)] delle letture approvate già in Zotero, item vivi."""
+    approvate = [p for p in letture if p.stato == "approvata" and p.zotero_key]
+    items = {i.key: i for i in ZoteroItem.query.filter(
+        ZoteroItem.key.in_([p.zotero_key for p in approvate]), ZoteroItem.eliminato.is_(False))}
+    return [(items[p.zotero_key], p.motivazione) for p in approvate if p.zotero_key in items]
+
+
+def _pagina_intervento(ed, titolo, **dati):
+    voce = next((v for v in ed.programma if v.titolo == titolo), None)
+    materiali = [m for m in sorted(dati.pop("materiali"), key=lambda m: (m.tipo, m.titolo))
+                 if m.stato == "pubblicato" and m.visibile_a(current_user)]
+    admin = current_user.is_authenticated and current_user.is_admin
+    return render_template("public/intervento.html", ed=ed, titolo=titolo, voce=voce,
+                           materiali=materiali, letture=_letture_consigliate(dati.pop("letture")),
+                           form=MaterialeUDForm() if admin else None, **dati)
+
+
+@bp.route("/edizioni/<slug>/interventi/<int:epid>")
+def intervento(slug, epid):
+    """Pagina di una lezione (relatore) o di una UD senza candidatura (docente, edizioni passate)."""
+    ed = _edizione_pubblica(slug)
+    ep = db.get_or_404(EdizionePersona, epid)
+    if ep.edizione_id != ed.id or ep.ruolo not in ("relatore", "docente"):
+        abort(404)
+    admin = current_user.is_authenticated and current_user.is_admin
+    return _pagina_intervento(
+        ed, ep.titolo_lezione or "Senza titolo", ep=ep, ud=ep.ruolo == "docente",
+        autore=ep.persona.nome_completo, affiliazione=ep.persona.affiliazione,
+        abstract=ep.descrizione, materiali=ep.materiali, letture=ep.letture,
+        form_descrizione=DescrizioneForm(obj=ep) if admin else None)
+
+
+@bp.route("/edizioni/<slug>/unita-didattiche/<int:cid>")
+def unita_didattica(slug, cid):
+    """UD di un docente ammesso: solo nome, titolo, discipline e abstract, mai altri dati personali."""
+    ed = _edizione_pubblica(slug)
+    c = db.get_or_404(Candidatura, cid)
+    if c.edizione_id != ed.id or c.stato != "ammessa" or not c.titolo_ud:
+        abort(404)
+    return _pagina_intervento(
+        ed, c.titolo_ud, c=c, ud=True, autore=c.utente.nome_completo, discipline=c.discipline,
+        abstract=c.abstract, materiali=c.materiali, letture=c.letture)
 
 
 def _letture_edizione(ed):

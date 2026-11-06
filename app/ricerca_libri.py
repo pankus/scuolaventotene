@@ -117,3 +117,47 @@ def cerca(q, isbn_testo=None):
     isbn = normalizza_isbn(isbn_testo) or normalizza_isbn(q)
     online, errori = cerca_online(q, isbn, current_app.config.get("GOOGLE_BOOKS_API_KEY"))
     return {"zotero": cerca_zotero(q, isbn), "online": online, "errori": errori}
+
+
+# --------------------------------------------------------------------------- copertine della bibliografia
+def _copertine_per_isbn(isbn, chiave_google=None):
+    """URL candidati della copertina: Open Library (diretto per ISBN, 404 se manca, poi ricerca),
+    poi Google Books. Un errore di rete o di quota si propaga: il libro si riprova al giro dopo."""
+    yield f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg?default=false"
+    for fonte in (lambda: open_library(None, isbn), lambda: google_books(None, isbn, chiave_google)):
+        for r in fonte():
+            if r.get("copertina_url"):
+                yield r["copertina_url"]
+
+
+def scarica_copertine(limite=50, salva=None, candidati=None):
+    """Copertine in locale per i libri con ISBN che non ne hanno una (``flask zotero-copertine``,
+    in cron dopo il sync). Un libro senza copertina trovata resta con ``copertina_path=""`` e non
+    si riprova. ``salva(url) -> percorso`` e ``candidati(isbn)`` si sostituiscono nei test.
+    Restituisce (scaricate, non trovate); i libri con una fonte giù restano da riprovare."""
+    from .extensions import db
+    from .utils import salva_copertina
+    salva = salva or salva_copertina
+    chiave = current_app.config.get("GOOGLE_BOOKS_API_KEY")
+    candidati = candidati or (lambda isbn: _copertine_per_isbn(isbn, chiave))
+    # ponytail: un libro alla volta, in serie; ``limite`` per giro tiene basso il carico sulle fonti
+    libri = (ZoteroItem.query.filter(ZoteroItem.eliminato.is_(False), ZoteroItem.tipo == "book",
+                                     ZoteroItem.isbn.isnot(None), ZoteroItem.copertina_path.is_(None))
+             .limit(limite).all())
+    scaricate = 0
+    senza = 0
+    for zi in libri:
+        try:
+            for url in candidati(zi.isbn):
+                try:
+                    zi.copertina_path = salva(url)
+                    scaricate += 1
+                    break
+                except Exception:  # noqa: BLE001  (404, host non ammesso, non immagine, troppo grande)
+                    continue
+            else:
+                zi.copertina_path, senza = "", senza + 1
+        except Exception:  # noqa: BLE001  (fonte giù o quota esaurita: resta None, si riprova)
+            pass
+        db.session.commit()
+    return scaricate, senza

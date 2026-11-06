@@ -54,7 +54,7 @@
     <table class="programma">
     {% for v in voci %}
       <tr class="tipo-{{ v.tipo }}"><td class="ora">{{ v.ora }}</td>
-        <td>{% if v.relatori %}<span class="relatori">{{ v.relatori }}</span>{% endif %}{{ v.titolo }}</td></tr>
+        <td>{% if v.relatori %}<span class="relatori">{{ v.relatori }}</span>{% endif %}{% if pagine.get(v.titolo) %}<a href="{{ pagine[v.titolo] }}">{{ v.titolo }}</a>{% else %}{{ v.titolo }}{% endif %}</td></tr>
     {% endfor %}
     </table>
   {% endfor %}

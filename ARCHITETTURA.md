@@ -31,6 +31,9 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /la-scuola                presentazione, chi può partecipare, come candidarsi
 /edizioni/<anno>          bando, date, programma, comitato, invito alla lettura dell'edizione
 /edizioni/<anno>/bando    PDF del bando
+/edizioni/<anno>/interventi/<id>        pagina di una lezione o di una UD senza candidatura: abstract,
+                          materiali, letture con copertine (riquadri di caricamento per l'admin)
+/edizioni/<anno>/unita-didattiche/<id>  UD di una candidatura ammessa (nome, titolo, discipline, abstract)
 /archivio                 elenco delle edizioni
 /archivio/<anno>          materiali (PDF/PPT) dell'edizione, filtrati per visibilità
 /materiali/<id>/scarica   download controllato
@@ -59,8 +62,10 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /area/candidatura/<id>/letture/<id>/elimina      (in bozza; dopo la scuola solo le nuove non rivedute)
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
 /admin/utenti                                    ruoli e attivazione
-/admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione (admin)
-/area/lezioni/<id>/letture[?tipo=webpage]         bibliografia della lezione (relatore, scrive in Zotero)
+/admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione o UD (admin)
+/admin/interventi/<id>/materiali, /descrizione   materiale e abstract dentro lezione/UD (admin, POST)
+/admin/candidature/<id>/materiali                materiale dentro la UD di una candidatura ammessa (admin, POST)
+/area/lezioni/<id>/letture[?tipo=webpage]         bibliografia della lezione (relatore; admin per ogni lezione/UD)
 /area/lezioni/<id>/letture/<id>/elimina           toglie dal sito (il record resta in Zotero)
 /area/lezioni/<id>/unita-didattiche               UD dei docenti ammessi (relatore)
 /admin/zotero/sync                               sincronizzazione manuale
@@ -85,7 +90,8 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - **Candidatura**: tipo (borsista o uditore), stato (`bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`), titolo dell'UD, discipline, file e numero di caratteri (calcolato automaticamente per i .docx). Ogni docente ha al massimo una candidatura per edizione.
 - **Valutazione**: una per membro del comitato, con originalità, potenzialità didattiche e valorizzazione delle fonti (0–25 ciascuna, massimo 75). La graduatoria usa la media dei punteggi.
 - **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato da un docente nella candidatura **oppure** dal relatore per la sua lezione (vincolo: esattamente una delle due); campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione | post_scuola`), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
-- **EdizionePersona**: persona nel comitato o tra i relatori di un'edizione; per un relatore è la lezione (`titolo_lezione`, `ordine`). **Persona.utente_id** lega la persona all'account del relatore (uno per persona).
+- **EdizionePersona**: persona di un'edizione con ruolo `comitato | relatore | docente` (`RUOLI_EDIZIONE`); per un relatore è la lezione, per un docente la UD senza candidatura (edizioni passate, create dal programma con `flask ud-dal-programma`): `titolo_lezione`, `ordine`, `descrizione` (abstract in markdown). **Persona.utente_id** lega la persona all'account (uno per persona); per i docenti il collegamento per ora non dà permessi.
+- **ZoteroItem.copertina_path**: copia locale della copertina; `""` = cercata per ISBN e non trovata (`flask zotero-copertine`).
 - **Materiale**: edizione, origine (lezione di un relatore, candidatura di un docente, nessuna per lo staff), tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
 
 ## 5. Flussi principali
@@ -97,7 +103,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 **Dopo la scuola**: il docente ammesso aggiunge altre letture (`momento = post_scuola`, fino a 10 oltre a quelle dell'iscrizione), che vanno nella stessa coda del comitato e in «Docenti»; può correggerle o eliminarle finché non sono rivedute (`PropostaLettura.modificabile`), quelle dell'iscrizione restano in sola lettura.
 
 **Bibliografia Zotero**: la bibliografia si cura nel gruppo Zotero, che resta la fonte di verità. Il sito ne tiene una copia locale aggiornata dalla sync. Il sito scrive in Zotero (`app/zotero_scrittura.py`) solo le letture proposte dai docenti e approvate dal comitato (solo tipi libro e pagina web, senza dati dei docenti). Gli item nel cestino Zotero non compaiono sul sito.
-- Il comando `flask zotero-sync` gira in cron (per esempio ogni ora) e si può lanciare anche dal cruscotto.
+- Il comando `flask zotero-sync` gira in cron (per esempio ogni ora) e si può lanciare anche dal cruscotto; dopo di lui `flask zotero-copertine` scarica le copertine dei libri con ISBN (Open Library, poi Google Books, dal server; un errore di rete o di quota lascia il libro da riprovare).
 - La sincronizzazione è incrementale: usa `since=<versione>` per collezioni e record e `/deleted` per le rimozioni. La sincronizzazione completa con `--completa` riallinea tutto.
 - Le citazioni arrivano già formattate dall'API (`include=bib`, stile CSL `chicago-author-date`, locale `it-IT`, entrambi configurabili).
 - Le collezioni del gruppo diventano le "sezioni" della bibliografia; filtrare per una sezione include le sottosezioni (l'edizione mostra anche «Relatori» e «Docenti»). Ogni voce (macro `voce_biblio`, anche nella pagina dell'edizione) ha citazione, ISBN, link e la copertina locale se c'è, servita da `/bibliografia/copertine/<key>`; nessun dato del docente né motivazione. La scheda della candidatura del comitato elenca le letture con il link alla revisione. Ogni edizione può essere collegata a una collezione, che compare come invito alla lettura nella pagina dell'edizione.
@@ -120,7 +126,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 ## 7. Da fare (prossimi passi)
 
 1. Testi istituzionali (storia e obiettivi, enti promotori; «Le edizioni» è scritta), loghi CNR-ISMed, Centro Ventotene e ANPPIA, verifica dell'informativa privacy con il DPO.
-2. Edizioni 2023–2025 caricate (`flask seed-precedenti`, dati in `app/edizioni_precedenti.py`); mancano i materiali di lezioni e UD e gli account dei relatori.
+2. Edizioni 2023–2025 caricate (`flask seed-precedenti`, dati in `app/edizioni_precedenti.py`); UD dei docenti create dal programma (`flask ud-dal-programma`); mancano i materiali di lezioni e UD (l'admin li carica dalla pagina di ciascuna) e gli account di relatori e docenti.
 3. Attestati di frequenza in PDF (borsisti e uditori): rimandati. Da decidere: tecnica (carta intestata `modelli/*.docx` compilata e convertita con LibreOffice, oppure fpdf2), chi li riceve (frequenza segnata dall'admin o tutti gli ammessi), firmatario e monte ore.
 4. Opzionale: campi per la registrazione delle presenze, export degli iscritti e degli uditori.
 5. [PIANO_LETTURE.md](PIANO_LETTURE.md): fatte F1–F7 e R1–R3; F8 (sfogliare i materiali) rimandata. Stato e punto di ripresa in cima al file.

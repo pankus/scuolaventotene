@@ -11,7 +11,7 @@ from flask_login import current_user, login_required
 from .. import zotero_sync as modulo_sync
 from ..extensions import db
 from ..forms import CandidaturaForm, LetturaDocenteForm, MaterialeForm, ProfiloForm
-from ..models import Candidatura, Edizione, Materiale, PropostaLettura, ZoteroItem, adesso
+from ..models import Candidatura, Edizione, EdizionePersona, Materiale, PropostaLettura, ZoteroItem, adesso
 from ..posta import email_conferma_invio
 from ..ricerca_libri import cerca
 from ..utils import copertina_ammessa, conta_caratteri, elimina_upload, salva_upload
@@ -229,6 +229,11 @@ def nuovo_materiale():
 
 # ------------------------------------------------------------------ relatore: la propria lezione
 def _mia_lezione(epid):
+    """La lezione del relatore; l'admin apre qualunque lezione o UD senza candidatura
+    (per completare le edizioni passate)."""
+    if current_user.is_admin:
+        ep = db.get_or_404(EdizionePersona, epid)
+        return ep if ep.ruolo in ("relatore", "docente") else abort(404)
     return next((ep for ep in current_user.lezioni() if ep.id == epid), None) or abort(404)
 
 
@@ -264,7 +269,8 @@ def letture_lezione(epid):
                 if any(k not in visti for k, _ in trovate):
                     scelte = trovate
             if not scelte:
-                avviso = salva_lettura(zot, p, ep.edizione, "relatori", scelta)
+                quale = "docenti" if ep.ruolo == "docente" else "relatori"
+                avviso = salva_lettura(zot, p, ep.edizione, quale, scelta, tag_proposte=False)
                 p.stato, p.deciso_il, p.deciso_da_id = "approvata", adesso(), current_user.id
                 db.session.add(p)
                 db.session.commit()

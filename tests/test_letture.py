@@ -252,7 +252,7 @@ def test_pagina_edizione_sotto_albero(app, zot):
                                       "<h3>Relatori</h3>", "Scelto da un relatore", "<h3>Docenti</h3>",
                                       "Proposto da un docente")]
     assert ordine == sorted(ordine)
-    assert html.count("Libro lezione due") == 1  # una volta sola
+    assert html.count("Libro lezione due") == 2  # una voce sola: citazione + segnaposto della copertina
 
 
 def test_doppione_comparso_dopo_apertura(app, zot):
