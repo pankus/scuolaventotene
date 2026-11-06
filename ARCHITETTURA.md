@@ -41,7 +41,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 
 /area/                    area personale del docente
 /area/profilo
-/area/candidatura/<anno>  bozza → invio
+/area/candidatura/edizione/<slug>  bozza → invio
 /area/candidatura/<id>    riepilogo, controlli del bando, invio/ritiro
 /area/materiali/nuovo     invio di un materiale (va in revisione)
 

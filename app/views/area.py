@@ -55,7 +55,8 @@ def profilo():
     return render_template("area/profilo.html", form=form, ed=ed, cand=cand)
 
 
-@bp.route("/candidatura/<slug>", methods=["GET", "POST"])
+# "edizione/" evita lo scontro con /candidatura/<int:cid> quando lo slug è un anno (2027)
+@bp.route("/candidatura/edizione/<slug>", methods=["GET", "POST"])
 def candidatura(slug):
     ed = Edizione.query.filter_by(slug=slug).first_or_404()
     cand = Candidatura.query.filter_by(utente_id=current_user.id, edizione_id=ed.id).first()

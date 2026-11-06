@@ -29,11 +29,23 @@ def url(c, **q):
 def test_bozza_porta_al_passo_letture(app):
     ed = crea_edizione()
     c = client_di(app, crea_utente())
-    r = c.post(f"/area/candidatura/{ed.slug}", data={"tipo": "uditore"})
+    r = c.post(f"/area/candidatura/edizione/{ed.slug}", data={"tipo": "uditore"})
     cand = Candidatura.query.filter_by(edizione_id=ed.id).one()
     assert r.headers["Location"].endswith(f"/area/candidatura/{cand.id}/letture")
     pagina = c.get(url(cand)).get_data(as_text=True)
     assert 'aria-current="step"' in pagina and 'data-ricerca-url="/area/letture/cerca"' in pagina
+
+
+def test_slug_numerico(app):
+    """Regressione: con slug = anno la pagina di candidatura finiva sul dettaglio (404)."""
+    ed = crea_edizione()
+    ed.slug = "2099"
+    db.session.commit()
+    c = client_di(app, crea_utente())
+    assert c.get("/area/").get_data(as_text=True).count("/area/candidatura/edizione/2099") == 1
+    assert c.get("/area/candidatura/edizione/2099").status_code == 200
+    c.post("/area/candidatura/edizione/2099", data={"tipo": "uditore"})
+    assert Candidatura.query.filter_by(edizione_id=ed.id).count() == 1
 
 
 def test_profilo_nel_percorso(app):
@@ -42,7 +54,7 @@ def test_profilo_nel_percorso(app):
     r = c.post(f"/area/profilo?edizione={ed.slug}",
                data={"nome": "Ada", "cognome": "Prova", "telefono": "1", "residenza": "Roma",
                      "data_nascita": "1980-01-01", "paese": "Italia", "grado": "", "tipo_contratto": ""})
-    assert r.headers["Location"].endswith(f"/area/candidatura/{ed.slug}")
+    assert r.headers["Location"].endswith(f"/area/candidatura/edizione/{ed.slug}")
 
 
 def test_aggiungi_libro_dalla_ricerca(app, bozza):
