@@ -15,6 +15,23 @@
   {% if c.inviata_il %}<dt>Inviata il</dt><dd>{{ c.inviata_il|data_it('%d/%m/%Y %H:%M') }}</dd>{% endif %}
 </dl>
 
+{% if c.dopo_la_scuola or c.materiali %}
+<h2>Dopo la scuola</h2>
+<p class="nota">Carica i materiali del tuo modulo (PDF, presentazioni) e, se vuoi, consiglia altre
+  letture. Il comitato li rivede prima di pubblicarli nell'archivio dell'edizione.</p>
+{% if c.materiali %}
+<table class="tabella">
+  <tr><th>Materiale</th><th>Stato</th></tr>
+  {% for m in c.materiali %}<tr><td>{{ m.titolo }} <small>{{ TIPI_MATERIALE.get(m.tipo, m.tipo) }}</small></td>
+    <td>{{ stato(m.stato, STATI_MATERIALE) }}</td></tr>{% endfor %}
+</table>
+{% endif %}
+{% if c.dopo_la_scuola %}<div class="azioni">
+  <a class="btn" href="{{ url_for('area.nuovo_materiale', candidatura=c.id) }}">Carica un materiale</a>
+  <a class="btn btn-secondario" href="{{ url_for('area.letture', cid=c.id) }}">Aggiungi letture</a>
+</div>{% endif %}
+{% endif %}
+
 {% if c.stato == 'bozza' %}
   {% if not c.letture %}<div class="avviso avviso-info">Consigliato: indica qualche libro o sito
     nell'<a href="{{ url_for('area.letture', cid=c.id) }}">invito alla lettura</a>. Puoi inviare anche senza.</div>{% endif %}

@@ -272,6 +272,12 @@ class Candidatura(db.Model):
                                   cascade="all, delete-orphan")
     letture = db.relationship("PropostaLettura", back_populates="candidatura",
                               cascade="all, delete-orphan", order_by="PropostaLettura.id")
+    materiali = db.relationship("Materiale", back_populates="candidatura")
+
+    @property
+    def dopo_la_scuola(self):
+        """Dopo la scuola il docente ammesso carica i materiali del modulo e altre letture."""
+        return self.stato == "ammessa" and self.edizione.stato in ("chiusa", "conclusa")
 
     @property
     def punteggio_medio(self):
@@ -363,6 +369,13 @@ class PropostaLettura(db.Model):
     def titolo(self):
         return (self.campi or {}).get("title") or "(senza titolo)"
 
+    @property
+    def modificabile(self):
+        """Il docente cambia le letture in bozza e, dopo la scuola, quelle nuove non ancora riviste."""
+        c = self.candidatura
+        return c is not None and (c.stato == "bozza" or (
+            c.dopo_la_scuola and self.momento == "post_scuola" and self.stato == "proposta"))
+
 
 # --------------------------------------------------------------------------- materiali
 TIPI_MATERIALE = {
@@ -393,13 +406,15 @@ class Materiale(db.Model):
     visibilita = db.Column(db.String(20), nullable=False, default="pubblico")
     stato = db.Column(db.String(20), nullable=False, default="in_revisione")
     caricato_da_id = db.Column(db.Integer, db.ForeignKey("utenti.id"))
-    # materiale di una lezione (caricato dal relatore); vuoto per quelli dei docenti e dello staff
+    # origine: lezione (relatore) o candidatura (docente, dopo la scuola); nessuna = staff
     lezione_id = db.Column(db.Integer, db.ForeignKey("edizioni_persone.id", ondelete="SET NULL"))
+    candidatura_id = db.Column(db.Integer, db.ForeignKey("candidature.id", ondelete="SET NULL"))
     creato_il = db.Column(db.DateTime, default=adesso)
 
     edizione = db.relationship("Edizione", back_populates="materiali")
     caricato_da = db.relationship("Utente")
     lezione = db.relationship("EdizionePersona", back_populates="materiali")
+    candidatura = db.relationship("Candidatura", back_populates="materiali")
 
     def visibile_a(self, user):
         if user.is_authenticated and (user.is_comitato or user.id == self.caricato_da_id):

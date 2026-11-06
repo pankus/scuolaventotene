@@ -8,6 +8,8 @@
   <p class="nota">Consiglia libri e siti web utili per il tema della scuola: facoltativo ma
     raccomandato. Il comitato li rivede; quelli approvati entrano nella bibliografia
     dell'edizione, senza il tuo nome.</p>
+  {% if c.stato != 'bozza' and aperte %}<p class="nota">Dopo la scuola puoi aggiungere altre letture:
+    quelle già rivedute dal comitato non si modificano più.</p>{% endif %}
 
   {% if c.letture %}
   <table class="tabella">
@@ -17,7 +19,7 @@
         <small>{{ (l.campi.autori or '')|replace('\n', '; ') }} {{ l.campi.date or '' }}{% if l.campi.url and l.tipo == 'webpage' %} · {{ l.campi.url }}{% endif %}</small>
         {% if l.nota_comitato and l.stato != 'proposta' %}<br><small>Nota del comitato: {{ l.nota_comitato }}</small>{% endif %}</td>
       <td>{% if c.stato != 'bozza' %}{{ stato(l.stato, STATI_PROPOSTA) }}{% endif %}</td>
-      <td>{% if c.stato == 'bozza' %}
+      <td>{% if l.modificabile %}
         <a href="{{ url_for('area.letture', cid=c.id, p=l.id) }}">modifica</a>
         <form method="post" action="{{ url_for('area.elimina_lettura', cid=c.id, pid=l.id) }}" class="in-linea">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -27,8 +29,8 @@
   </table>
   {% endif %}
 
-  {% if c.stato == 'bozza' %}
-    {% if p or c.letture|length < max_letture %}
+  {% if aperte %}
+    {% if p or n_letture < max_letture %}
     <h2>{% if p %}Modifica la lettura{% elif tipo == 'webpage' %}Aggiungi un sito web{% else %}Aggiungi un libro{% endif %}</h2>
     {% if not p %}<p><a href="{{ url_for('area.letture', cid=c.id, tipo='webpage' if tipo == 'book' else 'book') }}">oppure {{ 'aggiungi un sito web' if tipo == 'book' else 'aggiungi un libro' }}</a></p>{% endif %}
     <form method="post" class="modulo">
@@ -45,9 +47,9 @@
       </div>
     </form>
     {% else %}<p class="nota">Hai già consigliato {{ max_letture }} letture.</p>{% endif %}
-    <div class="azioni">
+    {% if c.stato == 'bozza' %}<div class="azioni">
       <a class="btn btn-accento" href="{{ url_for('area.dettaglio', cid=c.id) }}">Continua: riepilogo e invio</a>
-    </div>
+    </div>{% else %}<p><a href="{{ url_for('area.dettaglio', cid=c.id) }}">← Torna alla candidatura</a></p>{% endif %}
   {% else %}
     <p><a href="{{ url_for('area.dettaglio', cid=c.id) }}">← Torna alla candidatura</a></p>
   {% endif %}

@@ -44,7 +44,8 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /area/profilo
 /area/candidatura/edizione/<slug>  bozza → invio
 /area/candidatura/<id>    riepilogo, controlli del bando, invio/ritiro
-/area/materiali/nuovo[?lezione=<id>]   invio di un materiale (va in revisione); con lezione: del relatore
+/area/materiali/nuovo?lezione=<id>|?candidatura=<id>   materiale della propria lezione (relatore) o
+                          del modulo dopo la scuola (docente ammesso); va in revisione
 
 /admin/                   cruscotto (comitato e admin)
 /admin/edizioni/nuova, /admin/edizioni/<id>     edizione + programma + persone
@@ -53,7 +54,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /admin/materiali                                 revisione e caricamento
 /admin/letture[?edizione=<id>], /admin/letture/<id>   revisione delle letture proposte (comitato)
 /area/candidatura/<id>/letture[?tipo=webpage|?p=<id>]   passo 3: invito alla lettura del docente
-/area/candidatura/<id>/letture/<id>/elimina      (solo in bozza)
+/area/candidatura/<id>/letture/<id>/elimina      (in bozza; dopo la scuola solo le nuove non rivedute)
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
 /admin/utenti                                    ruoli e attivazione
 /admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione (admin)
@@ -72,6 +73,7 @@ utenti ─┬─< candidature >── edizioni ──< programma_voci
         └─< materiali >── edizioni
 edizioni ──< edizioni_persone >── persone ··· utenti (persone.utente_id: account del relatore)
                  └──< materiali (lezione_id: materiali della lezione)
+candidature ──< materiali (candidatura_id: materiali del modulo, dopo la scuola)
 edizioni.zotero_collection_key ··· zotero_collezioni
 zotero_items >──< zotero_collezioni   (zotero_item_collezioni)
 sync_stato (versione libreria Zotero, data ultima sync)
@@ -82,13 +84,15 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - **Valutazione**: una per membro del comitato, con originalità, potenzialità didattiche e valorizzazione delle fonti (0–25 ciascuna, massimo 75). La graduatoria usa la media dei punteggi.
 - **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato da un docente nella candidatura **oppure** dal relatore per la sua lezione (vincolo: esattamente una delle due); campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione | post_scuola`), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
 - **EdizionePersona**: persona nel comitato o tra i relatori di un'edizione; per un relatore è la lezione (`titolo_lezione`, `ordine`). **Persona.utente_id** lega la persona all'account del relatore (uno per persona).
-- **Materiale**: edizione, lezione (se è di un relatore), tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
+- **Materiale**: edizione, origine (lezione di un relatore, candidatura di un docente, nessuna per lo staff), tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
 
 ## 5. Flussi principali
 
 **Candidatura**: il docente si registra (con consenso privacy), poi segue quattro passi (macro `passi` in `_macros.html`, senza JS): 1 profilo (data di nascita, telefono e residenza sono richiesti dal bando), 2 proposta (bozza con il file), 3 invito alla lettura (facoltativo ma consigliato: fino a 10 libri o siti, con la ricerca dei libri; si modificano finché la candidatura è in bozza), 4 riepilogo e invio. Il sistema controlla i requisiti; le letture non bloccano l'invio (nel riepilogo c'è solo un avviso) e sono elencate nell'email di conferma. Può inviare solo entro la scadenza. Poi il comitato valuta, l'admin assegna l'esito, e l'export CSV restituisce la graduatoria.
 
-**Materiali**: l'admin pubblica direttamente. Il docente invia il materiale, che resta in revisione finché l'admin non lo pubblica o lo rifiuta, scegliendo anche la visibilità.
+**Materiali**: l'admin pubblica direttamente da `/admin/materiali`. Il relatore carica dalla propria lezione; il docente dalla propria candidatura, solo **dopo la scuola** (`Candidatura.dopo_la_scuola`: ammessa, edizione chiusa o conclusa). Non c'è un caricamento libero. I materiali restano in revisione finché l'admin non li pubblica o rifiuta, scegliendo anche la visibilità (default pubblico). L'archivio dell'edizione li divide in «Lezioni», «Unità didattiche dei docenti» e «Altri materiali».
+
+**Dopo la scuola**: il docente ammesso aggiunge altre letture (`momento = post_scuola`, fino a 10 oltre a quelle dell'iscrizione), che vanno nella stessa coda del comitato e in «Docenti»; può correggerle o eliminarle finché non sono rivedute (`PropostaLettura.modificabile`), quelle dell'iscrizione restano in sola lettura.
 
 **Bibliografia Zotero**: la bibliografia si cura nel gruppo Zotero, che resta la fonte di verità. Il sito ne tiene una copia locale aggiornata dalla sync. Il sito scrive in Zotero (`app/zotero_scrittura.py`) solo le letture proposte dai docenti e approvate dal comitato (solo tipi libro e pagina web, senza dati dei docenti). Gli item nel cestino Zotero non compaiono sul sito.
 - Il comando `flask zotero-sync` gira in cron (per esempio ogni ora) e si può lanciare anche dal cruscotto.

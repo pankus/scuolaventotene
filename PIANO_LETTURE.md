@@ -12,21 +12,26 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | R1 Struttura Zotero dell'edizione | **fatta** (2026-11-06): collezione dell'edizione scelta da elenco, sottocollezione «Docenti» creata dal sito (`zotero_docenti_key`), pagina edizione con il sotto-albero; struttura semplificata su richiesta (Edizione → Relatori, Docenti) |
 | R2 Ruolo relatore e lezioni | **fatta** (2026-11-06): ruolo `relatore`, `Persona.utente_id`, lezione = `EdizionePersona` (`titolo_lezione`, `ordine`), `Materiale.lezione_id`; admin collega l'account nella scheda edizione; area «Le mie lezioni» con caricamento; archivio diviso per lezioni; `env.py` spegne le FK durante le migrazioni |
 | R3 Bibliografia della lezione e UD per i relatori | **fatta** (2026-11-06): `PropostaLettura` di una candidatura **o** di una lezione (CHECK), letture dei relatori subito in «Relatori» (senza tag, conferma se ci sono doppioni), pagina edizione con «Relatori» divisa per lezione, UD dei docenti ammessi per i relatori, informativa aggiornata |
-| F6 Dopo la scuola: altri libri e materiali | da fare |
+| F6 Dopo la scuola: altri libri e materiali | **fatta** (2026-11-06): `Candidatura.dopo_la_scuola` (ammessa, edizione chiusa/conclusa), `Materiale.candidatura_id` + migrazione, upload dalla candidatura (`?candidatura=`), upload libero chiuso, archivio con «Unità didattiche dei docenti», letture `post_scuola` (`PropostaLettura.modificabile`), informativa aggiornata |
 | F7 Invito alla lettura pubblico | da fare |
 | F8 Sfogliare i materiali | da decidere |
 
 ## Riprendere da qui (stato al 2026-11-06)
-- **Prossima fase: F6.** Prima domanda da fare all'utente: chi può caricare dopo la scuola?
-  Proposta: candidature `ammessa` di edizioni `chiusa | conclusa`.
+- **Prossima fase: F7** (invito alla lettura pubblico in `/bibliografia`, letture nella scheda
+  candidatura del comitato).
+- F6 (decisioni dell'utente, 2026-11-06): caricano dopo la scuola le candidature `ammessa` di
+  edizioni `chiusa | conclusa` (borsisti e uditori); materiali dei docenti pubblici di default;
+  `/area/materiali/nuovo` senza `?lezione=` né `?candidatura=` risponde 404 (lo staff carica
+  da `/admin/materiali`). Un file per invio (si ripete per più file). Limite di 10 letture per
+  momento (iscrizione e dopo la scuola contano a parte).
 - Ruoli: **docente** = insegnante che si candida; **relatore** = storico che tiene una lezione
   (account proprio, ruolo assegnato dall'admin, collegato alla lezione). Vedi «Struttura Zotero
   e relatori» qui sotto.
 - Zotero: Edizione → «Relatori» e «Docenti» (niente collezioni per lezione: lezione e UD le
   conosce il sito). Letture dei docenti: revisione del comitato. Letture dei relatori: dirette.
 - Git: repository **locale**, senza remote (creato il 2026-11-06). Un commit per fase,
-  `Co-Authored-By` in coda. Ultimo: R3.
-- Database locale: migrazioni fino a `43ca587c6fc1`; backup prima di ogni fase in
+  `Co-Authored-By` in coda. Ultimo: F6.
+- Database locale: migrazioni fino a `388437ba29c9`; backup prima di ogni fase in
   `instance/backup/`. Edizioni: 2026 (chiusa), 2027 (aperta, creata dall'utente per le prove).
 - Note pratiche emerse provando:
   - dopo una modifica al `.env` il server di sviluppo va **riavviato** a mano (il reloader di

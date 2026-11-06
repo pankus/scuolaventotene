@@ -98,6 +98,8 @@ comitato; il relatore non entra nel back-office). Docente = insegnante che si ca
 storico che tiene una lezione: le sue lezioni sono `Utente.lezioni()` (via `Persona.utente_id`),
 e ogni accesso a una lezione passa da lì. Il relatore vede le UD solo dei docenti **ammessi**
 nelle edizioni in cui insegna (`area._relatore_di`), mai email, telefono, nascita, residenza.
+Il docente carica materiali solo dalla propria candidatura dopo la scuola
+(`Candidatura.dopo_la_scuola`), il relatore dalla propria lezione, lo staff da `/admin/materiali`.
 Proteggere le viste con `@login_required`, `@comitato_required` o `@admin_required`
 (`app/utils.py`); per i materiali usare `Materiale.visibile_a(user)`. Ogni nuova rotta del
 back-office deve avere un decoratore di permesso.
@@ -190,6 +192,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
   UD dei docenti ammessi senza dati personali, vincolo `una_origine`.
 - `test_letture.py`: revisione delle letture (permessi, collega/crea, nessun dato del docente
   nel payload Zotero), copertine, merge `dc:replaces`.
+- `test_dopo_scuola.py`: `Candidatura.dopo_la_scuola`, materiali del modulo (solo la propria
+  candidatura ammessa, niente upload libero), archivio, letture `post_scuola`.
 
 Per i test di rotta usare un client per utente (`client_di` in `test_rotte.py`). La fixture
 azzera `g._login_user` a ogni richiesta: l'app context resta aperto per tutto il test e
@@ -210,8 +214,8 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
 4. Opzionale: registrazione presenze, export iscritti e uditori.
 
 **In corso: [PIANO_LETTURE.md](PIANO_LETTURE.md)**: invito alla lettura, Zotero in lettura e
-scrittura, ricerca dei libri, relatori, materiali dopo la scuola. Fatte F1–F5 e R1–R3; prossima
-**F6**. Una fase per sessione: leggere la sezione «Riprendere da qui» e la tabella di stato in cima
+scrittura, ricerca dei libri, relatori, materiali dopo la scuola. Fatte F1–F6 e R1–R3; prossima
+**F7**. Una fase per sessione: leggere la sezione «Riprendere da qui» e la tabella di stato in cima
 al piano, fare la prima fase "da fare", aggiornare tabella e «Riprendere da qui», un commit per
 fase (repository git locale, senza remote).
 

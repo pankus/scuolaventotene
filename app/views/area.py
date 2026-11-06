@@ -110,33 +110,39 @@ def _compila(p, form):
 
 @bp.route("/candidatura/<int:cid>/letture", methods=["GET", "POST"])
 def letture(cid):
-    """Passo 3: invito alla lettura (facoltativo). Si modifica finché la candidatura è in bozza."""
+    """Passo 3: invito alla lettura (facoltativo), modificabile finché la candidatura è in bozza.
+    Dopo la scuola il docente ammesso ne aggiunge altre (momento post_scuola), stessa revisione."""
     c = _mia_candidatura(cid)
+    aperte = c.stato == "bozza" or c.dopo_la_scuola
+    momento = "iscrizione" if c.stato == "bozza" else "post_scuola"
     p = None
     if request.values.get("p"):
-        p = next((x for x in c.letture if x.id == request.values.get("p", type=int)), None) or abort(404)
+        p = next((x for x in c.letture if x.id == request.values.get("p", type=int)
+                  and x.modificabile), None) or abort(404)
     tipo = p.tipo if p else ("webpage" if request.args.get("tipo") == "webpage" else "book")
     form = LetturaDocenteForm(data={**p.campi, "motivazione": p.motivazione, "zotero_key": p.zotero_key,
                                     "copertina_url": p.copertina_url} if p else None)
-    if c.stato == "bozza" and form.validate_on_submit():
-        if p is None and len(c.letture) >= MAX_LETTURE:
+    n_letture = sum(x.momento == momento for x in c.letture)  # il limite vale per momento
+    if aperte and form.validate_on_submit():
+        if p is None and n_letture >= MAX_LETTURE:
             flash(f"Puoi consigliare al massimo {MAX_LETTURE} letture.", "errore")
             return redirect(url_for("area.letture", cid=c.id))
-        p = p or PropostaLettura(candidatura=c, tipo=tipo, momento="iscrizione")
+        p = p or PropostaLettura(candidatura=c, tipo=tipo, momento=momento)
         db.session.add(p)
         _compila(p, form)
         db.session.commit()
         flash("Lettura salvata.", "ok")
         return redirect(url_for("area.letture", cid=c.id))
     return render_template("area/letture.html", c=c, ed=c.edizione, form=form, tipo=tipo, p=p,
-                           campi=CAMPI_MODULO[tipo], max_letture=MAX_LETTURE)
+                           campi=CAMPI_MODULO[tipo], max_letture=MAX_LETTURE, aperte=aperte,
+                           n_letture=n_letture)
 
 
 @bp.post("/candidatura/<int:cid>/letture/<int:pid>/elimina")
 def elimina_lettura(cid, pid):
     c = _mia_candidatura(cid)
     p = next((x for x in c.letture if x.id == pid), None) or abort(404)
-    if c.stato != "bozza":
+    if not p.modificabile:
         abort(400)
     db.session.delete(p)
     db.session.commit()
@@ -184,24 +190,31 @@ def file_candidatura(cid):
 
 @bp.route("/materiali/nuovo", methods=["GET", "POST"])
 def nuovo_materiale():
-    # ?lezione=<id>: materiale della lezione di un relatore (solo la propria)
-    lezione = None
+    """Materiale di una lezione (?lezione=, il relatore) o di una candidatura ammessa dopo la
+    scuola (?candidatura=, il docente). Quelli dello staff si caricano da /admin/materiali."""
+    lezione = cand = None
     if request.args.get("lezione"):
-        lezione = next((ep for ep in current_user.lezioni()
-                        if ep.id == request.args.get("lezione", type=int)), None) or abort(404)
-    form = MaterialeForm()
-    edizioni = [lezione.edizione] if lezione else \
-        Edizione.query.filter(Edizione.stato != "bozza").order_by(Edizione.anno.desc())
-    form.edizione_id.choices = [(e.id, f"{e.anno} – {e.titolo}") for e in edizioni]
+        lezione = _mia_lezione(request.args.get("lezione", type=int))
+        ed = lezione.edizione
+    elif request.args.get("candidatura"):
+        cand = _mia_candidatura(request.args.get("candidatura", type=int))
+        if not cand.dopo_la_scuola:
+            abort(404)
+        ed = cand.edizione
+    else:
+        abort(404)
+    form = MaterialeForm(tipo="unita_didattica" if cand else "slide")
+    form.edizione_id.choices = [(ed.id, f"{ed.anno} – {ed.titolo}")]
     if form.validate_on_submit():
         if not form.file.data and not form.url.data:
             flash("Carica un file oppure indica un link.", "errore")
         else:
-            m = Materiale(edizione_id=form.edizione_id.data, titolo=form.titolo.data,
+            m = Materiale(edizione_id=ed.id, titolo=form.titolo.data,
                           autori=form.autori.data or current_user.nome_completo,
                           tipo=form.tipo.data, descrizione=form.descrizione.data,
                           url=form.url.data or None, caricato_da_id=current_user.id,
-                          lezione=lezione, stato="in_revisione", visibilita="pubblico")
+                          lezione=lezione, candidatura=cand, stato="in_revisione",
+                          visibilita="pubblico")
             if form.file.data:
                 info = salva_upload(form.file.data, "materiali",
                                     current_app.config["ESTENSIONI_MATERIALI"])
@@ -210,8 +223,8 @@ def nuovo_materiale():
             db.session.add(m)
             db.session.commit()
             flash("Materiale inviato: sarà pubblicato dopo la revisione.", "ok")
-            return redirect(url_for("area.dashboard"))
-    return render_template("area/materiale_form.html", form=form, lezione=lezione)
+            return redirect(url_for("area.dettaglio", cid=cand.id) if cand else url_for("area.dashboard"))
+    return render_template("area/materiale_form.html", form=form, lezione=lezione, cand=cand)
 
 
 # ------------------------------------------------------------------ relatore: la propria lezione

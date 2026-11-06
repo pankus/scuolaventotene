@@ -18,9 +18,11 @@
 {% endmacro %}
 {% if materiali %}
 {% set delle_lezioni = materiali|selectattr('lezione')|sort(attribute='lezione.posizione')|list %}
-{% set altri = materiali|rejectattr('lezione')|list %}
+{% set dei_docenti = materiali|rejectattr('lezione')|selectattr('candidatura')|list %}
+{% set altri = materiali|rejectattr('lezione')|rejectattr('candidatura')|list %}
 {% if delle_lezioni %}<h2>Lezioni</h2>{{ tabella(delle_lezioni, True) }}{% endif %}
-{% if altri %}{% if delle_lezioni %}<h2>Altri materiali</h2>{% endif %}{{ tabella(altri) }}{% endif %}
+{% if dei_docenti %}<h2>Unità didattiche dei docenti</h2>{{ tabella(dei_docenti) }}{% endif %}
+{% if altri %}{% if delle_lezioni or dei_docenti %}<h2>Altri materiali</h2>{% endif %}{{ tabella(altri) }}{% endif %}
 {% else %}
 <p>Nessun materiale disponibile{% if not current_user.is_authenticated %} pubblicamente — alcuni materiali sono riservati agli utenti registrati{% endif %}.</p>
 {% endif %}

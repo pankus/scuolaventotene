@@ -46,14 +46,14 @@
   {% for c in candidature %}
   <tr><td>{{ c.edizione.anno }}</td><td>{{ c.tipo }}</td><td>{{ c.titolo_ud or '—' }}</td>
       <td>{{ stato(c.stato, STATI_CANDIDATURA) }}</td>
-      <td><a href="{{ url_for('area.dettaglio', cid=c.id) }}">Apri</a></td></tr>
+      <td><a href="{{ url_for('area.dettaglio', cid=c.id) }}">Apri</a>{% if c.dopo_la_scuola %}<br>
+        <a class="btn btn-piccolo" href="{{ url_for('area.nuovo_materiale', candidatura=c.id) }}">Carica un materiale</a>{% endif %}</td></tr>
   {% endfor %}
 </table>
 {% else %}<p>Nessuna candidatura.</p>{% endif %}
 
-<h2>I miei materiali</h2>
-<p><a class="btn btn-secondario" href="{{ url_for('area.nuovo_materiale') }}">Invia un materiale</a></p>
 {% if materiali %}
+<h2>I miei materiali</h2>
 <table class="tabella">
   <tr><th>Titolo</th><th>Edizione</th><th>Stato</th></tr>
   {% for m in materiali %}<tr><td>{{ m.titolo }}</td><td>{{ m.edizione.anno }}</td><td>{{ stato(m.stato, STATI_MATERIALE) }}</td></tr>{% endfor %}
