@@ -72,7 +72,7 @@ TIPI_COPERTINA = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp",
 MAX_COPERTINA = 2 * 1024 * 1024
 
 
-def _host_ammesso(url):
+def copertina_ammessa(url):
     p = urllib.parse.urlsplit(url or "")
     host = (p.hostname or "").lower()
     return p.scheme == "https" and any(host == h or host.endswith("." + h) for h in HOST_COPERTINE)
@@ -80,14 +80,14 @@ def _host_ammesso(url):
 
 class _RedirectControllato(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        if not _host_ammesso(newurl):
+        if not copertina_ammessa(newurl):
             raise ValueError(f"redirect verso un host non ammesso: {newurl}")
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 def salva_copertina(url):
     """Scarica la copertina in uploads/copertine/ (via salva_upload). Percorso o ValueError."""
-    if not _host_ammesso(url):
+    if not copertina_ammessa(url):
         raise ValueError("indirizzo della copertina non ammesso")
     apri = urllib.request.build_opener(_RedirectControllato).open
     with apri(urllib.request.Request(url, headers={"User-Agent": "scuola-ventotene"}), timeout=5) as r:

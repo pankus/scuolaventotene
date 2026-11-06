@@ -8,7 +8,7 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F2 Zotero: scrittura | **fatta** (2026-11-06): `app/zotero_scrittura.py` (`crea_item`, `aggiorna_item`, `candidati_duplicati`), `FakeZot` in scrittura; nessuna rotta né migrazione |
 | F3 Proposte di lettura e revisione del comitato | **fatta** (2026-11-06): `PropostaLettura` + migrazione, `/admin/letture` (collega o crea, rifiuta), `collega_item`, copertine con host ammessi, merge `dc:replaces` nella sync |
 | F4 Lookup durante la digitazione | **fatta** (2026-11-06): `app/ricerca_libri.py`, `/area/letture/cerca`, `static/js/letture.js` (già attivo nella revisione del comitato); `GOOGLE_BOOKS_API_KEY` facoltativa (senza: 429 frequenti, resta Open Library); niente miniature esterne nel browser |
-| F5 Flusso di iscrizione | da fare |
+| F5 Flusso di iscrizione | **fatta** (2026-11-06): passi 1–4 (macro `passi`), `/area/candidatura/<id>/letture` (aggiungi/modifica/elimina in bozza, max 10, ricerca attiva), avviso nel riepilogo, letture nell'email di conferma, `la_scuola` e informativa aggiornate (Zotero, Google Books, Open Library senza dati personali) |
 | F6 Dopo la scuola: altri libri e materiali | da fare |
 | F7 Invito alla lettura pubblico | da fare |
 | F8 Sfogliare i materiali | da decidere |

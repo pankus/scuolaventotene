@@ -1,4 +1,5 @@
-"""Area riservata del docente: profilo, candidature, invio materiali, ricerca dei libri."""
+"""Area riservata del docente: profilo, candidatura a passi (profilo, UD, invito alla lettura,
+riepilogo e invio), invio materiali, ricerca dei libri."""
 import time
 from collections import defaultdict, deque
 
@@ -7,11 +8,12 @@ from flask import (Blueprint, abort, current_app, flash, jsonify, redirect, rend
 from flask_login import current_user, login_required
 
 from ..extensions import db
-from ..forms import CandidaturaForm, MaterialeForm, ProfiloForm
-from ..models import Candidatura, Edizione, Materiale, adesso
+from ..forms import CandidaturaForm, LetturaDocenteForm, MaterialeForm, ProfiloForm
+from ..models import Candidatura, Edizione, Materiale, PropostaLettura, ZoteroItem, adesso
 from ..posta import email_conferma_invio
 from ..ricerca_libri import cerca
-from ..utils import conta_caratteri, elimina_upload, salva_upload
+from ..utils import copertina_ammessa, conta_caratteri, elimina_upload, salva_upload
+from ..zotero_scrittura import CAMPI_MODULO
 
 bp = Blueprint("area", __name__)
 
@@ -41,13 +43,16 @@ def dashboard():
 
 @bp.route("/profilo", methods=["GET", "POST"])
 def profilo():
+    # ?edizione=<slug>: passo 1 della candidatura, poi si prosegue con la proposta
+    ed = Edizione.query.filter_by(slug=request.args.get("edizione", "")).first()
     form = ProfiloForm(obj=current_user)
     if form.validate_on_submit():
         form.populate_obj(current_user)
         db.session.commit()
         flash("Profilo aggiornato.", "ok")
-        return redirect(url_for("area.dashboard"))
-    return render_template("area/profilo.html", form=form)
+        return redirect(url_for("area.candidatura", slug=ed.slug) if ed else url_for("area.dashboard"))
+    cand = ed and Candidatura.query.filter_by(utente_id=current_user.id, edizione_id=ed.id).first()
+    return render_template("area/profilo.html", form=form, ed=ed, cand=cand)
 
 
 @bp.route("/candidatura/<slug>", methods=["GET", "POST"])
@@ -76,8 +81,8 @@ def candidatura(slug):
             cand.file_path, cand.file_nome = info["file_path"], info["file_nome"]
             cand.n_caratteri = conta_caratteri(cand.file_path)
         db.session.commit()
-        flash("Bozza salvata. Controlla i dati e invia la candidatura.", "ok")
-        return redirect(url_for("area.dettaglio", cid=cand.id))
+        flash("Bozza salvata. Ora puoi consigliare libri e siti (facoltativo).", "ok")
+        return redirect(url_for("area.letture", cid=cand.id))
     return render_template("area/candidatura_form.html", form=form, ed=ed, cand=cand)
 
 
@@ -85,6 +90,50 @@ def candidatura(slug):
 def dettaglio(cid):
     c = _mia_candidatura(cid)
     return render_template("area/candidatura.html", c=c, problemi=c.problemi_invio())
+
+
+MAX_LETTURE = 10  # per candidatura
+
+
+@bp.route("/candidatura/<int:cid>/letture", methods=["GET", "POST"])
+def letture(cid):
+    """Passo 3: invito alla lettura (facoltativo). Si modifica finché la candidatura è in bozza."""
+    c = _mia_candidatura(cid)
+    p = None
+    if request.values.get("p"):
+        p = next((x for x in c.letture if x.id == request.values.get("p", type=int)), None) or abort(404)
+    tipo = p.tipo if p else ("webpage" if request.args.get("tipo") == "webpage" else "book")
+    form = LetturaDocenteForm(data={**p.campi, "motivazione": p.motivazione, "zotero_key": p.zotero_key,
+                                    "copertina_url": p.copertina_url} if p else None)
+    if c.stato == "bozza" and form.validate_on_submit():
+        if p is None and len(c.letture) >= MAX_LETTURE:
+            flash(f"Puoi consigliare al massimo {MAX_LETTURE} letture.", "errore")
+            return redirect(url_for("area.letture", cid=c.id))
+        p = p or PropostaLettura(candidatura=c, tipo=tipo, momento="iscrizione")
+        db.session.add(p)
+        p.campi = {k: (form[k].data or "").strip() for k in CAMPI_MODULO[tipo]}
+        p.motivazione = form.motivazione.data
+        # dalla ricerca: si tengono solo valori verificabili
+        key = form.zotero_key.data or None
+        p.zotero_key = key if key and ZoteroItem.query.filter_by(key=key, eliminato=False).first() else None
+        p.copertina_url = form.copertina_url.data if copertina_ammessa(form.copertina_url.data) else None
+        db.session.commit()
+        flash("Lettura salvata.", "ok")
+        return redirect(url_for("area.letture", cid=c.id))
+    return render_template("area/letture.html", c=c, ed=c.edizione, form=form, tipo=tipo, p=p,
+                           campi=CAMPI_MODULO[tipo], max_letture=MAX_LETTURE)
+
+
+@bp.post("/candidatura/<int:cid>/letture/<int:pid>/elimina")
+def elimina_lettura(cid, pid):
+    c = _mia_candidatura(cid)
+    p = next((x for x in c.letture if x.id == pid), None) or abort(404)
+    if c.stato != "bozza":
+        abort(400)
+    db.session.delete(p)
+    db.session.commit()
+    flash("Lettura eliminata.", "info")
+    return redirect(url_for("area.letture", cid=c.id))
 
 
 @bp.post("/candidatura/<int:cid>/invia")

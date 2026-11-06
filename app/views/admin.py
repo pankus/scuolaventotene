@@ -15,7 +15,7 @@ from ..models import (ESITI_CANDIDATURA, RUOLI, STATI_MATERIALE, VISIBILITA, Can
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroItem, adesso)
 from ..posta import email_esito
 from ..utils import admin_required, comitato_required, elimina_upload, salva_copertina, salva_upload
-from ..zotero_scrittura import TIPI, ErroreScrittura, candidati_duplicati, collega_item, crea_item
+from ..zotero_scrittura import CAMPI_MODULO, ErroreScrittura, candidati_duplicati, collega_item, crea_item
 
 bp = Blueprint("admin", __name__)
 
@@ -241,10 +241,6 @@ def aggiorna_materiale(mid):
 
 
 # ------------------------------------------------------------------ letture proposte
-CAMPI_LETTURA = {"book": TIPI["book"][:1] + ["autori", "curatori"] + TIPI["book"][1:],
-                 "webpage": TIPI["webpage"][:1] + ["autori"] + TIPI["webpage"][1:]}
-
-
 def _letture():
     """Proposte delle candidature inviate (quelle in bozza le vede solo il docente)."""
     return PropostaLettura.query.join(Candidatura).filter(Candidatura.stato != "bozza")
@@ -299,7 +295,7 @@ def lettura(pid):
         return redirect(url_for("admin.letture", edizione=ed.id))
 
     if azione == "approva" and form.validate_on_submit():
-        p.campi = {k: (form[k].data or "").strip() for k in CAMPI_LETTURA[p.tipo]}
+        p.campi = {k: (form[k].data or "").strip() for k in CAMPI_MODULO[p.tipo]}
         scelta = request.form.get("zotero_key", "")
         if not ed.zotero_collection_key:
             flash("Manca la collezione Zotero dell'edizione: impostala in Modifica edizione.", "errore")
@@ -333,7 +329,7 @@ def lettura(pid):
 
     scelte = _scelte_zotero(p, zot) if p.stato != "approvata" else []
     return render_template("admin/lettura.html", p=p, ed=ed, form=form, scelte=scelte,
-                           campi=CAMPI_LETTURA[p.tipo])
+                           campi=CAMPI_MODULO[p.tipo])
 
 
 # ------------------------------------------------------------------ utenti

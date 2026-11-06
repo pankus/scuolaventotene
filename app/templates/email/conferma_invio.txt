@@ -3,7 +3,10 @@ Gentile {{ c.utente.nome }},
 abbiamo ricevuto la tua candidatura come {{ c.tipo }} alla {{ c.edizione.numero }}ª edizione
 della Scuola ({{ c.edizione.titolo }}).
 {% if c.titolo_ud %}Unità didattica: {{ c.titolo_ud }}
-{% endif %}
+{% endif %}{% if c.letture %}
+Letture che hai consigliato (le rivedrà il comitato):
+{% for l in c.letture %}- {{ l.titolo }}{% if l.campi.autori %} ({{ l.campi.autori|replace('\n', '; ') }}){% endif %}
+{% endfor %}{% endif %}
 Puoi seguirne lo stato nell'area personale:
 {{ url_for('area.dettaglio', cid=c.id, _external=True) }}
 {% if c.edizione.data_esiti %}

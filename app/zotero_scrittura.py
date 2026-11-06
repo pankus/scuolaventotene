@@ -20,6 +20,9 @@ TIPI = {
     "webpage": ["title", "websiteTitle", "url", "accessDate"],
 }
 CREATORI = {"book": ("author", "editor"), "webpage": ("author",)}
+# campi dei moduli del sito (forms.LetturaForm), in ordine: quelli Zotero più autori e curatori
+CAMPI_MODULO = {"book": TIPI["book"][:1] + ["autori", "curatori"] + TIPI["book"][1:],
+                "webpage": TIPI["webpage"][:1] + ["autori"] + TIPI["webpage"][1:]}
 
 
 class ErroreScrittura(Exception):

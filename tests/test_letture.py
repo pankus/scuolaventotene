@@ -132,7 +132,7 @@ def test_copertina_scaricata(app, zot, monkeypatch):
     ("", False),
 ])
 def test_host_copertine(url, ok):
-    assert utils._host_ammesso(url) is ok
+    assert utils.copertina_ammessa(url) is ok
 
 
 class _Risposta(io.BytesIO):

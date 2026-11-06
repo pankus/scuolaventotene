@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, passi, stato %}
+{% block title %}Invito alla lettura · Candidatura {{ ed.anno }}{% endblock %}
+{% block content %}
+<div class="stretto">
+  <h1>Invito alla lettura</h1>
+  {% if c.stato == 'bozza' %}{{ passi(3, ed, c) }}{% endif %}
+  <p class="nota">Consiglia libri e siti web utili per il tema della scuola: facoltativo ma
+    raccomandato. Il comitato li rivede; quelli approvati entrano nella bibliografia
+    dell'edizione, senza il tuo nome.</p>
+
+  {% if c.letture %}
+  <table class="tabella">
+    <tr><th>Lettura</th><th>{% if c.stato != 'bozza' %}Stato{% endif %}</th><th></th></tr>
+    {% for l in c.letture %}
+    <tr><td><strong>{{ l.titolo }}</strong> <small>{{ TIPI_LETTURA.get(l.tipo, l.tipo) }}</small><br>
+        <small>{{ (l.campi.autori or '')|replace('\n', '; ') }} {{ l.campi.date or '' }}{% if l.campi.url and l.tipo == 'webpage' %} · {{ l.campi.url }}{% endif %}</small>
+        {% if l.nota_comitato and l.stato != 'proposta' %}<br><small>Nota del comitato: {{ l.nota_comitato }}</small>{% endif %}</td>
+      <td>{% if c.stato != 'bozza' %}{{ stato(l.stato, STATI_PROPOSTA) }}{% endif %}</td>
+      <td>{% if c.stato == 'bozza' %}
+        <a href="{{ url_for('area.letture', cid=c.id, p=l.id) }}">modifica</a>
+        <form method="post" action="{{ url_for('area.elimina_lettura', cid=c.id, pid=l.id) }}" class="in-linea">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="link-pericolo">elimina</button>
+        </form>{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if c.stato == 'bozza' %}
+    {% if p or c.letture|length < max_letture %}
+    <h2>{% if p %}Modifica la lettura{% elif tipo == 'webpage' %}Aggiungi un sito web{% else %}Aggiungi un libro{% endif %}</h2>
+    {% if not p %}<p><a href="{{ url_for('area.letture', cid=c.id, tipo='webpage' if tipo == 'book' else 'book') }}">oppure {{ 'aggiungi un sito web' if tipo == 'book' else 'aggiungi un libro' }}</a></p>{% endif %}
+    <form method="post" class="modulo">
+      {{ form.hidden_tag() }}
+      {% if p %}<input type="hidden" name="p" value="{{ p.id }}">{% endif %}
+      {% for nome in campi %}
+        {% if nome == 'title' and tipo == 'book' %}{{ campo(form.title, data_ricerca_url=url_for('area.cerca_letture'), placeholder="Scrivi il titolo: cerchiamo nella bibliografia e online") }}
+        {% else %}{{ campo(form[nome]) }}{% endif %}
+      {% endfor %}
+      {{ campo(form.motivazione) }}
+      <div class="azioni">
+        <button class="btn" type="submit">Salva la lettura</button>
+        {% if p %}<a href="{{ url_for('area.letture', cid=c.id) }}">annulla</a>{% endif %}
+      </div>
+    </form>
+    {% else %}<p class="nota">Hai già consigliato {{ max_letture }} letture.</p>{% endif %}
+    <div class="azioni">
+      <a class="btn btn-accento" href="{{ url_for('area.dettaglio', cid=c.id) }}">Continua: riepilogo e invio</a>
+    </div>
+  {% else %}
+    <p><a href="{{ url_for('area.dettaglio', cid=c.id) }}">← Torna alla candidatura</a></p>
+  {% endif %}
+</div>
+{% endblock %}
+{% block script %}<script src="{{ url_for('static', filename='js/letture.js') }}" defer></script>{% endblock %}

@@ -171,6 +171,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
 - `test_zotero.py`, `test_zotero_scrittura.py`: sync, scrittura, duplicati, con `FakeZot`.
 - `test_ricerca_libri.py`: lookup con `_json` finto (mai le API vere), fusione per ISBN, fonte giù,
   limite di 30 ricerche al minuto.
+- `test_iscrizione.py`: passi della candidatura, letture del docente (valori della ricerca
+  verificati, limite, sola lettura dopo l'invio, email di conferma).
 - `test_letture.py`: revisione delle letture (permessi, collega/crea, nessun dato del docente
   nel payload Zotero), copertine, merge `dc:replaces`.
 

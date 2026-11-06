@@ -51,6 +51,8 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /admin/candidature/<id>                          scheda, valutazione, esito
 /admin/materiali                                 revisione e caricamento
 /admin/letture[?edizione=<id>], /admin/letture/<id>   revisione delle letture proposte (comitato)
+/area/candidatura/<id>/letture[?tipo=webpage|?p=<id>]   passo 3: invito alla lettura del docente
+/area/candidatura/<id>/letture/<id>/elimina      (solo in bozza)
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
 /admin/utenti                                    ruoli e attivazione
 /admin/zotero/sync                               sincronizzazione manuale
@@ -77,7 +79,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 
 ## 5. Flussi principali
 
-**Candidatura**: il docente si registra (con consenso privacy), completa il profilo (data di nascita, telefono e residenza sono richiesti dal bando), salva la bozza con il file, e il sistema controlla i requisiti. Può inviare solo entro la scadenza. Poi il comitato valuta, l'admin assegna l'esito, e l'export CSV restituisce la graduatoria.
+**Candidatura**: il docente si registra (con consenso privacy), poi segue quattro passi (macro `passi` in `_macros.html`, senza JS): 1 profilo (data di nascita, telefono e residenza sono richiesti dal bando), 2 proposta (bozza con il file), 3 invito alla lettura (facoltativo ma consigliato: fino a 10 libri o siti, con la ricerca dei libri; si modificano finché la candidatura è in bozza), 4 riepilogo e invio. Il sistema controlla i requisiti; le letture non bloccano l'invio (nel riepilogo c'è solo un avviso) e sono elencate nell'email di conferma. Può inviare solo entro la scadenza. Poi il comitato valuta, l'admin assegna l'esito, e l'export CSV restituisce la graduatoria.
 
 **Materiali**: l'admin pubblica direttamente. Il docente invia il materiale, che resta in revisione finché l'admin non lo pubblica o lo rifiuta, scegliendo anche la visibilità.
 
@@ -88,9 +90,9 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - Le collezioni del gruppo diventano le "sezioni" della bibliografia. Ogni edizione può essere collegata a una collezione, che compare come invito alla lettura nella pagina dell'edizione.
 - La chiave API deve avere il permesso di scrittura sul gruppo (controllo: `flask zotero-verifica`); per la sola lettura basta una chiave in lettura, o nessuna se il gruppo è pubblico.
 
-**Letture proposte** (PIANO_LETTURE.md): il docente indica libri e siti nella candidatura (dalla fase F5). In `/admin/letture` il comitato vede le proposte delle candidature inviate, corregge la scheda e sceglie: collegarla a un record già in Zotero (doppioni trovati per ISBN o per titolo e anno) oppure crearne uno nuovo. In entrambi i casi l'item entra nella collezione dell'edizione con il tag `ZOTERO_TAG_PROPOSTE`, e la copertina viene scaricata in `uploads/copertine/` (solo da Google Books, Open Library e archive.org). Serve che l'edizione abbia la collezione Zotero. Se in Zotero si fondono due item, la sync sposta le proposte sul superstite (`dc:replaces`). Una proposta rifiutata riporta la nota del comitato; una approvata si corregge direttamente in Zotero.
+**Letture proposte** (PIANO_LETTURE.md): il docente indica libri e siti nella candidatura (passo 3); dopo l'invio vede lo stato e la nota del comitato. In `/admin/letture` il comitato vede le proposte delle candidature inviate, corregge la scheda e sceglie: collegarla a un record già in Zotero (doppioni trovati per ISBN o per titolo e anno) oppure crearne uno nuovo. In entrambi i casi l'item entra nella collezione dell'edizione con il tag `ZOTERO_TAG_PROPOSTE`, e la copertina viene scaricata in `uploads/copertine/` (solo da Google Books, Open Library e archive.org). Serve che l'edizione abbia la collezione Zotero. Se in Zotero si fondono due item, la sync sposta le proposte sul superstite (`dc:replaces`). Una proposta rifiutata riporta la nota del comitato; una approvata si corregge direttamente in Zotero.
 
-**Ricerca dei libri**: mentre si scrive il titolo (`letture.js`, 300 ms di pausa) il sito cerca nella copia locale di Zotero e, dal server, su Google Books e Open Library (timeout 5 s, in parallelo, risultati fusi per ISBN; se una fonte non risponde restano le altre). I risultati già in Zotero sono evidenziati; scegliendone uno si compilano i campi della scheda. Il browser non contatta servizi esterni: le copertine restano un indirizzo finché il comitato non approva. Per i siti web niente ricerca automatica (il titolo da un URL richiederebbe protezioni SSRF). Oggi la ricerca serve al comitato in `/admin/letture/<id>`; dalla fase F5 al docente.
+**Ricerca dei libri**: mentre si scrive il titolo (`letture.js`, 300 ms di pausa) il sito cerca nella copia locale di Zotero e, dal server, su Google Books e Open Library (timeout 5 s, in parallelo, risultati fusi per ISBN; se una fonte non risponde restano le altre). I risultati già in Zotero sono evidenziati; scegliendone uno si compilano i campi della scheda. Il browser non contatta servizi esterni: le copertine restano un indirizzo finché il comitato non approva. Per i siti web niente ricerca automatica (il titolo da un URL richiederebbe protezioni SSRF). La ricerca serve al docente (passo 3) e al comitato in `/admin/letture/<id>`.
 
 ## 6. Sicurezza e dati personali
 

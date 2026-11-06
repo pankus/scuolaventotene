@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% from "_macros.html" import form_auto %}
+{% from "_macros.html" import form_auto, passi %}
 {% block title %}Profilo{% endblock %}
 {% block content %}
 <div class="stretto">
   <h1>Il mio profilo</h1>
+  {% if ed and (not cand or cand.stato == 'bozza') %}{{ passi(1, ed, cand) }}{% endif %}
   <p class="nota">Data di nascita, telefono e residenza sono richiesti dal bando per inviare la candidatura.</p>
-  {{ form_auto(form) }}
+  {{ form_auto(form, 'Salva e continua' if ed else 'Salva') }}
 </div>
 {% endblock %}

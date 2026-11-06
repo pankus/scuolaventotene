@@ -18,3 +18,17 @@
 {% endmacro %}
 
 {% macro stato(s, etichette) %}<span class="badge badge-{{ s }}">{{ etichette.get(s, s) }}</span>{% endmacro %}
+
+{# Passi della candidatura: 1 profilo · 2 proposta UD · 3 invito alla lettura · 4 riepilogo e invio #}
+{% macro passi(attivo, ed, c=None) %}
+<ol class="passi">
+  {% set voci = [
+    (1, "Profilo", url_for('area.profilo', edizione=ed.slug)),
+    (2, "Proposta", url_for('area.candidatura', slug=ed.slug)),
+    (3, "Invito alla lettura", url_for('area.letture', cid=c.id) if c else None),
+    (4, "Riepilogo e invio", url_for('area.dettaglio', cid=c.id) if c else None)] %}
+  {% for n, nome, url in voci %}
+  <li{% if n == attivo %} aria-current="step"{% endif %}>{% if url and n != attivo %}<a href="{{ url }}">{{ n }} · {{ nome }}</a>{% else %}<span>{{ n }} · {{ nome }}</span>{% endif %}</li>
+  {% endfor %}
+</ol>
+{% endmacro %}

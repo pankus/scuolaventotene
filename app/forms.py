@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
-from wtforms import (BooleanField, DateField, EmailField, IntegerField, PasswordField,
-                     SelectField, StringField, TextAreaField)
+from wtforms import (BooleanField, DateField, EmailField, HiddenField, IntegerField,
+                     PasswordField, SelectField, StringField, TextAreaField)
 from wtforms.validators import (URL, DataRequired, Email, EqualTo, Length, NumberRange,
                                 Optional)
 
@@ -133,8 +133,8 @@ class PersonaEdizioneForm(FlaskForm):
     ruolo = SelectField("Ruolo", choices=[("comitato", "Comitato scientifico"), ("relatore", "Relatore")])
 
 
-class LetturaRevisioneForm(FlaskForm):
-    """Il comitato corregge la scheda prima di scriverla in Zotero (nomi dei campi = Zotero)."""
+class LetturaForm(FlaskForm):
+    """Scheda di un libro o sito (nomi dei campi = Zotero; quali si mostrano: CAMPI_MODULO)."""
     title = StringField("Titolo", validators=[DataRequired(), Length(max=500)])
     autori = TextAreaField("Autori (Cognome, Nome — uno per riga; un ente su una riga senza virgola)",
                            validators=[Optional()], render_kw={"rows": 3})
@@ -147,4 +147,16 @@ class LetturaRevisioneForm(FlaskForm):
     websiteTitle = StringField("Sito / ente", validators=[Optional(), Length(max=255)])
     url = StringField("URL", validators=[Optional(), URL(), Length(max=1000)])
     accessDate = StringField("Data di consultazione (AAAA-MM-GG)", validators=[Optional(), Length(max=20)])
+
+
+class LetturaRevisioneForm(LetturaForm):
+    """Il comitato corregge la scheda prima di scriverla in Zotero."""
     nota_comitato = TextAreaField("Nota del comitato (visibile al docente)", validators=[Optional()])
+
+
+class LetturaDocenteForm(LetturaForm):
+    """Il docente consiglia una lettura; copertina e key Zotero arrivano dalla ricerca (letture.js)."""
+    motivazione = TextAreaField("Perché la consigli (facoltativo)", validators=[Optional(), Length(max=1500)],
+                                render_kw={"rows": 3})
+    copertina_url = HiddenField(validators=[Optional(), Length(max=1000)])
+    zotero_key = HiddenField(validators=[Optional(), Length(max=20)])

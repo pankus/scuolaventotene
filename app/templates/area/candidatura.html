@@ -1,18 +1,23 @@
 {% extends "base.html" %}
-{% from "_macros.html" import stato %}
+{% from "_macros.html" import passi, stato %}
 {% block title %}La mia candidatura{% endblock %}
 {% block content %}
 <h1>Candidatura {{ c.edizione.anno }} {{ stato(c.stato, STATI_CANDIDATURA) }}</h1>
+{% if c.stato == 'bozza' %}{{ passi(4, c.edizione, c) }}{% endif %}
 <dl class="dati">
   <dt>Tipo</dt><dd>{{ TIPI_CANDIDATURA[c.tipo] }}</dd>
   <dt>Unità didattica</dt><dd>{{ c.titolo_ud or '—' }}</dd>
   <dt>Discipline</dt><dd>{{ c.discipline or '—' }}</dd>
   <dt>Proposta</dt><dd>{% if c.file_path %}<a href="{{ url_for('area.file_candidatura', cid=c.id) }}">{{ c.file_nome }}</a>
       {% if c.n_caratteri %}· {{ c.n_caratteri }} caratteri{% endif %}{% else %}—{% endif %}</dd>
+  <dt>Invito alla lettura</dt><dd>{% if c.letture %}<ul>{% for l in c.letture %}<li>{{ l.titolo }}{% if c.stato != 'bozza' %} {{ stato(l.stato, STATI_PROPOSTA) }}{% endif %}</li>{% endfor %}</ul>{% else %}—{% endif %}
+      <a href="{{ url_for('area.letture', cid=c.id) }}">{{ 'modifica' if c.stato == 'bozza' else 'dettagli' }}</a></dd>
   {% if c.inviata_il %}<dt>Inviata il</dt><dd>{{ c.inviata_il|data_it('%d/%m/%Y %H:%M') }}</dd>{% endif %}
 </dl>
 
 {% if c.stato == 'bozza' %}
+  {% if not c.letture %}<div class="avviso avviso-info">Consigliato: indica qualche libro o sito
+    nell'<a href="{{ url_for('area.letture', cid=c.id) }}">invito alla lettura</a>. Puoi inviare anche senza.</div>{% endif %}
   {% if problemi %}<div class="avviso avviso-errore"><ul>{% for p in problemi %}<li>{{ p }}</li>{% endfor %}</ul></div>{% endif %}
   <div class="azioni">
     <a class="btn btn-secondario" href="{{ url_for('area.candidatura', slug=c.edizione.slug) }}">Modifica</a>

@@ -268,3 +268,10 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .risultati-ricerca small { display: block; color: var(--inchiostro-lo); }
 .risultati-ricerca .in-zotero { background: var(--accento-bg); }
 .risultati-ricerca .in-zotero small { color: var(--accento); font-weight: 600; }
+
+/* ------------------------------------------------------------------ passi della candidatura */
+.passi { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; list-style: none; margin: 0 0 1.8rem; padding: 0 0 .7rem; border-bottom: 1px solid var(--linea); font-family: var(--sans); font-size: .85rem; }
+.passi a { color: var(--inchiostro-md); text-decoration: none; }
+.passi a:hover { color: var(--accento); }
+.passi span { color: var(--inchiostro-lo); }
+.passi [aria-current] span { color: var(--accento); font-weight: 600; }
