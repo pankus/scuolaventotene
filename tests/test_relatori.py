@@ -158,7 +158,7 @@ def test_doppione_chiede_conferma(app, zot, relatore):
     assert "È già nella bibliografia?" in html and 'value="ESIST"' in html
     assert not ep.letture and not zot.creati  # niente salvato finché non si sceglie
 
-    c.post(f"/area/lezioni/{ep.id}/letture", data={**LIBRO, "conferma": "1", "scelta": "ESIST"})
+    c.post(f"/area/lezioni/{ep.id}/letture", data={**LIBRO, "visti": "ESIST", "scelta": "ESIST"})
     (p,) = ep.letture
     assert p.zotero_key == "ESIST" and not zot.creati
     data = zot.record["ESIST"]["data"]
@@ -169,8 +169,21 @@ def test_doppione_ma_opera_diversa(app, zot, relatore):
     ep, c = relatore
     zot.metti_item("ESIST", "Esuli e confinati", ISBN="978-0-306-40615-7")
     sincronizza(zot=zot)
-    c.post(f"/area/lezioni/{ep.id}/letture", data={**LIBRO, "conferma": "1", "scelta": ""})
+    c.post(f"/area/lezioni/{ep.id}/letture", data={**LIBRO, "visti": "ESIST", "scelta": ""})
     assert len(zot.creati) == 1 and ep.letture[0].zotero_key != "ESIST"
+
+
+def test_doppione_comparso_dopo_la_scelta(app, zot, relatore):
+    """Il relatore ha visto un doppione e sceglie «crea nuovo», ma intanto un altro relatore
+    ha inserito lo stesso libro: si ripropone la scelta invece di creare un doppione."""
+    ep, c = relatore
+    zot.metti_item("ESIST", "Esuli e confinati", ISBN="978-0-306-40615-7")
+    zot.metti_item("NUOVO", "Esuli e confinati", date="2015")
+    sincronizza(zot=zot)
+    html = c.post(f"/area/lezioni/{ep.id}/letture",
+                  data={**LIBRO, "visti": "ESIST", "scelta": ""}).get_data(as_text=True)
+    assert not zot.creati and not ep.letture
+    assert 'value="NUOVO"' in html and 'name="visti" value="ESIST,NUOVO"' in html
 
 
 def test_senza_collezione_dell_edizione(app, zot, relatore):

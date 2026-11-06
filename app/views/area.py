@@ -254,10 +254,15 @@ def letture_lezione(epid):
         scelta = p.zotero_key or request.form.get("scelta", "")
         try:
             zot = modulo_sync.client()
-            if not scelta and "conferma" not in request.form:
-                scelte, avviso = scelte_duplicati(zot, tipo, p.campi)
+            if not scelta:
+                # si controlla a ogni invio: se c'è un doppione che la pagina non mostrava
+                # (anche comparso dopo, per esempio da un altro relatore) si chiede di scegliere
+                trovate, avviso = scelte_duplicati(zot, tipo, p.campi)
                 if avviso:
                     flash(avviso, "errore")
+                visti = set(request.form.get("visti", "").split(","))
+                if any(k not in visti for k, _ in trovate):
+                    scelte = trovate
             if not scelte:
                 avviso = salva_lettura(zot, p, ep.edizione, "relatori", scelta)
                 p.stato, p.deciso_il, p.deciso_da_id = "approvata", adesso(), current_user.id

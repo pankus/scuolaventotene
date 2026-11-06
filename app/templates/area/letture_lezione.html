@@ -41,7 +41,7 @@
       <label class="spunta"><input type="radio" name="scelta" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ descr }}</label>
       {% endfor %}
       <label class="spunta"><input type="radio" name="scelta" value=""> No, è un'altra opera: crea un nuovo record</label>
-      <input type="hidden" name="conferma" value="1">
+      <input type="hidden" name="visti" value="{{ scelte|map('first')|join(',') }}">
     </fieldset>
     {% endif %}
     <button class="btn" type="submit">{{ 'Conferma e salva' if scelte else 'Salva la lettura' }}</button>
