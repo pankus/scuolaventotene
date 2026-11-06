@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, stato %}
+{% block title %}Lettura proposta{% endblock %}
+{% block content %}
+<p class="occhiello"><a href="{{ url_for('admin.letture', edizione=ed.id) }}">← Letture {{ ed.anno }}</a></p>
+<h1>{{ p.titolo }} {{ stato(p.stato, STATI_PROPOSTA) }}</h1>
+{% include "admin/_nav.html" %}
+<div class="due-colonne">
+  <div>
+    <dl class="dati">
+      <dt>Tipo</dt><dd>{{ TIPI_LETTURA.get(p.tipo, p.tipo) }}</dd>
+      <dt>Proposta da</dt><dd><a href="{{ url_for('admin.candidatura', cid=p.candidatura_id) }}">{{ p.candidatura.utente.nome_completo }}</a>
+        ({{ MOMENTI_PROPOSTA.get(p.momento, p.momento) | lower }}, {{ p.creato_il|data_it }})</dd>
+      <dt>Motivazione</dt><dd>{{ p.motivazione or '—' }}</dd>
+      {% if p.copertina_url %}<dt>Copertina</dt><dd><a href="{{ p.copertina_url }}" rel="noreferrer">dal lookup</a> (scaricata in locale all'approvazione)</dd>{% endif %}
+      {% if p.zotero_key %}<dt>Zotero</dt><dd>{{ p.zotero_key }}</dd>{% endif %}
+      {% if p.deciso_il %}<dt>Decisa</dt><dd>{{ p.deciso_il|data_it }}{% if p.deciso_da %} da {{ p.deciso_da.nome_completo }}{% endif %}</dd>{% endif %}
+      {% if p.nota_comitato %}<dt>Nota</dt><dd>{{ p.nota_comitato }}</dd>{% endif %}
+    </dl>
+  </div>
+  <aside>
+    {% if p.stato == 'approvata' %}
+    <div class="scheda"><p>Già in Zotero: eventuali correzioni si fanno direttamente lì.</p></div>
+    {% else %}
+    <form method="post" class="modulo scheda">
+      {{ form.hidden_tag() }}
+      <h3>Scheda da salvare in Zotero</h3>
+      {% for nome in campi %}{{ campo(form[nome]) }}{% endfor %}
+      <fieldset>
+        <legend>Già in Zotero?</legend>
+        {% for key, descr in scelte %}
+        <label class="spunta"><input type="radio" name="zotero_key" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ descr }}</label>
+        {% endfor %}
+        <label class="spunta"><input type="radio" name="zotero_key" value="" {% if not scelte %}checked{% endif %}> No, crea un nuovo record</label>
+        {% if scelte %}<small class="nota">Possibili doppioni (stesso ISBN o stesso titolo): scegli il record esistente per collegarlo all'edizione.</small>{% endif %}
+      </fieldset>
+      {{ campo(form.nota_comitato) }}
+      <div class="azioni">
+        <button class="btn" name="azione" value="approva">Approva</button>
+        <button class="btn btn-secondario" name="azione" value="rifiuta" formnovalidate>Rifiuta</button>
+      </div>
+    </form>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

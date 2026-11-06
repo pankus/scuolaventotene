@@ -237,9 +237,9 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 
 /* ------------------------------------------------------------------ stati */
 .badge { display: inline-block; vertical-align: middle; font-family: var(--mono); font-size: .62rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; padding: .22rem .55rem; border-radius: 999px; border: 1px solid var(--linea); color: var(--inchiostro-md); background: #fff; }
-.badge-inviata, .badge-in_valutazione, .badge-in_revisione, .badge-chiusa { border-color: #f5c48a; color: #8a4b00; background: #fff8ee; }
-.badge-ammessa, .badge-pubblicato, .badge-aperta { border-color: #9ad7bd; color: var(--ok); background: #effaf5; }
-.badge-non_ammessa, .badge-rifiutato, .badge-ritirata { border-color: #f4b4ae; color: var(--err); background: #fef3f2; }
+.badge-inviata, .badge-in_valutazione, .badge-in_revisione, .badge-chiusa, .badge-proposta { border-color: #f5c48a; color: #8a4b00; background: #fff8ee; }
+.badge-ammessa, .badge-pubblicato, .badge-aperta, .badge-approvata { border-color: #9ad7bd; color: var(--ok); background: #effaf5; }
+.badge-non_ammessa, .badge-rifiutato, .badge-ritirata, .badge-rifiutata { border-color: #f4b4ae; color: var(--err); background: #fef3f2; }
 .badge-riserva, .badge-conclusa { border-color: var(--linea); color: var(--inchiostro-md); background: var(--carta-2); }
 
 /* ------------------------------------------------------------------ piede */

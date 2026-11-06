@@ -50,6 +50,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /admin/edizioni/<id>/candidature(.csv)          graduatoria ed export
 /admin/candidature/<id>                          scheda, valutazione, esito
 /admin/materiali                                 revisione e caricamento
+/admin/letture[?edizione=<id>], /admin/letture/<id>   revisione delle letture proposte (comitato)
 /admin/utenti                                    ruoli e attivazione
 /admin/zotero/sync                               sincronizzazione manuale
 ```
@@ -59,6 +60,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 ```
 utenti ─┬─< candidature >── edizioni ──< programma_voci
         │        └──< valutazioni >── utenti (comitato)
+        │        └──< proposte_lettura ··· zotero_items (zotero_key)
         └─< materiali >── edizioni
 edizioni ──< edizioni_persone >── persone        (comitato / relatori)
 edizioni.zotero_collection_key ··· zotero_collezioni
@@ -69,6 +71,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - **Edizione**: numero, anno, slug, titolo, sottotitolo, date, scadenza, data degli esiti, posti borsisti, uditori sì/no, limiti di caratteri (6000–8000), stato (`bozza → aperta → chiusa → conclusa`), bando e collezione Zotero collegata.
 - **Candidatura**: tipo (borsista o uditore), stato (`bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`), titolo dell'UD, discipline, file e numero di caratteri (calcolato automaticamente per i .docx). Ogni docente ha al massimo una candidatura per edizione.
 - **Valutazione**: una per membro del comitato, con originalità, potenzialità didattiche e valorizzazione delle fonti (0–25 ciascuna, massimo 75). La graduatoria usa la media dei punteggi.
+- **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato dal docente nella candidatura; campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione | post_scuola`), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
 - **Materiale**: edizione, tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
 
 ## 5. Flussi principali
@@ -77,12 +80,14 @@ sync_stato (versione libreria Zotero, data ultima sync)
 
 **Materiali**: l'admin pubblica direttamente. Il docente invia il materiale, che resta in revisione finché l'admin non lo pubblica o lo rifiuta, scegliendo anche la visibilità.
 
-**Bibliografia Zotero**: la bibliografia si cura nel gruppo Zotero, che resta la fonte di verità. Il sito ne tiene una copia locale aggiornata dalla sync. Con `app/zotero_scrittura.py` (fase F2 di PIANO_LETTURE.md) il sito può scrivere in Zotero: dalla fase F3 ci finiranno le letture proposte dai docenti e approvate dal comitato (solo tipi libro e pagina web, senza dati dei docenti). Gli item nel cestino Zotero non compaiono sul sito.
+**Bibliografia Zotero**: la bibliografia si cura nel gruppo Zotero, che resta la fonte di verità. Il sito ne tiene una copia locale aggiornata dalla sync. Il sito scrive in Zotero (`app/zotero_scrittura.py`) solo le letture proposte dai docenti e approvate dal comitato (solo tipi libro e pagina web, senza dati dei docenti). Gli item nel cestino Zotero non compaiono sul sito.
 - Il comando `flask zotero-sync` gira in cron (per esempio ogni ora) e si può lanciare anche dal cruscotto.
 - La sincronizzazione è incrementale: usa `since=<versione>` per collezioni e record e `/deleted` per le rimozioni. La sincronizzazione completa con `--completa` riallinea tutto.
 - Le citazioni arrivano già formattate dall'API (`include=bib`, stile CSL `chicago-author-date`, locale `it-IT`, entrambi configurabili).
 - Le collezioni del gruppo diventano le "sezioni" della bibliografia. Ogni edizione può essere collegata a una collezione, che compare come invito alla lettura nella pagina dell'edizione.
-- Basta una chiave API in sola lettura, oppure nessuna chiave se il gruppo è pubblico.
+- La chiave API deve avere il permesso di scrittura sul gruppo (controllo: `flask zotero-verifica`); per la sola lettura basta una chiave in lettura, o nessuna se il gruppo è pubblico.
+
+**Letture proposte** (PIANO_LETTURE.md): il docente indica libri e siti nella candidatura (dalla fase F5). In `/admin/letture` il comitato vede le proposte delle candidature inviate, corregge la scheda e sceglie: collegarla a un record già in Zotero (doppioni trovati per ISBN o per titolo e anno) oppure crearne uno nuovo. In entrambi i casi l'item entra nella collezione dell'edizione con il tag `ZOTERO_TAG_PROPOSTE`, e la copertina viene scaricata in `uploads/copertine/` (solo da Google Books, Open Library e archive.org). Serve che l'edizione abbia la collezione Zotero. Se in Zotero si fondono due item, la sync sposta le proposte sul superstite (`dc:replaces`). Una proposta rifiutata riporta la nota del comitato; una approvata si corregge direttamente in Zotero.
 
 ## 6. Sicurezza e dati personali
 

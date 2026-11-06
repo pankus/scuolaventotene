@@ -8,6 +8,7 @@ Entità principali
 - Candidatura       domanda di partecipazione (borsista / uditore) + proposta UD
 - Valutazione       punteggi del comitato (originalità, potenzialità, fonti)
 - Materiale         PDF/PowerPoint dell'archivio, caricati da admin o docenti
+- PropostaLettura   libro o sito consigliato dal docente, rivisto dal comitato e scritto in Zotero
 - ZoteroCollezione / ZoteroItem / SyncStato   cache locale del gruppo Zotero
 """
 from datetime import date, datetime, timezone
@@ -232,6 +233,8 @@ class Candidatura(db.Model):
     edizione = db.relationship("Edizione", back_populates="candidature")
     valutazioni = db.relationship("Valutazione", back_populates="candidatura",
                                   cascade="all, delete-orphan")
+    letture = db.relationship("PropostaLettura", back_populates="candidatura",
+                              cascade="all, delete-orphan", order_by="PropostaLettura.id")
 
     @property
     def punteggio_medio(self):
@@ -281,6 +284,41 @@ class Valutazione(db.Model):
     @property
     def totale(self):
         return self.originalita + self.potenzialita + self.fonti
+
+
+# --------------------------------------------------------------------------- letture
+TIPI_LETTURA = {"book": "Libro", "webpage": "Sito / pagina web"}  # tipi Zotero
+STATI_PROPOSTA = {"proposta": "Da rivedere", "approvata": "Approvata", "rifiutata": "Rifiutata"}
+MOMENTI_PROPOSTA = {"iscrizione": "Con la candidatura", "post_scuola": "Dopo la scuola"}
+
+
+class PropostaLettura(db.Model):
+    """Lettura consigliata dal docente. Il legame docente↔libro resta solo qui, mai in Zotero."""
+    __tablename__ = "proposte_lettura"
+
+    id = db.Column(db.Integer, primary_key=True)
+    candidatura_id = db.Column(db.Integer, db.ForeignKey("candidature.id", ondelete="CASCADE"),
+                               nullable=False, index=True)
+    tipo = db.Column(db.String(20), nullable=False, default="book")
+    # campi Zotero (title, date, publisher, place, ISBN, series, url, websiteTitle, accessDate)
+    # più "autori" e "curatori" come testo, una persona per riga ("Cognome, Nome")
+    campi = db.Column(db.JSON, nullable=False, default=dict)
+    copertina_url = db.Column(db.String(1000))  # dal lookup; scaricata in locale all'approvazione
+    motivazione = db.Column(db.Text)            # perché il docente lo consiglia (resta nel sito)
+    zotero_key = db.Column(db.String(20), index=True)  # già in Zotero, o creato all'approvazione
+    stato = db.Column(db.String(20), nullable=False, default="proposta")
+    momento = db.Column(db.String(20), nullable=False, default="iscrizione")
+    nota_comitato = db.Column(db.Text)
+    creato_il = db.Column(db.DateTime, default=adesso)
+    deciso_il = db.Column(db.DateTime)
+    deciso_da_id = db.Column(db.Integer, db.ForeignKey("utenti.id", ondelete="SET NULL"))
+
+    candidatura = db.relationship("Candidatura", back_populates="letture")
+    deciso_da = db.relationship("Utente")
+
+    @property
+    def titolo(self):
+        return (self.campi or {}).get("title") or "(senza titolo)"
 
 
 # --------------------------------------------------------------------------- materiali

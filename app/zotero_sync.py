@@ -6,6 +6,8 @@ Usa la Zotero Web API v3 tramite pyzotero (logica portata da Itinera, app/biblio
 - collezioni: sempre la lista completa (sono poche); il cestino vale per tutto il sotto-albero;
   se Zotero non restituisce nessuna collezione ma in locale ce ne sono, non si cancella nulla
   (probabile errore di rete o di permessi);
+- item fusi in Zotero: il superstite porta in ``relations["dc:replaces"]`` le URI dei fusi; le
+  proposte di lettura (e la copertina locale) passano alla nuova key;
 - record: solo top-level modificati dopo l'ultima sync (``since``), con la citazione già formattata
   (``include=bib``); gli item nel cestino Zotero restano in cache con ``eliminato=True``
   (``/items/top`` non li restituisce, vanno chiesti a ``/items/trash``); gli item eliminati
@@ -21,7 +23,7 @@ import unicodedata
 from flask import current_app
 
 from .extensions import db
-from .models import SyncStato, ZoteroCollezione, ZoteroItem, adesso
+from .models import PropostaLettura, SyncStato, ZoteroCollezione, ZoteroItem, adesso
 
 TIPI_ESCLUSI = {"attachment", "note", "annotation"}
 
@@ -126,6 +128,22 @@ def applica_item(zi, it, collezioni_idx):
     zi.collezioni = [collezioni_idx[k] for k in d.get("collections", []) if k in collezioni_idx]
 
 
+def _sposta_fusi(zi, d):
+    """Merge fatto in Zotero: legami e copertina dei vecchi item passano al superstite."""
+    sostituiti = d.get("relations", {}).get("dc:replaces") or []
+    if isinstance(sostituiti, str):
+        sostituiti = [sostituiti]
+    vecchie = [u.rstrip("/").rsplit("/", 1)[-1] for u in sostituiti]
+    if not vecchie:
+        return
+    PropostaLettura.query.filter(PropostaLettura.zotero_key.in_(vecchie)).update(
+        {"zotero_key": zi.key}, synchronize_session=False)
+    if not zi.copertina_path:
+        vecchio = ZoteroItem.query.filter(ZoteroItem.key.in_(vecchie),
+                                          ZoteroItem.copertina_path.isnot(None)).first()
+        zi.copertina_path = vecchio.copertina_path if vecchio else None
+
+
 def _sync_collezioni(zot, stats):
     scaricate = [c["data"] for c in zot.everything(zot.collections())]
     locali = {c.key: c for c in ZoteroCollezione.query.all()}
@@ -188,6 +206,7 @@ def sincronizza(completa=False, zot=None):
                 continue
             zi = db.session.get(ZoteroItem, d["key"]) or ZoteroItem(key=d["key"])
             applica_item(zi, it, collezioni_idx)
+            _sposta_fusi(zi, d)
             if chiave_stat == "cestino":
                 zi.eliminato = True
             db.session.add(zi)

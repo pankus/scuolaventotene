@@ -1,5 +1,8 @@
+import io
 import mimetypes
 import os
+import urllib.parse
+import urllib.request
 import uuid
 from functools import wraps
 
@@ -7,6 +10,7 @@ import markdown as md
 from flask import abort, current_app
 from flask_login import current_user
 from markupsafe import Markup
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 from . import models
@@ -59,6 +63,42 @@ def elimina_upload(rel):
         p = os.path.join(upload_root(), rel)
         if os.path.isfile(p):
             os.remove(p)
+
+
+# copertine: solo dalle fonti del lookup (anche dopo i redirect), solo immagini piccole
+HOST_COPERTINE = ("books.google.com", "books.googleusercontent.com", "covers.openlibrary.org",
+                  "archive.org")
+TIPI_COPERTINA = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}
+MAX_COPERTINA = 2 * 1024 * 1024
+
+
+def _host_ammesso(url):
+    p = urllib.parse.urlsplit(url or "")
+    host = (p.hostname or "").lower()
+    return p.scheme == "https" and any(host == h or host.endswith("." + h) for h in HOST_COPERTINE)
+
+
+class _RedirectControllato(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not _host_ammesso(newurl):
+            raise ValueError(f"redirect verso un host non ammesso: {newurl}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def salva_copertina(url):
+    """Scarica la copertina in uploads/copertine/ (via salva_upload). Percorso o ValueError."""
+    if not _host_ammesso(url):
+        raise ValueError("indirizzo della copertina non ammesso")
+    apri = urllib.request.build_opener(_RedirectControllato).open
+    with apri(urllib.request.Request(url, headers={"User-Agent": "scuola-ventotene"}), timeout=5) as r:
+        ext = TIPI_COPERTINA.get(r.headers.get_content_type())
+        if not ext:
+            raise ValueError("la copertina non è un'immagine")
+        dati = r.read(MAX_COPERTINA + 1)
+    if len(dati) > MAX_COPERTINA:
+        raise ValueError("copertina troppo grande")
+    fs = FileStorage(io.BytesIO(dati), filename=f"copertina.{ext}")
+    return salva_upload(fs, "copertine", set(TIPI_COPERTINA.values()))["file_path"]
 
 
 def conta_caratteri(rel):
@@ -114,6 +154,9 @@ def register_template_utils(app):
             "STATI_CANDIDATURA": models.STATI_CANDIDATURA,
             "STATI_EDIZIONE": models.STATI_EDIZIONE,
             "STATI_MATERIALE": models.STATI_MATERIALE,
+            "STATI_PROPOSTA": models.STATI_PROPOSTA,
+            "TIPI_LETTURA": models.TIPI_LETTURA,
+            "MOMENTI_PROPOSTA": models.MOMENTI_PROPOSTA,
             "TIPI_MATERIALE": models.TIPI_MATERIALE,
             "TIPI_CANDIDATURA": models.TIPI_CANDIDATURA,
             "TIPI_PROGRAMMA": models.TIPI_PROGRAMMA,

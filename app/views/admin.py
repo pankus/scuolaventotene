@@ -1,4 +1,4 @@
-"""Back-office: edizioni e programma, candidature e graduatoria, materiali, utenti, Zotero."""
+"""Back-office: edizioni e programma, candidature e graduatoria, materiali, letture, utenti, Zotero."""
 import csv
 import io
 
@@ -7,13 +7,15 @@ from flask import (Blueprint, Response, abort, current_app, flash, redirect, ren
 from flask_login import current_user, login_required
 
 from ..extensions import db
-from ..forms import (EdizioneForm, MaterialeAdminForm, PersonaEdizioneForm, ProgrammaVoceForm,
+from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il nome
+from ..forms import (EdizioneForm, LetturaRevisioneForm, MaterialeAdminForm, PersonaEdizioneForm, ProgrammaVoceForm,
                      StatoCandidaturaForm, ValutazioneForm)
 from ..models import (ESITI_CANDIDATURA, RUOLI, STATI_MATERIALE, VISIBILITA, Candidatura,
-                      Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce, SyncStato,
-                      Utente, Valutazione, ZoteroItem)
+                      Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce,
+                      PropostaLettura, SyncStato, Utente, Valutazione, ZoteroItem, adesso)
 from ..posta import email_esito
-from ..utils import admin_required, comitato_required, elimina_upload, salva_upload
+from ..utils import admin_required, comitato_required, elimina_upload, salva_copertina, salva_upload
+from ..zotero_scrittura import TIPI, ErroreScrittura, candidati_duplicati, collega_item, crea_item
 
 bp = Blueprint("admin", __name__)
 
@@ -32,6 +34,7 @@ def dashboard():
         edizioni=Edizione.query.order_by(Edizione.anno.desc()).all(),
         da_valutare=Candidatura.query.filter(Candidatura.stato.in_(["inviata", "in_valutazione"])).count(),
         materiali_revisione=Materiale.query.filter_by(stato="in_revisione").count(),
+        letture_da_rivedere=_letture().filter(PropostaLettura.stato == "proposta").count(),
         n_utenti=Utente.query.count(),
         n_biblio=ZoteroItem.query.filter_by(eliminato=False).count(),
         ultima_sync=SyncStato.get("zotero_ultima_sync"),
@@ -235,6 +238,102 @@ def aggiorna_materiale(mid):
             m.visibilita = request.form["visibilita"]
     db.session.commit()
     return redirect(url_for("admin.materiali"))
+
+
+# ------------------------------------------------------------------ letture proposte
+CAMPI_LETTURA = {"book": TIPI["book"][:1] + ["autori", "curatori"] + TIPI["book"][1:],
+                 "webpage": TIPI["webpage"][:1] + ["autori"] + TIPI["webpage"][1:]}
+
+
+def _letture():
+    """Proposte delle candidature inviate (quelle in bozza le vede solo il docente)."""
+    return PropostaLettura.query.join(Candidatura).filter(Candidatura.stato != "bozza")
+
+
+@bp.route("/letture")
+def letture():
+    edizioni = Edizione.query.order_by(Edizione.anno.desc()).all()
+    ed = db.session.get(Edizione, request.args.get("edizione", type=int) or 0) or \
+        (edizioni[0] if edizioni else None)
+    elenco = []
+    if ed:
+        elenco = (_letture().filter(Candidatura.edizione_id == ed.id)
+                  .order_by((PropostaLettura.stato == "proposta").desc(), PropostaLettura.id).all())
+    return render_template("admin/letture.html", edizioni=edizioni, ed=ed, letture=elenco)
+
+
+def _scelte_zotero(p, zot):
+    """Item Zotero a cui collegare la proposta: (key, descrizione). Vuota se non ce ne sono."""
+    try:
+        locali, remoti = candidati_duplicati(zot, p.tipo, p.campi)
+    except Exception as e:  # noqa: BLE001  (Zotero irraggiungibile: restano i locali)
+        flash(f"Ricerca in Zotero non riuscita ({e}): controllati solo i record già sincronizzati.",
+              "errore")
+        locali, remoti = candidati_duplicati(None, p.tipo, p.campi)
+    scelte = [(z.key, f"{z.autori or ''} {z.anno or ''} — {z.titolo}") for z in locali if not z.eliminato]
+    scelte += [(r["key"], f"{r['titolo']} (in Zotero, non ancora sincronizzato)") for r in remoti]
+    if p.zotero_key and p.zotero_key not in {k for k, _ in scelte}:
+        z = db.session.get(ZoteroItem, p.zotero_key)
+        scelte.insert(0, (p.zotero_key, f"{z.titolo if z else p.zotero_key} (scelto dal docente)"))
+    return scelte
+
+
+@bp.route("/letture/<int:pid>", methods=["GET", "POST"])
+def lettura(pid):
+    p = _letture().filter(PropostaLettura.id == pid).first_or_404()
+    ed = p.candidatura.edizione
+    form = LetturaRevisioneForm(data={**p.campi, "nota_comitato": p.nota_comitato})
+    try:
+        zot = modulo_sync.client()
+    except RuntimeError:
+        zot = None
+    azione = request.form.get("azione")
+    if request.method == "POST" and p.stato == "approvata":
+        abort(409)  # già in Zotero: si corregge lì
+
+    if azione == "rifiuta":
+        p.stato, p.nota_comitato = "rifiutata", form.nota_comitato.data
+        p.deciso_il, p.deciso_da_id = adesso(), current_user.id
+        db.session.commit()
+        flash("Proposta rifiutata.", "ok")
+        return redirect(url_for("admin.letture", edizione=ed.id))
+
+    if azione == "approva" and form.validate_on_submit():
+        p.campi = {k: (form[k].data or "").strip() for k in CAMPI_LETTURA[p.tipo]}
+        scelta = request.form.get("zotero_key", "")
+        if not ed.zotero_collection_key:
+            flash("Manca la collezione Zotero dell'edizione: impostala in Modifica edizione.", "errore")
+        elif zot is None:
+            flash("Zotero non è configurato (.env).", "errore")
+        else:
+            try:
+                if scelta:
+                    zi = collega_item(zot, scelta, [ed.zotero_collection_key])
+                else:
+                    campi = dict(p.campi)
+                    zi = crea_item(zot, p.tipo, campi, campi.pop("autori", ""),
+                                   campi.pop("curatori", ""), [ed.zotero_collection_key])
+            except ErroreScrittura as e:
+                db.session.rollback()
+                flash(str(e), "errore")
+            except Exception as e:  # noqa: BLE001  (rete, permessi)
+                db.session.rollback()
+                flash(f"Scrittura in Zotero non riuscita: {e}", "errore")
+            else:
+                p.zotero_key, p.stato, p.nota_comitato = zi.key, "approvata", form.nota_comitato.data
+                p.deciso_il, p.deciso_da_id = adesso(), current_user.id
+                if p.copertina_url and not zi.copertina_path:
+                    try:
+                        zi.copertina_path = salva_copertina(p.copertina_url)
+                    except Exception as e:  # noqa: BLE001  (la copertina non blocca)
+                        flash(f"Copertina non scaricata: {e}", "errore")
+                db.session.commit()
+                flash("Lettura approvata e salvata in Zotero.", "ok")
+                return redirect(url_for("admin.letture", edizione=ed.id))
+
+    scelte = _scelte_zotero(p, zot) if p.stato != "approvata" else []
+    return render_template("admin/lettura.html", p=p, ed=ed, form=form, scelte=scelte,
+                           campi=CAMPI_LETTURA[p.tipo])
 
 
 # ------------------------------------------------------------------ utenti

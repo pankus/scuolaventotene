@@ -113,6 +113,32 @@ def aggiorna_item(zot, key, versione, campi, autori=None, curatori=None):
     return _aggiorna_cache(zot, key)
 
 
+def collega_item(zot, key, collezioni=()):
+    """Item già in Zotero proposto da un docente: aggiunge collezioni e tag delle proposte.
+
+    Si parte dalla versione attuale in Zotero (nessun modulo aperto da proteggere); se cambia
+    proprio in quell'istante, Zotero risponde 412 e si chiede di riprovare.
+    """
+    try:
+        data = dict(zot.item(key)["data"])
+    except ze.ResourceNotFoundError as e:
+        raise ErroreScrittura(f"L'item {key} non esiste più in Zotero.") from e
+    if data.get("itemType") not in TIPI:
+        raise ErroreScrittura(f"Tipo non previsto per l'invito alla lettura: {data.get('itemType')}")
+    tag = current_app.config["ZOTERO_TAG_PROPOSTE"]
+    nuove = [k for k in collezioni if k not in data.get("collections", [])]
+    if nuove or tag not in {t["tag"] for t in data.get("tags", [])}:
+        data["collections"] = data.get("collections", []) + nuove
+        data["tags"] = [t for t in data.get("tags", []) if t["tag"] != tag] + [{"tag": tag}]
+        try:
+            zot.update_item(data, last_modified=data["version"])
+        except ze.PreConditionFailedError as e:
+            raise ErroreScrittura("L'item è cambiato in Zotero proprio ora: riprova.") from e
+        except ze.PyZoteroError as e:
+            raise ErroreScrittura(f"Zotero ha rifiutato la modifica: {e}") from e
+    return _aggiorna_cache(zot, key)
+
+
 def _anni_compatibili(a, b):
     """Stesso anno, oppure uno dei due manca."""
     return not a or not b or a == b

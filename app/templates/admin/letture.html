@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stato %}
+{% block title %}Letture proposte{% endblock %}
+{% block content %}
+<h1>Invito alla lettura: proposte dei docenti</h1>
+{% include "admin/_nav.html" %}
+<ul class="pillole">
+  {% for e in edizioni %}<li><a href="{{ url_for('admin.letture', edizione=e.id) }}"{% if ed and e.id == ed.id %} aria-current="page"{% endif %}>{{ e.anno }}</a></li>{% endfor %}
+</ul>
+{% if ed %}
+<p class="nota">Edizione {{ ed.anno }} · collezione Zotero: {{ ed.zotero_collection_key or 'non impostata' }}.
+  Approvando, la lettura entra in Zotero nella collezione dell'edizione, senza il nome del docente.</p>
+<table class="tabella">
+  <tr><th>Titolo</th><th>Tipo</th><th>Docente</th><th>Quando</th><th>Stato</th></tr>
+  {% for p in letture %}
+  <tr><td><a href="{{ url_for('admin.lettura', pid=p.id) }}"><strong>{{ p.titolo }}</strong></a><br>
+      <small>{{ (p.campi.autori or '')|replace('\n', '; ') }} {{ p.campi.date or '' }}</small></td>
+    <td>{{ TIPI_LETTURA.get(p.tipo, p.tipo) }}</td>
+    <td>{{ p.candidatura.utente.nome_completo }}</td>
+    <td>{{ MOMENTI_PROPOSTA.get(p.momento, p.momento) }}</td>
+    <td>{{ stato(p.stato, STATI_PROPOSTA) }}</td></tr>
+  {% else %}<tr><td colspan="5">Nessuna lettura proposta.</td></tr>{% endfor %}
+</table>
+{% endif %}
+{% endblock %}

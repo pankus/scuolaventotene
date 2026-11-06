@@ -131,3 +131,20 @@ class PersonaEdizioneForm(FlaskForm):
     cognome = StringField("Cognome", validators=[DataRequired()])
     affiliazione = StringField("Affiliazione", validators=[Optional()])
     ruolo = SelectField("Ruolo", choices=[("comitato", "Comitato scientifico"), ("relatore", "Relatore")])
+
+
+class LetturaRevisioneForm(FlaskForm):
+    """Il comitato corregge la scheda prima di scriverla in Zotero (nomi dei campi = Zotero)."""
+    title = StringField("Titolo", validators=[DataRequired(), Length(max=500)])
+    autori = TextAreaField("Autori (Cognome, Nome — uno per riga; un ente su una riga senza virgola)",
+                           validators=[Optional()], render_kw={"rows": 3})
+    curatori = TextAreaField("Curatori (uno per riga)", validators=[Optional()], render_kw={"rows": 2})
+    date = StringField("Anno", validators=[Optional(), Length(max=50)])
+    publisher = StringField("Editore", validators=[Optional(), Length(max=255)])
+    place = StringField("Luogo di edizione", validators=[Optional(), Length(max=255)])
+    ISBN = StringField("ISBN", validators=[Optional(), Length(max=100)])
+    series = StringField("Collana", validators=[Optional(), Length(max=255)])
+    websiteTitle = StringField("Sito / ente", validators=[Optional(), Length(max=255)])
+    url = StringField("URL", validators=[Optional(), URL(), Length(max=1000)])
+    accessDate = StringField("Data di consultazione (AAAA-MM-GG)", validators=[Optional(), Length(max=20)])
+    nota_comitato = TextAreaField("Nota del comitato (visibile al docente)", validators=[Optional()])

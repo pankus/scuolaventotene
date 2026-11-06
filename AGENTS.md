@@ -79,6 +79,7 @@ non scrivere stringhe sparse nelle viste o nei template.
 - Edizione: `bozza → aperta → chiusa → conclusa`
 - Candidatura: `bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`
 - Materiale: `in_revisione | pubblicato | rifiutato`; visibilità `pubblico | registrati | privato`
+- PropostaLettura: `proposta → approvata | rifiutata`; tipi `book | webpage`; momento `iscrizione | post_scuola`
 
 **Regole del bando** (non cambiarle senza che lo chieda l'utente): una candidatura per docente
 per edizione (vincolo unico); proposta di UD tra `caratteri_min` e `caratteri_max` dell'edizione
@@ -139,7 +140,9 @@ tenuti con `eliminato=True` (vanno chiesti a `/items/trash`), eliminati definiti
 Citazioni già formattate (`include=bib`). La chiave ha permesso di scrittura (controllo:
 `flask zotero-verifica`); la scrittura è in `app/zotero_scrittura.py` (`crea_item` con tag `ZOTERO_TAG_PROPOSTE`,
 `aggiorna_item` con 412 → `ErroreScrittura`, `candidati_duplicati`): solo campi bibliografici,
-mai dati del docente; la usa la revisione del comitato (F3). Nei test solo `FakeZot`
+mai dati del docente; la usa la revisione del comitato (`/admin/letture`, `collega_item` per i
+record già presenti). Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
+nei redirect, solo immagini, max 2 MB). Nei test solo `FakeZot`
 (`tests/conftest.py`), mai il gruppo vero: `TestConfig` usa un ID finto.
 
 ## Sicurezza e dati personali
@@ -161,6 +164,9 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
   `conta_caratteri`, `Materiale.visibile_a`, graduatoria (`admin._graduatoria`).
 - `test_rotte.py`: permessi admin/comitato/docente/anonimo, candidature di altri, invio,
   download dei materiali.
+- `test_zotero.py`, `test_zotero_scrittura.py`: sync, scrittura, duplicati, con `FakeZot`.
+- `test_letture.py`: revisione delle letture (permessi, collega/crea, nessun dato del docente
+  nel payload Zotero), copertine, merge `dc:replaces`.
 
 Per i test di rotta usare un client per utente (`client_di` in `test_rotte.py`). La fixture
 azzera `g._login_user` a ogni richiesta: l'app context resta aperto per tutto il test e

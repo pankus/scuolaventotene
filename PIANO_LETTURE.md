@@ -6,7 +6,7 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 |---|---|
 | F1 Zotero: configurazione e sync robusta | **fatta** (2026-11-06): `zotero-verifica`, cestino, guard, ISBN/firma; merge `dc:replaces` rimandato a F3 (servono i legami delle proposte) |
 | F2 Zotero: scrittura | **fatta** (2026-11-06): `app/zotero_scrittura.py` (`crea_item`, `aggiorna_item`, `candidati_duplicati`), `FakeZot` in scrittura; nessuna rotta né migrazione |
-| F3 Proposte di lettura e revisione del comitato | da fare |
+| F3 Proposte di lettura e revisione del comitato | **fatta** (2026-11-06): `PropostaLettura` + migrazione, `/admin/letture` (collega o crea, rifiuta), `collega_item`, copertine con host ammessi, merge `dc:replaces` nella sync |
 | F4 Lookup durante la digitazione | da fare |
 | F5 Flusso di iscrizione | da fare |
 | F6 Dopo la scuola: altri libri e materiali | da fare |

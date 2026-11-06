@@ -1,6 +1,7 @@
 <nav class="sottomenu">
   <a href="{{ url_for('admin.dashboard') }}">Cruscotto</a>
   <a href="{{ url_for('admin.materiali') }}">Materiali</a>
+  <a href="{{ url_for('admin.letture') }}">Letture</a>
   {% if current_user.is_admin %}
   <a href="{{ url_for('admin.nuova_edizione') }}">Nuova edizione</a>
   <a href="{{ url_for('admin.utenti') }}">Utenti</a>
