@@ -64,6 +64,13 @@ def register_cli(app):
         click.echo(f"Gruppo {app.config['ZOTERO_LIBRARY_ID']}: {v['item']} record, "
                    f"versione {v['versione']}, scrittura: {scrittura}")
 
+    @app.cli.command("seed-precedenti")
+    def seed_precedenti():
+        """Carica le edizioni 2023–2025 dalle pagine CNR-ISMed (con locandine e call in PDF)."""
+        from .edizioni_precedenti import carica
+        anni = carica(avviso=click.echo)
+        click.echo(f"Caricate: {', '.join(map(str, anni))}." if anni else "Nessuna edizione nuova.")
+
     @app.cli.command("seed-2026")
     def seed_2026():
         """Carica la IV edizione (2026) dai dati del bando."""

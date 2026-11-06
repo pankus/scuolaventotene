@@ -34,6 +34,7 @@ export FLASK_APP=app:create_app          # (anche in .env)
 uv run flask init-db                     # crea/aggiorna le tabelle (= flask db upgrade)
 uv run flask db migrate -m "descrizione"  # nuova migrazione dopo una modifica ai modelli
 uv run flask seed-2026                   # IV edizione dai dati del bando
+uv run flask seed-precedenti             # edizioni 2023–2025 (app/edizioni_precedenti.py)
 uv run flask crea-admin email@ismed.cnr.it
 uv run flask prova-email tuo@indirizzo.it   # controlla la configurazione SMTP
 uv run flask zotero-sync [--completa]    # bibliografia (in produzione gira in cron)
@@ -222,8 +223,12 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
    server CNR, email via Infomaniak); i punti `[DA VERIFICARE]` e i tempi di conservazione
    vanno confermati con il DPO del CNR. Se cambiano i dati raccolti, i destinatari o i cookie,
    aggiornare l'informativa.
-2. Caricamento delle edizioni 2023–2025 e dei loro materiali.
-3. Attestati di frequenza in PDF generati dal sito (borsisti e uditori).
+2. Edizioni 2023–2025: caricate con `flask seed-precedenti` (programma, comitato, lezioni,
+   call e locandine in PDF; 2024 collegata alla collezione Zotero «2024»). Mancano i materiali
+   delle lezioni e delle UD (slide, testi) e i testi su queste edizioni in `la_scuola.html`.
+3. Attestati di frequenza in PDF generati dal sito (borsisti e uditori): rimandati, decisioni
+   aperte (tecnica: docx + LibreOffice o fpdf2; chi riceve; firmatario e ore). Carta intestata
+   CNR-ISMed in `modelli/Carta_intestata_accessibile_ita.docx`.
 4. Opzionale: registrazione presenze, export iscritti e uditori.
 
 **In corso: [PIANO_LETTURE.md](PIANO_LETTURE.md)**: invito alla lettura, Zotero in lettura e

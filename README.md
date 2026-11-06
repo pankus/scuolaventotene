@@ -23,7 +23,7 @@ ventotene/
     ├── zotero_scrittura.py scrittura in Zotero (letture approvate) e controllo duplicati
     ├── ricerca_libri.py    ricerca dei libri: cache Zotero + Google Books / Open Library
     ├── posta.py            email SMTP (Infomaniak) e token
-    ├── cli.py              init-db, crea-admin, seed-2026, zotero-sync, zotero-verifica, prova-email
+    ├── cli.py              init-db, crea-admin, seed-2026, seed-precedenti, zotero-sync, zotero-verifica, prova-email
     ├── views/
     │   ├── public.py       home, edizione, la scuola, contatti, privacy
     │   ├── auth.py         registrazione, accesso, verifica email, reset password
@@ -43,6 +43,7 @@ cp .env.example .env          # impostare SECRET_KEY, SESSION_COOKIE_SECURE=0 in
 export FLASK_APP=app:create_app
 uv run flask init-db          # applica le migrazioni (= flask db upgrade)
 uv run flask seed-2026        # IV edizione dai dati del bando
+uv run flask seed-precedenti  # edizioni 2023–2025 dalle pagine CNR-ISMed (scarica call e locandine)
 uv run flask crea-admin tuo@ismed.cnr.it
 uv run flask --debug run
 ```
