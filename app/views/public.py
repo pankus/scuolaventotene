@@ -2,7 +2,7 @@
 from flask import Blueprint, abort, current_app, render_template, send_from_directory
 
 from ..extensions import db
-from ..models import Edizione, ZoteroCollezione
+from ..models import Edizione, EdizionePersona, PropostaLettura, ZoteroCollezione
 
 bp = Blueprint("public", __name__)
 
@@ -59,9 +59,24 @@ def _letture_edizione(ed):
                         if not i.eliminato and i.key not in visti}.values(),
                        key=lambda i: (i.primo_autore or "", i.anno or ""))
         visti |= {i.key for i in items}
-        if items:
+        if items and cols[0].key == ed.zotero_relatori_key:
+            out += _per_lezione(ed, titolo, items)
+        elif items:
             out.append((titolo, items))
     return out
+
+
+def _per_lezione(ed, titolo, items):
+    """«Relatori» divisa per lezione (il legame lettura↔lezione lo conosce solo il sito);
+    i record messi a mano in Zotero restano sotto «Relatori»."""
+    lezione_di = {p.zotero_key: p.lezione for p in PropostaLettura.query.join(EdizionePersona)
+                  .filter(EdizionePersona.edizione_id == ed.id, PropostaLettura.zotero_key.isnot(None))}
+    gruppi = {}
+    for i in items:
+        gruppi.setdefault(lezione_di.get(i.key), []).append(i)
+    ordinate = sorted((ep for ep in gruppi if ep), key=lambda ep: ep.posizione)
+    out = [(f"{titolo} · {ep.nome_lezione}", gruppi[ep]) for ep in ordinate]
+    return ([(titolo, gruppi[None])] if None in gruppi else []) + out
 
 
 @bp.route("/edizioni/<slug>/bando")

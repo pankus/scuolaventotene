@@ -12,6 +12,7 @@ from pyzotero import errors as ze
 
 from .extensions import db
 from .models import ZoteroCollezione, ZoteroItem
+from .utils import salva_copertina
 from .zotero_sync import applica_item, firma, normalizza_isbn
 
 # campi Zotero modificabili dal sito, per tipo
@@ -71,8 +72,9 @@ def _aggiorna_cache(zot, key):
     return zi
 
 
-def crea_item(zot, tipo, campi, autori="", curatori="", collezioni=()):
-    """Crea l'item in Zotero (tag delle proposte) e ne salva la copia locale.
+def crea_item(zot, tipo, campi, autori="", curatori="", collezioni=(), tag_proposte=True):
+    """Crea l'item in Zotero e ne salva la copia locale. ``tag_proposte``: tag delle letture
+    dei docenti (ZOTERO_TAG_PROPOSTE); le letture dei relatori non lo hanno.
 
     Il controllo dei duplicati (``candidati_duplicati``) è del chiamante.
     """
@@ -84,7 +86,7 @@ def crea_item(zot, tipo, campi, autori="", curatori="", collezioni=()):
     data["creators"] = []
     _applica(data, campi, autori, curatori)
     data["collections"] = list(collezioni)
-    data["tags"] = [{"tag": current_app.config["ZOTERO_TAG_PROPOSTE"]}]
+    data["tags"] = [{"tag": current_app.config["ZOTERO_TAG_PROPOSTE"]}] if tag_proposte else []
     try:
         res = zot.create_items([data])
     except ze.PyZoteroError as e:
@@ -116,8 +118,9 @@ def aggiorna_item(zot, key, versione, campi, autori=None, curatori=None):
     return _aggiorna_cache(zot, key)
 
 
-def collega_item(zot, key, collezioni=()):
-    """Item già in Zotero proposto da un docente: aggiunge collezioni e tag delle proposte.
+def collega_item(zot, key, collezioni=(), tag_proposte=True):
+    """Item già in Zotero scelto per l'invito alla lettura: aggiunge le collezioni e, per le
+    letture dei docenti, il tag delle proposte.
 
     Si parte dalla versione attuale in Zotero (nessun modulo aperto da proteggere); se cambia
     proprio in quell'istante, Zotero risponde 412 e si chiede di riprovare.
@@ -130,9 +133,11 @@ def collega_item(zot, key, collezioni=()):
         raise ErroreScrittura(f"Tipo non previsto per l'invito alla lettura: {data.get('itemType')}")
     tag = current_app.config["ZOTERO_TAG_PROPOSTE"]
     nuove = [k for k in collezioni if k not in data.get("collections", [])]
-    if nuove or tag not in {t["tag"] for t in data.get("tags", [])}:
+    manca_tag = tag_proposte and tag not in {t["tag"] for t in data.get("tags", [])}
+    if nuove or manca_tag:
         data["collections"] = data.get("collections", []) + nuove
-        data["tags"] = [t for t in data.get("tags", []) if t["tag"] != tag] + [{"tag": tag}]
+        if manca_tag:
+            data["tags"] = data.get("tags", []) + [{"tag": tag}]
         try:
             zot.update_item(data, last_modified=data["version"])
         except ze.PreConditionFailedError as e:
@@ -190,3 +195,60 @@ def candidati_duplicati(zot, tipo, campi):
             if d.get("itemType") in TIPI and not db.session.get(ZoteroItem, d["key"]):
                 remoti.append({"key": d["key"], "titolo": d.get("title"), "tipo": d.get("itemType")})
     return list(locali.values()), remoti
+
+
+# --------------------------------------------------------------------------- letture del sito
+# sottocollezioni della collezione dell'edizione: quale -> (nome in Zotero, attributo di Edizione)
+SOTTOCOLLEZIONI = {"docenti": ("Docenti", "zotero_docenti_key"),
+                   "relatori": ("Relatori", "zotero_relatori_key")}
+
+
+def sottocollezione_edizione(zot, ed, quale):
+    """Key di «Docenti» o «Relatori» sotto la collezione dell'edizione; creata la prima volta
+    (o ritrovata per nome se esiste già). Commit subito: se poi la scrittura dell'item fallisce,
+    alla volta dopo non si crea un doppione."""
+    nome, attr = SOTTOCOLLEZIONI[quale]
+    col = getattr(ed, attr) and db.session.get(ZoteroCollezione, getattr(ed, attr))
+    if col is None:
+        col = ZoteroCollezione.query.filter_by(parent_key=ed.zotero_collection_key, nome=nome).first() \
+            or crea_collezione(zot, nome, ed.zotero_collection_key)
+        setattr(ed, attr, col.key)
+        db.session.commit()
+    return col.key
+
+
+def scelte_duplicati(zot, tipo, campi):
+    """Record Zotero a cui collegare una lettura: ([(key, descrizione)], avviso o None)."""
+    avviso = None
+    try:
+        locali, remoti = candidati_duplicati(zot, tipo, campi)
+    except Exception as e:  # noqa: BLE001  (Zotero irraggiungibile: restano i locali)
+        avviso = f"Ricerca in Zotero non riuscita ({e}): controllati solo i record già sincronizzati."
+        locali, remoti = candidati_duplicati(None, tipo, campi)
+    scelte = [(z.key, f"{z.autori or ''} {z.anno or ''} — {z.titolo}") for z in locali if not z.eliminato]
+    scelte += [(r["key"], f"{r['titolo']} (in Zotero, non ancora sincronizzato)") for r in remoti]
+    return scelte, avviso
+
+
+def salva_lettura(zot, p, ed, quale, scelta=""):
+    """Scrive in Zotero la lettura ``p`` nella sottocollezione ``quale`` dell'edizione:
+    collegando il record ``scelta`` se indicato, altrimenti creandone uno nuovo. Imposta
+    ``p.zotero_key`` e scarica la copertina. Restituisce un avviso sulla copertina o None.
+    Commit del chiamante."""
+    if not ed.zotero_collection_key:
+        raise ErroreScrittura("Manca la collezione Zotero dell'edizione (Modifica edizione).")
+    destinazione = [sottocollezione_edizione(zot, ed, quale)]
+    tag = quale == "docenti"
+    if scelta:
+        zi = collega_item(zot, scelta, destinazione, tag_proposte=tag)
+    else:
+        campi = dict(p.campi)
+        zi = crea_item(zot, p.tipo, campi, campi.pop("autori", ""), campi.pop("curatori", ""),
+                       destinazione, tag_proposte=tag)
+    p.zotero_key = zi.key
+    if p.copertina_url and not zi.copertina_path:
+        try:
+            zi.copertina_path = salva_copertina(p.copertina_url)
+        except Exception as e:  # noqa: BLE001  (la copertina non blocca)
+            return f"Copertina non scaricata: {e}"
+    return None

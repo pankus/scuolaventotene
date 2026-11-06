@@ -132,6 +132,7 @@ class Edizione(db.Model):
     # il sito alla prima lettura approvata. Lezione e UD di ogni lettura stanno solo nel sito.
     zotero_collection_key = db.Column(db.String(20))
     zotero_docenti_key = db.Column(db.String(20))
+    zotero_relatori_key = db.Column(db.String(20))
 
     programma = db.relationship("ProgrammaVoce", back_populates="edizione",
                                 cascade="all, delete-orphan",
@@ -216,6 +217,8 @@ class EdizionePersona(db.Model):
     edizione = db.relationship("Edizione", back_populates="persone")
     persona = db.relationship("Persona", back_populates="edizioni")
     materiali = db.relationship("Materiale", back_populates="lezione")
+    letture = db.relationship("PropostaLettura", back_populates="lezione",
+                              cascade="all, delete-orphan", order_by="PropostaLettura.id")
 
     @property
     def posizione(self):
@@ -327,12 +330,17 @@ MOMENTI_PROPOSTA = {"iscrizione": "Con la candidatura", "post_scuola": "Dopo la 
 
 
 class PropostaLettura(db.Model):
-    """Lettura consigliata dal docente. Il legame docente↔libro resta solo qui, mai in Zotero."""
+    """Lettura consigliata da un docente (legata alla candidatura, rivista dal comitato) o dal
+    relatore di una lezione (scritta subito in Zotero). Il legame persona↔libro resta solo qui."""
     __tablename__ = "proposte_lettura"
+    __table_args__ = (db.CheckConstraint("(candidatura_id IS NULL) <> (lezione_id IS NULL)",
+                                         name="una_origine"),)
 
     id = db.Column(db.Integer, primary_key=True)
     candidatura_id = db.Column(db.Integer, db.ForeignKey("candidature.id", ondelete="CASCADE"),
-                               nullable=False, index=True)
+                               index=True)
+    lezione_id = db.Column(db.Integer, db.ForeignKey("edizioni_persone.id", ondelete="CASCADE"),
+                           index=True)
     tipo = db.Column(db.String(20), nullable=False, default="book")
     # campi Zotero (title, date, publisher, place, ISBN, series, url, websiteTitle, accessDate)
     # più "autori" e "curatori" come testo, una persona per riga ("Cognome, Nome")
@@ -348,6 +356,7 @@ class PropostaLettura(db.Model):
     deciso_da_id = db.Column(db.Integer, db.ForeignKey("utenti.id", ondelete="SET NULL"))
 
     candidatura = db.relationship("Candidatura", back_populates="letture")
+    lezione = db.relationship("EdizionePersona", back_populates="letture")
     deciso_da = db.relationship("Utente")
 
     @property

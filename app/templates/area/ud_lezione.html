@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Unità didattiche {{ ep.edizione.anno }}{% endblock %}
+{% block content %}
+<p class="occhiello"><a href="{{ url_for('area.dashboard') }}">← Area personale</a></p>
+<h1>Unità didattiche dei docenti ammessi · {{ ep.edizione.anno }}</h1>
+<p class="nota">Materiale riservato ai relatori dell'edizione: non va diffuso.</p>
+{% for c in candidature %}
+<div class="scheda">
+  <h3>{{ c.titolo_ud or 'Unità didattica senza titolo' }}</h3>
+  <p><small>{{ c.utente.nome_completo }}{% if c.discipline %} · {{ c.discipline }}{% endif %} · {{ TIPI_CANDIDATURA.get(c.tipo, c.tipo) }}</small></p>
+  {% if c.abstract %}<p>{{ c.abstract }}</p>{% endif %}
+  {% if c.file_path %}<p><a href="{{ url_for('area.file_candidatura', cid=c.id) }}">Scarica la proposta ({{ c.file_nome.rsplit('.',1)[-1]|upper }})</a></p>{% endif %}
+  {% set approvate = c.letture|selectattr('stato', 'equalto', 'approvata')|list %}
+  {% if approvate %}<p><small>Letture proposte: {% for l in approvate %}{{ l.titolo }}{% if not loop.last %}; {% endif %}{% endfor %}</small></p>{% endif %}
+</div>
+{% else %}<p>Nessun docente ammesso per ora.</p>{% endfor %}
+{% endblock %}

@@ -11,7 +11,7 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F5 Flusso di iscrizione | **fatta** (2026-11-06): passi 1–4 (macro `passi`), `/area/candidatura/<id>/letture` (aggiungi/modifica/elimina in bozza, max 10, ricerca attiva), avviso nel riepilogo, letture nell'email di conferma, `la_scuola` e informativa aggiornate (Zotero, Google Books, Open Library senza dati personali) |
 | R1 Struttura Zotero dell'edizione | **fatta** (2026-11-06): collezione dell'edizione scelta da elenco, sottocollezione «Docenti» creata dal sito (`zotero_docenti_key`), pagina edizione con il sotto-albero; struttura semplificata su richiesta (Edizione → Relatori, Docenti) |
 | R2 Ruolo relatore e lezioni | **fatta** (2026-11-06): ruolo `relatore`, `Persona.utente_id`, lezione = `EdizionePersona` (`titolo_lezione`, `ordine`), `Materiale.lezione_id`; admin collega l'account nella scheda edizione; area «Le mie lezioni» con caricamento; archivio diviso per lezioni; `env.py` spegne le FK durante le migrazioni |
-| R3 Bibliografia della lezione e UD per i relatori | da fare |
+| R3 Bibliografia della lezione e UD per i relatori | **fatta** (2026-11-06): `PropostaLettura` di una candidatura **o** di una lezione (CHECK), letture dei relatori subito in «Relatori» (senza tag, conferma se ci sono doppioni), pagina edizione con «Relatori» divisa per lezione, UD dei docenti ammessi per i relatori, informativa aggiornata |
 | F6 Dopo la scuola: altri libri e materiali | da fare |
 | F7 Invito alla lettura pubblico | da fare |
 | F8 Sfogliare i materiali | da decidere |

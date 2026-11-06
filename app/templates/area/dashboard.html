@@ -24,7 +24,9 @@
   {% for ep in lezioni %}
   <tr><td>{{ ep.edizione.anno }}</td><td>{{ ep.titolo_lezione or '—' }}</td>
     <td>{% for m in ep.materiali %}{{ m.titolo }} {{ stato(m.stato, STATI_MATERIALE) }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>
-    <td><a class="btn btn-piccolo" href="{{ url_for('area.nuovo_materiale', lezione=ep.id) }}">Carica un materiale</a></td></tr>
+    <td><a class="btn btn-piccolo" href="{{ url_for('area.nuovo_materiale', lezione=ep.id) }}">Carica un materiale</a><br>
+      <a href="{{ url_for('area.letture_lezione', epid=ep.id) }}">Bibliografia ({{ ep.letture|length }})</a> ·
+      <a href="{{ url_for('area.ud_lezione', epid=ep.id) }}">UD dei docenti</a></td></tr>
   {% endfor %}
 </table>
 {% else %}<p class="nota">Il tuo account non è ancora collegato a una lezione: lo fa l'amministrazione della scuola.</p>{% endif %}

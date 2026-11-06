@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block title %}Bibliografia della lezione{% endblock %}
+{% block content %}
+<div class="stretto">
+  <p class="occhiello"><a href="{{ url_for('area.dashboard') }}">← Area personale</a></p>
+  <h1>Bibliografia della lezione</h1>
+  <p><strong>{{ ep.titolo_lezione or 'Lezione senza titolo' }}</strong> · {{ ep.edizione.anno }}</p>
+  <p class="nota">Ogni lettura entra subito nella bibliografia della scuola (Zotero, collezione
+    «Relatori» dell'edizione) e compare nella pagina dell'edizione sotto la tua lezione.</p>
+
+  {% if ep.letture %}
+  <table class="tabella">
+    <tr><th>Lettura</th><th></th></tr>
+    {% for l in ep.letture %}
+    <tr><td><strong>{{ l.titolo }}</strong> <small>{{ TIPI_LETTURA.get(l.tipo, l.tipo) }}</small><br>
+        <small>{{ (l.campi.autori or '')|replace('\n', '; ') }} {{ l.campi.date or '' }}</small></td>
+      <td><form method="post" action="{{ url_for('area.elimina_lettura_lezione', epid=ep.id, pid=l.id) }}" class="in-linea"
+            onsubmit="return confirm('Togliere la lettura dalla lezione? Il record resta in Zotero.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="link-pericolo">togli</button></form></td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if ep.letture|length < max_letture %}
+  <h2>{{ 'Aggiungi un sito web' if tipo == 'webpage' else 'Aggiungi un libro' }}</h2>
+  <p><a href="{{ url_for('area.letture_lezione', epid=ep.id, tipo='webpage' if tipo == 'book' else 'book') }}">oppure {{ 'aggiungi un sito web' if tipo == 'book' else 'aggiungi un libro' }}</a></p>
+  <form method="post" class="modulo">
+    {{ form.hidden_tag() }}
+    {% for nome in campi %}
+      {% if nome == 'title' and tipo == 'book' %}{{ campo(form.title, data_ricerca_url=url_for('area.cerca_letture'), placeholder="Scrivi il titolo: cerchiamo nella bibliografia e online") }}
+      {% else %}{{ campo(form[nome]) }}{% endif %}
+    {% endfor %}
+    {{ campo(form.motivazione) }}
+    {% if scelte %}
+    <fieldset>
+      <legend>È già nella bibliografia?</legend>
+      <p class="nota">Abbiamo trovato record simili (stesso ISBN o stesso titolo). Se è lo stesso libro, sceglilo.</p>
+      {% for key, descr in scelte %}
+      <label class="spunta"><input type="radio" name="scelta" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ descr }}</label>
+      {% endfor %}
+      <label class="spunta"><input type="radio" name="scelta" value=""> No, è un'altra opera: crea un nuovo record</label>
+      <input type="hidden" name="conferma" value="1">
+    </fieldset>
+    {% endif %}
+    <button class="btn" type="submit">{{ 'Conferma e salva' if scelte else 'Salva la lettura' }}</button>
+  </form>
+  {% else %}<p class="nota">Hai già indicato {{ max_letture }} letture per questa lezione.</p>{% endif %}
+</div>
+{% endblock %}
+{% block script %}<script src="{{ url_for('static', filename='js/letture.js') }}" defer></script>{% endblock %}

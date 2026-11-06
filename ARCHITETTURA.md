@@ -20,7 +20,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 |---|---|
 | Visitatore | Consulta l'edizione corrente, il programma, il bando, l'archivio pubblico e la bibliografia |
 | Docente (registrato) | Gestisce il profilo, si candida (come borsista o uditore), carica la proposta di UD, invia materiali e vede quelli riservati ai registrati |
-| Relatore | Storico che tiene una lezione: si registra, l'admin gli dà il ruolo e collega l'account alla sua lezione (scheda dell'edizione); dall'area personale carica i materiali della lezione (in revisione come gli altri). Con R3: bibliografia della lezione e UD dei docenti ammessi |
+| Relatore | Storico che tiene una lezione: si registra, l'admin gli dà il ruolo e collega l'account alla sua lezione (scheda dell'edizione); dall'area personale carica i materiali della lezione (in revisione come gli altri). Indica la bibliografia della lezione (entra subito in Zotero, in «Relatori») e vede le UD dei docenti ammessi della sua edizione, senza i loro dati personali |
 | Comitato | Accede al back-office, legge le candidature, assegna i punteggi (ognuno i propri) e vede la graduatoria |
 | Admin | Fa tutto ciò che fa il comitato e in più gestisce edizioni, programma, comitato, esiti, materiali, utenti e la sincronizzazione Zotero |
 
@@ -57,6 +57,9 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
 /admin/utenti                                    ruoli e attivazione
 /admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione (admin)
+/area/lezioni/<id>/letture[?tipo=webpage]         bibliografia della lezione (relatore, scrive in Zotero)
+/area/lezioni/<id>/letture/<id>/elimina           toglie dal sito (il record resta in Zotero)
+/area/lezioni/<id>/unita-didattiche               UD dei docenti ammessi (relatore)
 /admin/zotero/sync                               sincronizzazione manuale
 ```
 
@@ -77,7 +80,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - **Edizione**: numero, anno, slug, titolo, sottotitolo, date, scadenza, data degli esiti, posti borsisti, uditori sì/no, limiti di caratteri (6000–8000), stato (`bozza → aperta → chiusa → conclusa`), bando e collezione Zotero collegata.
 - **Candidatura**: tipo (borsista o uditore), stato (`bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`), titolo dell'UD, discipline, file e numero di caratteri (calcolato automaticamente per i .docx). Ogni docente ha al massimo una candidatura per edizione.
 - **Valutazione**: una per membro del comitato, con originalità, potenzialità didattiche e valorizzazione delle fonti (0–25 ciascuna, massimo 75). La graduatoria usa la media dei punteggi.
-- **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato dal docente nella candidatura; campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione | post_scuola`), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
+- **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato da un docente nella candidatura **oppure** dal relatore per la sua lezione (vincolo: esattamente una delle due); campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione | post_scuola`), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
 - **EdizionePersona**: persona nel comitato o tra i relatori di un'edizione; per un relatore è la lezione (`titolo_lezione`, `ordine`). **Persona.utente_id** lega la persona all'account del relatore (uno per persona).
 - **Materiale**: edizione, lezione (se è di un relatore), tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
 
@@ -94,7 +97,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - Le collezioni del gruppo diventano le "sezioni" della bibliografia. Ogni edizione può essere collegata a una collezione, che compare come invito alla lettura nella pagina dell'edizione.
 - La chiave API deve avere il permesso di scrittura sul gruppo (controllo: `flask zotero-verifica`); per la sola lettura basta una chiave in lettura, o nessuna se il gruppo è pubblico.
 
-**Struttura del gruppo Zotero**: una collezione per edizione (scelta da elenco in Modifica edizione, tra le collezioni radice sincronizzate); dentro due sottocollezioni, «Relatori» e «Docenti»; «Docenti» la crea il sito alla prima lettura approvata (`Edizione.zotero_docenti_key`). Lezione e unità didattica di ogni lettura le conosce solo il sito (`PropostaLettura`), che le raggruppa. La pagina pubblica dell'edizione mostra l'invito alla lettura come sotto-albero: prima i record della radice, poi una sezione per sottocollezione (anche le vecchie per lezione, come nel 2024), per ultima «Docenti». Ruolo relatore e bibliografie delle lezioni dal sito: fasi R2–R3 di PIANO_LETTURE.md.
+**Struttura del gruppo Zotero**: una collezione per edizione (scelta da elenco in Modifica edizione, tra le collezioni radice sincronizzate); dentro due sottocollezioni, «Relatori» e «Docenti»; «Docenti» la crea il sito alla prima lettura approvata (`Edizione.zotero_docenti_key`). Lezione e unità didattica di ogni lettura le conosce solo il sito (`PropostaLettura`), che le raggruppa. La pagina pubblica dell'edizione mostra l'invito alla lettura come sotto-albero: prima i record della radice, poi una sezione per sottocollezione (anche le vecchie per lezione, come nel 2024), per ultima «Docenti». Le letture dei relatori entrano subito in «Relatori» (`Edizione.zotero_relatori_key`), senza tag e senza revisione; se ci sono possibili doppioni il relatore sceglie prima il record. Nella pagina dell'edizione «Relatori» è divisa per lezione (il legame lo conosce il sito); i record aggiunti a mano in Zotero restano sotto «Relatori». Togliere una lettura dal sito non la elimina da Zotero.
 
 **Letture proposte** (PIANO_LETTURE.md): il docente indica libri e siti nella candidatura (passo 3); dopo l'invio vede lo stato e la nota del comitato. In `/admin/letture` il comitato vede le proposte delle candidature inviate, corregge la scheda e sceglie: collegarla a un record già in Zotero (doppioni trovati per ISBN o per titolo e anno) oppure crearne uno nuovo. In entrambi i casi l'item entra nella sottocollezione «Docenti» dell'edizione con il tag `ZOTERO_TAG_PROPOSTE`, e la copertina viene scaricata in `uploads/copertine/` (solo da Google Books, Open Library e archive.org). Serve che l'edizione abbia la sua collezione Zotero. Se in Zotero si fondono due item, la sync sposta le proposte sul superstite (`dc:replaces`). Una proposta rifiutata riporta la nota del comitato; una approvata si corregge direttamente in Zotero.
 

@@ -118,7 +118,7 @@ def test_rifiuta_e_approvata_bloccata(app, zot):
 
 
 def test_copertina_scaricata(app, zot, monkeypatch):
-    monkeypatch.setattr("app.views.admin.salva_copertina", lambda url: "copertine/x.jpg")
+    monkeypatch.setattr("app.zotero_scrittura.salva_copertina", lambda url: "copertine/x.jpg")
     p = crea_proposta(copertina_url="https://covers.openlibrary.org/b/isbn/9780306406157-L.jpg")
     approva(client_di(app, crea_utente(ruolo="comitato")), p)
     p = db.session.get(PropostaLettura, p.id)

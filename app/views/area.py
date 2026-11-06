@@ -1,5 +1,6 @@
-"""Area riservata del docente: profilo, candidatura a passi (profilo, UD, invito alla lettura,
-riepilogo e invio), invio materiali, ricerca dei libri."""
+"""Area riservata. Docente: profilo, candidatura a passi (profilo, UD, invito alla lettura,
+riepilogo e invio), invio materiali. Relatore: materiali e bibliografia della propria lezione,
+UD dei docenti ammessi. Per tutti: ricerca dei libri."""
 import time
 from collections import defaultdict, deque
 
@@ -7,13 +8,14 @@ from flask import (Blueprint, abort, current_app, flash, jsonify, redirect, rend
                    request, send_from_directory, url_for)
 from flask_login import current_user, login_required
 
+from .. import zotero_sync as modulo_sync
 from ..extensions import db
 from ..forms import CandidaturaForm, LetturaDocenteForm, MaterialeForm, ProfiloForm
 from ..models import Candidatura, Edizione, Materiale, PropostaLettura, ZoteroItem, adesso
 from ..posta import email_conferma_invio
 from ..ricerca_libri import cerca
 from ..utils import copertina_ammessa, conta_caratteri, elimina_upload, salva_upload
-from ..zotero_scrittura import CAMPI_MODULO
+from ..zotero_scrittura import CAMPI_MODULO, ErroreScrittura, salva_lettura, scelte_duplicati
 
 bp = Blueprint("area", __name__)
 
@@ -94,7 +96,16 @@ def dettaglio(cid):
     return render_template("area/candidatura.html", c=c, problemi=c.problemi_invio())
 
 
-MAX_LETTURE = 10  # per candidatura
+MAX_LETTURE = 10  # per candidatura o per lezione
+
+
+def _compila(p, form):
+    """Campi della lettura dal form; dalla ricerca si tengono solo valori verificabili."""
+    p.campi = {k: (form[k].data or "").strip() for k in CAMPI_MODULO[p.tipo]}
+    p.motivazione = form.motivazione.data
+    key = form.zotero_key.data or None
+    p.zotero_key = key if key and ZoteroItem.query.filter_by(key=key, eliminato=False).first() else None
+    p.copertina_url = form.copertina_url.data if copertina_ammessa(form.copertina_url.data) else None
 
 
 @bp.route("/candidatura/<int:cid>/letture", methods=["GET", "POST"])
@@ -113,12 +124,7 @@ def letture(cid):
             return redirect(url_for("area.letture", cid=c.id))
         p = p or PropostaLettura(candidatura=c, tipo=tipo, momento="iscrizione")
         db.session.add(p)
-        p.campi = {k: (form[k].data or "").strip() for k in CAMPI_MODULO[tipo]}
-        p.motivazione = form.motivazione.data
-        # dalla ricerca: si tengono solo valori verificabili
-        key = form.zotero_key.data or None
-        p.zotero_key = key if key and ZoteroItem.query.filter_by(key=key, eliminato=False).first() else None
-        p.copertina_url = form.copertina_url.data if copertina_ammessa(form.copertina_url.data) else None
+        _compila(p, form)
         db.session.commit()
         flash("Lettura salvata.", "ok")
         return redirect(url_for("area.letture", cid=c.id))
@@ -168,7 +174,7 @@ def ritira(cid):
 @bp.route("/candidatura/<int:cid>/file")
 def file_candidatura(cid):
     c = db.get_or_404(Candidatura, cid)
-    if c.utente_id != current_user.id and not current_user.is_comitato:
+    if c.utente_id != current_user.id and not current_user.is_comitato and not _relatore_di(c):
         abort(404)
     if not c.file_path:
         abort(404)
@@ -206,6 +212,77 @@ def nuovo_materiale():
             flash("Materiale inviato: sarà pubblicato dopo la revisione.", "ok")
             return redirect(url_for("area.dashboard"))
     return render_template("area/materiale_form.html", form=form, lezione=lezione)
+
+
+# ------------------------------------------------------------------ relatore: la propria lezione
+def _mia_lezione(epid):
+    return next((ep for ep in current_user.lezioni() if ep.id == epid), None) or abort(404)
+
+
+def _relatore_di(c):
+    """Il relatore vede le UD dei docenti ammessi nelle edizioni in cui tiene una lezione."""
+    return (current_user.is_relatore and c.stato == "ammessa"
+            and any(ep.edizione_id == c.edizione_id for ep in current_user.lezioni()))
+
+
+@bp.route("/lezioni/<int:epid>/letture", methods=["GET", "POST"])
+def letture_lezione(epid):
+    """Bibliografia della lezione: ogni lettura entra subito in Zotero, in «Relatori»."""
+    ep = _mia_lezione(epid)
+    tipo = "webpage" if request.args.get("tipo") == "webpage" else "book"
+    form = LetturaDocenteForm()
+    scelte = []
+    if form.validate_on_submit():
+        if len(ep.letture) >= MAX_LETTURE:
+            flash(f"Puoi indicare al massimo {MAX_LETTURE} letture per lezione.", "errore")
+            return redirect(url_for("area.letture_lezione", epid=ep.id))
+        p = PropostaLettura(lezione_id=ep.id, tipo=tipo)  # in sessione solo se si salva
+        _compila(p, form)
+        scelta = p.zotero_key or request.form.get("scelta", "")
+        try:
+            zot = modulo_sync.client()
+            if not scelta and "conferma" not in request.form:
+                scelte, avviso = scelte_duplicati(zot, tipo, p.campi)
+                if avviso:
+                    flash(avviso, "errore")
+            if not scelte:
+                avviso = salva_lettura(zot, p, ep.edizione, "relatori", scelta)
+                p.stato, p.deciso_il, p.deciso_da_id = "approvata", adesso(), current_user.id
+                db.session.add(p)
+                db.session.commit()
+                if avviso:
+                    flash(avviso, "errore")
+                flash("Lettura salvata nella bibliografia della lezione.", "ok")
+                return redirect(url_for("area.letture_lezione", epid=ep.id))
+            # altrimenti: possibili doppioni, si ripropone il modulo con la scelta del record
+        except (ErroreScrittura, RuntimeError) as e:
+            db.session.rollback()
+            flash(str(e), "errore")
+        except Exception as e:  # noqa: BLE001  (rete, permessi)
+            db.session.rollback()
+            flash(f"Scrittura in Zotero non riuscita: {e}", "errore")
+    return render_template("area/letture_lezione.html", ep=ep, form=form, tipo=tipo, scelte=scelte,
+                           campi=CAMPI_MODULO[tipo], max_letture=MAX_LETTURE)
+
+
+@bp.post("/lezioni/<int:epid>/letture/<int:pid>/elimina")
+def elimina_lettura_lezione(epid, pid):
+    """Toglie la lettura dal sito; il record resta in Zotero (fonte di verità)."""
+    ep = _mia_lezione(epid)
+    p = next((x for x in ep.letture if x.id == pid), None) or abort(404)
+    db.session.delete(p)
+    db.session.commit()
+    flash("Lettura tolta dalla lezione. Il record resta in Zotero: se va eliminato, fallo lì.", "info")
+    return redirect(url_for("area.letture_lezione", epid=ep.id))
+
+
+@bp.route("/lezioni/<int:epid>/unita-didattiche")
+def ud_lezione(epid):
+    """UD dei docenti ammessi nell'edizione della lezione: niente dati personali oltre al nome."""
+    ep = _mia_lezione(epid)
+    ammesse = (Candidatura.query.filter_by(edizione_id=ep.edizione_id, stato="ammessa")
+               .order_by(Candidatura.titolo_ud).all())
+    return render_template("area/ud_lezione.html", ep=ep, candidature=ammesse)
 
 
 # ------------------------------------------------------------------ ricerca dei libri (lookup)

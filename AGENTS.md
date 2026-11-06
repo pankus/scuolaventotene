@@ -96,7 +96,8 @@ estendere lì, non nelle viste.
 **Ruoli e permessi.** `visitatore`, `docente`, `relatore`, `comitato`, `admin` (admin include
 comitato; il relatore non entra nel back-office). Docente = insegnante che si candida; relatore =
 storico che tiene una lezione: le sue lezioni sono `Utente.lezioni()` (via `Persona.utente_id`),
-e ogni accesso a una lezione passa da lì.
+e ogni accesso a una lezione passa da lì. Il relatore vede le UD solo dei docenti **ammessi**
+nelle edizioni in cui insegna (`area._relatore_di`), mai email, telefono, nascita, residenza.
 Proteggere le viste con `@login_required`, `@comitato_required` o `@admin_required`
 (`app/utils.py`); per i materiali usare `Materiale.visibile_a(user)`. Ogni nuova rotta del
 back-office deve avere un decoratore di permesso.
@@ -151,7 +152,9 @@ Citazioni già formattate (`include=bib`). La chiave ha permesso di scrittura (c
 `aggiorna_item` con 412 → `ErroreScrittura`, `candidati_duplicati`): solo campi bibliografici,
 mai dati del docente; la usa la revisione del comitato (`/admin/letture`, `collega_item` per i
 record già presenti), che scrive nella sottocollezione «Docenti» dell'edizione
-(`crea_collezione`, `Edizione.zotero_docenti_key`); struttura: Edizione → «Relatori», «Docenti». Struttura del gruppo e ruolo relatore in
+(`crea_collezione`, `Edizione.zotero_docenti_key`); struttura: Edizione → «Relatori», «Docenti».
+Logica comune in `zotero_scrittura.py`: `sottocollezione_edizione`, `scelte_duplicati`,
+`salva_lettura` (docenti con il tag, relatori senza, subito in «Relatori»). Struttura del gruppo e ruolo relatore in
 PIANO_LETTURE.md (R1–R3): docente = insegnante candidato, relatore = storico delle lezioni. Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
 nei redirect, solo immagini, max 2 MB). Ricerca dei libri in `app/ricerca_libri.py`
 (`/area/letture/cerca`): le API esterne si chiamano solo dal server, il browser non carica
@@ -182,8 +185,9 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`.
   limite di 30 ricerche al minuto.
 - `test_iscrizione.py`: passi della candidatura, letture del docente (valori della ricerca
   verificati, limite, sola lettura dopo l'invio, email di conferma).
-- `test_relatori.py`: account del relatore collegato alla lezione (solo admin), materiali della
-  lezione (solo le proprie), archivio diviso per lezioni.
+- `test_relatori.py`: account del relatore collegato alla lezione (solo admin), materiali e
+  bibliografia della lezione (solo le proprie, doppioni, niente tag), pagina edizione per lezione,
+  UD dei docenti ammessi senza dati personali, vincolo `una_origine`.
 - `test_letture.py`: revisione delle letture (permessi, collega/crea, nessun dato del docente
   nel payload Zotero), copertine, merge `dc:replaces`.
 
