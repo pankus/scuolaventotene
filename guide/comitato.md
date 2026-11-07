@@ -173,8 +173,9 @@ pagina (vedi *Completare le edizioni passate*).
 
 ## Utenti e ruoli
 
-Solo admin. **Utenti**: per ogni account ruolo (*docente*, *relatore*, *comitato*, *admin*) e
-attivo sì/no; un account disattivato non può più entrare. Non si può cambiare il proprio ruolo.
+Solo admin. **Utenti**: per ogni account cognome e nome, ruolo (*docente*, *relatore*,
+*comitato*, *admin*) e attivo sì/no, poi **Salva**; un account disattivato non può più entrare.
+Non si può cambiare il proprio ruolo (il proprio nome sì).
 **Elimina** cancella l'account (per esempio uno creato per prova) con candidature, letture e
 file caricati; non vale per chi ha valutato candidature o caricato materiali: quelli si disattivano.
 Il primo admin si crea dal server con `flask crea-admin`.

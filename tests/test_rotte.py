@@ -181,3 +181,17 @@ def test_programma_modifica_e_ordine(app):
     db.session.expire_all()
     assert a.titolo == "A2" and str(a.giorno) == "2026-09-01" and a.ordine == 3
     assert "A2" in c.get(f"/admin/edizioni/{ed.id}").data.decode()
+
+
+def test_admin_modifica_nome_utente(app):
+    admin, docente, comitato = crea_utente(ruolo="admin"), crea_utente(), crea_utente(ruolo="comitato")
+    c = client_di(app, admin)
+    assert client_di(app, comitato).post(f"/admin/utenti/{docente.id}",
+                                         data={"nome": "X", "cognome": "Y"}).status_code == 403
+    c.post(f"/admin/utenti/{docente.id}", data={"nome": " Maria Gloria ", "cognome": "Calì",
+                                               "ruolo": "relatore", "attivo": "1"})
+    c.post(f"/admin/utenti/{docente.id}", data={"nome": "", "cognome": "Vuoto", "ruolo": "docente"})  # rifiutato
+    c.post(f"/admin/utenti/{admin.id}", data={"nome": "Io", "cognome": "Admin", "ruolo": "docente"})
+    db.session.expire_all()
+    assert (docente.nome, docente.cognome, docente.ruolo, docente.attivo) == ("Maria Gloria", "Calì", "relatore", True)
+    assert (admin.nome, admin.cognome, admin.ruolo) == ("Io", "Admin", "admin")  # il proprio ruolo non cambia

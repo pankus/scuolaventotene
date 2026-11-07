@@ -221,6 +221,8 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .modulo-riga .campo { margin: 0; flex: 1 1 10rem; }
 .in-linea { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; font-family: var(--sans); font-size: .85rem; }
 .in-linea select { width: auto; padding: .35rem .5rem; font-size: .85rem; }
+.nome-utente input { font: inherit; width: 9rem; padding: .35rem .5rem; border: 1px solid var(--linea); border-radius: var(--r); background: var(--carta); color: var(--inchiostro); }
+.nome-utente input:focus { border-color: var(--accento); outline: 0; }
 .filtri { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; margin: 1.5rem 0; font-family: var(--sans); font-size: .9rem; }
 .filtri input { flex: 2 1 16rem; width: auto; }
 .filtri select { flex: 1 1 12rem; width: auto; }

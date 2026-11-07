@@ -542,14 +542,20 @@ def utenti():
 @bp.post("/utenti/<int:uid>")
 @admin_required
 def aggiorna_utente(uid):
+    """Nome e cognome (anche i propri: gli account importati possono averli sbagliati),
+    ruolo e attivo (non i propri)."""
     u = db.get_or_404(Utente, uid)
-    if u.id == current_user.id:
-        flash("Non puoi modificare il tuo stesso ruolo.", "errore")
-    else:
+    nome, cognome = request.form.get("nome", "").strip(), request.form.get("cognome", "").strip()
+    if not (nome and cognome) or len(nome) > 100 or len(cognome) > 100:
+        flash("Nome e cognome sono obbligatori (al massimo 100 caratteri).", "errore")
+        return redirect(url_for("admin.utenti"))
+    u.nome, u.cognome = nome, cognome
+    if u.id != current_user.id:
         if request.form.get("ruolo") in RUOLI:
             u.ruolo = request.form["ruolo"]
         u.attivo = request.form.get("attivo") == "1"
-        db.session.commit()
+    db.session.commit()
+    flash(f"Utente {u.email} aggiornato.", "ok")
     return redirect(url_for("admin.utenti"))
 
 

@@ -6,12 +6,17 @@
 <table class="tabella">
   <tr><th>Nome</th><th>Email</th><th>Scuola</th><th>Registrato</th><th>Ruolo / stato</th></tr>
   {% for u in utenti %}
-  <tr><td>{{ u.cognome }} {{ u.nome }}</td><td>{{ u.email }}</td><td>{{ u.scuola or '' }}</td><td>{{ u.creato_il|data_it }}</td>
-    <td><form method="post" action="{{ url_for('admin.aggiorna_utente', uid=u.id) }}" class="in-linea">
+  {% set f = 'u' ~ u.id %}
+  <tr><td><div class="in-linea nome-utente">
+      <input form="{{ f }}" name="cognome" value="{{ u.cognome }}" required maxlength="100" aria-label="Cognome" placeholder="Cognome">
+      <input form="{{ f }}" name="nome" value="{{ u.nome }}" required maxlength="100" aria-label="Nome" placeholder="Nome"></div></td><td>{{ u.email }}</td><td>{{ u.scuola or '' }}</td><td>{{ u.creato_il|data_it }}</td>
+    <td><form method="post" action="{{ url_for('admin.aggiorna_utente', uid=u.id) }}" class="in-linea" id="{{ f }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if u.id != current_user.id %}
       <select name="ruolo">{% for k, v in RUOLI.items() %}<option value="{{ k }}" {% if k == u.ruolo %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
       <label><input type="checkbox" name="attivo" value="1" {% if u.attivo %}checked{% endif %}> attivo</label>
-      <button class="btn btn-piccolo">OK</button></form>
+      {% else %}{{ RUOLI.get(u.ruolo) }} (tu){% endif %}
+      <button class="btn btn-piccolo">Salva</button></form>
     {% if u.id != current_user.id %}<form method="post" action="{{ url_for('admin.elimina_utente', uid=u.id) }}" class="in-linea">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="link-pericolo" onclick="return confirm('Eliminare definitivamente {{ u.email }} con le sue candidature?')">elimina</button></form>{% endif %}</td></tr>
