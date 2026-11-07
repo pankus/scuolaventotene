@@ -7,6 +7,7 @@ from flask import (Blueprint, Response, abort, current_app, flash, redirect, ren
 from flask_login import current_user, login_required
 from sqlalchemy import or_
 
+from ..edizioni_precedenti import lezioni_dal_programma
 from ..extensions import db
 from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il nome
 from ..forms import (CopertinaForm, DescrizioneForm, EmailPartecipantiForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
@@ -115,6 +116,8 @@ def aggiungi_voce(eid):
             v.ordine = max((x.ordine or 0 for x in ed.programma if x is not v), default=-1) + 1
         db.session.add(v)
         db.session.commit()
+        if v.tipo == "lezione":
+            _crea_lezioni(ed)
     else:
         flash("Voce di programma non valida.", "errore")
     return redirect(url_for("admin.modifica_edizione", eid=eid) + "#programma")
@@ -126,10 +129,17 @@ def aggiorna_voce(vid):
     v = db.get_or_404(ProgrammaVoce, vid)
     f = ProgrammaVoceForm(prefix=f"v{vid}")
     if f.validate_on_submit():
+        vecchio = v.titolo
         f.populate_obj(v)
         v.ordine = v.ordine or 0
+        if v.titolo != vecchio:  # la lezione segue il titolo, così il link del programma regge
+            for ep in v.edizione.persone:
+                if ep.ruolo == "relatore" and ep.titolo_lezione == vecchio:
+                    ep.titolo_lezione = v.titolo
         db.session.commit()
         flash("Voce aggiornata.", "ok")
+        if v.tipo == "lezione":
+            _crea_lezioni(v.edizione)
     else:
         flash("Voce di programma non valida.", "errore")
     return redirect(url_for("admin.modifica_edizione", eid=v.edizione_id) + "#programma")
@@ -146,6 +156,24 @@ def ordina_programma(eid):
             voci[vid].ordine = i
     db.session.commit()
     return "", 204
+
+
+@bp.post("/edizioni/<int:eid>/lezioni-dal-programma")
+@admin_required
+def lezioni_programma(eid):
+    ed = db.get_or_404(Edizione, eid)
+    if not _crea_lezioni(ed):
+        flash("Nessuna lezione da creare: tutte le voci «lezione» hanno già la loro.", "ok")
+    return redirect(url_for("admin.modifica_edizione", eid=eid) + "#persone")
+
+
+def _crea_lezioni(ed):
+    """Lezioni mancanti dalle voci «lezione» del programma (una per relatore)."""
+    n = lezioni_dal_programma(ed)
+    db.session.commit()
+    if n:
+        flash(f"Create {n} lezioni dal programma." if n > 1 else "Creata 1 lezione dal programma.", "ok")
+    return n
 
 
 @bp.post("/programma/<int:vid>/elimina")

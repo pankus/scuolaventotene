@@ -55,9 +55,12 @@ si cambiano giorno e ordine da «modifica».
 **Comitato scientifico e relatori**: nome, cognome, affiliazione, ruolo e, per i relatori, il
 titolo della lezione. Ogni relatore aggiunto è una **lezione**: titolo, **ordine** (la
 posizione nell'archivio e nella bibliografia) e **account del relatore**.
-Se le lezioni sono già nel programma (voci *lezione* con i relatori, separati da virgola), l'admin
-le crea tutte con `flask lezioni-dal-programma`: una per relatore, anche quando la lezione è a
-due voci; il comando si può rilanciare, non crea doppioni.
+Le lezioni nascono dal programma: quando si salva una voce *lezione* con i relatori (separati da
+virgola), il sito crea la lezione di ogni relatore che non ce l'ha ancora, una per relatore anche
+quando la lezione è a due voci. Se si cambia il titolo della voce, cambia anche quello della
+lezione. Per le voci scritte prima, o per ricreare una lezione rimossa, il pulsante **Crea le
+lezioni dal programma** (sotto il programma) fa lo stesso per tutte le voci, senza doppioni.
+Eliminare una voce non elimina la lezione: si rimuove da qui.
 
 Per collegare l'account: il relatore si registra dal sito, l'admin gli dà il ruolo
 *Relatore* in **Utenti**, poi lo sceglie nella lezione e **Salva lezione**. Da quel momento il

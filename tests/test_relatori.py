@@ -257,3 +257,55 @@ def test_vincolo_una_origine(app):
     with pytest.raises(IntegrityError):
         db.session.commit()
     db.session.rollback()
+
+
+# ------------------------------------------------------------------ lezioni dal programma
+def _voce(c, ed, **campi):
+    dati = {"voce-tipo": "lezione", "voce-titolo": "Esuli", "voce-relatori": "Anna Neri, Luca Blu"}
+    dati.update({f"voce-{k}": v for k, v in campi.items()})
+    return c.post(f"/admin/edizioni/{ed.id}/programma", data=dati)
+
+
+def _lezioni(ed):
+    db.session.expire_all()
+    return sorted((ep.persona.cognome, ep.titolo_lezione) for ep in ed.persone if ep.ruolo == "relatore")
+
+
+def test_voce_lezione_crea_le_lezioni(app):
+    ed = crea_edizione(stato="chiusa")
+    c = client_di(app, crea_utente(ruolo="admin"))
+    assert _voce(c, ed).status_code == 302
+    assert _lezioni(ed) == [("Blu", "Esuli"), ("Neri", "Esuli")]
+    _voce(c, ed, tipo="pausa", titolo="Pranzo", relatori="")
+    assert len(_lezioni(ed)) == 2
+
+
+def test_voce_rinominata_ed_eliminata(app):
+    ed = crea_edizione(stato="bozza")
+    c = client_di(app, crea_utente(ruolo="admin"))
+    _voce(c, ed, relatori="Anna Neri")
+    v = ed.programma[0]
+    c.post(f"/admin/programma/{v.id}", data={f"v{v.id}-tipo": "lezione", f"v{v.id}-titolo": "Confinati",
+                                              f"v{v.id}-relatori": "Anna Neri", f"v{v.id}-ordine": "0"})
+    assert _lezioni(ed) == [("Neri", "Confinati")]
+    c.post(f"/admin/programma/{v.id}/elimina")
+    assert _lezioni(ed) == [("Neri", "Confinati")]  # la lezione resta
+
+
+def test_pulsante_lezioni_dal_programma(app):
+    from app.models import ProgrammaVoce
+    ed = crea_edizione(stato="chiusa")
+    db.session.add(ProgrammaVoce(edizione=ed, tipo="lezione", titolo="Esuli", relatori="Anna Neri"))
+    db.session.commit()
+    c = client_di(app, crea_utente(ruolo="admin"))
+    assert "Crea le lezioni dal programma" in c.get(f"/admin/edizioni/{ed.id}").get_data(as_text=True)
+    assert c.post(f"/admin/edizioni/{ed.id}/lezioni-dal-programma").status_code == 302
+    c.post(f"/admin/edizioni/{ed.id}/lezioni-dal-programma")  # di nuovo: niente doppioni
+    assert _lezioni(ed) == [("Neri", "Esuli")]
+
+
+@pytest.mark.parametrize("ruolo", ["comitato", "relatore", "docente"])
+def test_pulsante_solo_admin(app, ruolo):
+    ed = crea_edizione(stato="chiusa")
+    c = client_di(app, crea_utente(ruolo=ruolo))
+    assert c.post(f"/admin/edizioni/{ed.id}/lezioni-dal-programma").status_code == 403

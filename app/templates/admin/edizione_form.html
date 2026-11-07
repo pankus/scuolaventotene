@@ -35,6 +35,11 @@
   {% for f in voce_form if f.type != 'CSRFTokenField' %}{{ campo(f) }}{% endfor %}
   <button class="btn btn-piccolo">Aggiungi voce</button>
 </form>
+<form method="post" action="{{ url_for('admin.lezioni_programma', eid=ed.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-piccolo">Crea le lezioni dal programma</button>
+  <span class="nota">Una lezione per ogni relatore delle voci «lezione» che non ce l'ha ancora.</span>
+</form>
 
 <h2 id="persone">Comitato scientifico, relatori e UD dei docenti</h2>
 <p class="nota">Il relatore si registra dal sito; poi in <a href="{{ url_for('admin.utenti') }}">Utenti</a> gli dai
