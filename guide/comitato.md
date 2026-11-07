@@ -110,6 +110,15 @@ mai mostrate al docente.
 
 ## Invito alla lettura
 
+### Riferimenti di base
+
+Libri e siti validi per tutte le edizioni stanno in Zotero in una collezione di primo livello,
+«Riferimenti di base», fuori dalle collezioni delle edizioni (non nella radice del gruppo: lì ci
+sono tutti gli item). Si aggiungono direttamente in Zotero; dopo la sincronizzazione compaiono
+in fondo all'invito alla lettura di ogni edizione, come sezione in Bibliografia e nella ricerca
+dei libri. La collezione la sceglie l'admin una volta sola, con la sua key nel `.env`
+(`ZOTERO_COLLEZIONE_BASE`).
+
 ### Revisione delle letture
 
 **Letture**: le proposte dei docenti dell'edizione scelta (prima quelle da rivedere), con tipo,

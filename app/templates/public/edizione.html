@@ -94,7 +94,7 @@
   {% if titolo %}<h3>{{ titolo }}</h3>{% endif %}
   <ol class="biblio">{% for i in items %}{{ voce_biblio(i) }}{% endfor %}</ol>
   {% endfor %}
-  <p><a href="{{ url_for('bibliografia.index', collezione=ed.zotero_collection_key) }}">Cerca nella bibliografia dell'edizione →</a></p>
+  {% if ed.zotero_collection_key %}<p><a href="{{ url_for('bibliografia.index', collezione=ed.zotero_collection_key) }}">Cerca nella bibliografia dell'edizione →</a></p>{% endif %}
 </section>
 {% endif %}
 {% endblock %}

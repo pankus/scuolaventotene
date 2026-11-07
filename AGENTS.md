@@ -178,7 +178,8 @@ Citazioni già formattate (`include=bib`). La chiave ha permesso di scrittura (c
 `aggiorna_item` con 412 → `ErroreScrittura`, `candidati_duplicati`): solo campi bibliografici,
 mai dati del docente; la usa la revisione del comitato (`/admin/letture`, `collega_item` per i
 record già presenti), che scrive nella sottocollezione «Docenti» dell'edizione
-(`crea_collezione`, `Edizione.zotero_docenti_key`); struttura: Edizione → «Relatori», «Docenti».
+(`crea_collezione`, `Edizione.zotero_docenti_key`); struttura: Edizione → «Relatori», «Docenti»; più una collezione di primo livello dei
+riferimenti di base (`ZOTERO_COLLEZIONE_BASE`), in fondo all'invito alla lettura di ogni edizione.
 Logica comune in `zotero_scrittura.py`: `sottocollezione_edizione`, `scelte_duplicati`,
 `salva_lettura` (docenti con il tag, relatori senza, subito in «Relatori»). Struttura del gruppo e ruolo relatore in
 PIANO_LETTURE.md (R1–R3): docente = insegnante candidato, relatore = storico delle lezioni. Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche

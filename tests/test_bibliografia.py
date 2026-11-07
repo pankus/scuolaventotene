@@ -68,3 +68,34 @@ def test_letture_nella_scheda_del_comitato(app):
     html = client_di(app, crea_utente(ruolo="comitato")).get(
         f"/admin/candidature/{c.id}").get_data(as_text=True)
     assert "Proposta del docente" in html and f'href="/admin/letture/{p.id}"' in html
+
+
+def test_riferimenti_di_base_in_ogni_edizione(app, client):
+    libreria(app)
+    base = ZoteroCollezione(key="BASE", nome="Riferimenti di base")
+    db.session.add(base)
+    db.session.add(ZoteroItem(key="B1", titolo="Manuale di base", tipo="book", collezioni=[base]))
+    r1 = db.session.get(ZoteroItem, "R1")
+    r1.collezioni.append(base)  # già nell'edizione: una volta sola
+    con = crea_edizione(stato="chiusa")
+    con.zotero_collection_key = "ED"
+    senza = crea_edizione(stato="chiusa")
+    db.session.commit()
+
+    assert "Riferimenti di base" not in client.get(f"/edizioni/{con.slug}").get_data(as_text=True)
+    app.config["ZOTERO_COLLEZIONE_BASE"] = "BASE"
+    html = client.get(f"/edizioni/{con.slug}").get_data(as_text=True)
+    assert "Riferimenti di base" in html and "Manuale di base" in html
+    assert html.count("<em>Libro del relatore</em>") == 1
+    assert html.index("Libro del docente") < html.index("Manuale di base")  # in fondo
+    html = client.get(f"/edizioni/{senza.slug}").get_data(as_text=True)
+    assert "Manuale di base" in html and "Libro del relatore" in html  # R1 è anche nella base
+    assert "Cerca nella bibliografia dell'edizione" not in html
+
+
+def test_riferimenti_di_base_nella_ricerca(app):
+    from app.ricerca_libri import cerca_zotero
+    base = ZoteroCollezione(key="BASE", nome="Riferimenti di base")
+    db.session.add(ZoteroItem(key="B1", titolo="Manuale di base", tipo="book", collezioni=[base]))
+    db.session.commit()
+    assert [z["key"] for z in cerca_zotero("manuale")] == ["B1"]

@@ -101,9 +101,12 @@ def _letture_edizione(ed):
     """Invito alla lettura: [(titolo sezione o None, item)] dal sotto-albero della collezione
     dell'edizione. Prima i record della radice, poi una sezione per sottocollezione in ordine di
     nome ("Relatori"; nelle edizioni vecchie una per lezione), per ultima "Docenti". Un item
-    compare una volta sola."""
+    compare una volta sola. In fondo i «Riferimenti di base», comuni a tutte le edizioni
+    (collezione ZOTERO_COLLEZIONE_BASE), anche per le edizioni senza collezione."""
     radice = ed.zotero_collection_key and db.session.get(ZoteroCollezione, ed.zotero_collection_key)
-    if not radice:
+    base_key = current_app.config.get("ZOTERO_COLLEZIONE_BASE")
+    base = base_key and db.session.get(ZoteroCollezione, base_key)
+    if not radice and not base:
         return []
     figli = {}
     for c in ZoteroCollezione.query.all():
@@ -115,10 +118,14 @@ def _letture_edizione(ed):
             out += discendenti(f)
         return out
 
-    sezioni = [(None, [radice])]
-    for c in sorted(figli.get(radice.key, []),
-                    key=lambda c: (c.key == ed.zotero_docenti_key, c.nome.lower())):
-        sezioni.append((c.nome, discendenti(c)))
+    sezioni = []
+    if radice:
+        sezioni.append((None, [radice]))
+        for c in sorted(figli.get(radice.key, []),
+                        key=lambda c: (c.key == ed.zotero_docenti_key, c.nome.lower())):
+            sezioni.append((c.nome, discendenti(c)))
+    if base:
+        sezioni.append(("Riferimenti di base", discendenti(base)))
     visti, out = set(), []
     for titolo, cols in sezioni:
         items = sorted({i.key: i for c in cols for i in c.items

@@ -27,6 +27,8 @@ class Config:
     ZOTERO_GROUP_URL = os.environ.get("ZOTERO_GROUP_URL", "")
     # tag messo sugli item creati dal sito con le letture proposte dai docenti
     ZOTERO_TAG_PROPOSTE = os.environ.get("ZOTERO_TAG_PROPOSTE", "proposta-docenti")
+    # key della collezione dei riferimenti di base, comuni a tutte le edizioni (vuota = nessuna)
+    ZOTERO_COLLEZIONE_BASE = os.environ.get("ZOTERO_COLLEZIONE_BASE", "")
     # ricerca dei libri: chiave facoltativa (senza, Google limita presto con 429; resta Open Library)
     GOOGLE_BOOKS_API_KEY = os.environ.get("GOOGLE_BOOKS_API_KEY", "")
 
@@ -61,4 +63,5 @@ class TestConfig(Config):
     # mai il gruppo vero nei test: si usa FakeZot (tests/conftest.py)
     ZOTERO_LIBRARY_ID = "12345"
     ZOTERO_API_KEY = ""
+    ZOTERO_COLLEZIONE_BASE = ""
     GOOGLE_BOOKS_API_KEY = ""
