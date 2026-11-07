@@ -3,7 +3,7 @@ name = "scuola-ventotene"
 version = "0.1.0"
 description = "Sito della Scuola di formazione di Ventotene (CNR-ISMed, Centro Ventotene e Santo Stefano, ANPPIA)"
 readme = "README.md"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.10"
 dependencies = [
     "flask>=3.0",
     "flask-sqlalchemy>=3.1",
