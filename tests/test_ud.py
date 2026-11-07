@@ -209,3 +209,10 @@ def test_una_fonte_giu_non_ferma_le_altre(app, monkeypatch):
         "9788833142586", salva=lambda u: "copertine/a.jpg" if "amazon" in u else 1 / 0) == "copertine/a.jpg"
     with pytest.raises(ValueError, match="Google Books \\(troppe richieste\\).*GOOGLE_BOOKS_API_KEY"):
         ricerca_libri.cerca_copertina("9788833142586", salva=lambda u: 1 / 0)
+
+
+def test_archivio_vuoto(app, client):
+    ed = crea_edizione(stato="conclusa")
+    html = client.get(f"/archivio/{ed.slug}").get_data(as_text=True)
+    assert "non sono ancora stati caricati" in html and f'href="/edizioni/{ed.slug}"' in html
+    assert "accedi</a> per vederli" in html

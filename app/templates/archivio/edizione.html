@@ -40,6 +40,9 @@
 {% endif %}
 
 {% if not (lezioni or ud or altri) %}
-<p>Nessun materiale disponibile{% if not current_user.is_authenticated %} pubblicamente — alcuni materiali sono riservati agli utenti registrati{% endif %}.</p>
+<p>Lezioni, unità didattiche e materiali di questa edizione non sono ancora stati caricati.
+  Intanto c'è il <a href="{{ url_for('public.edizione', slug=ed.slug) }}">programma dell'edizione</a>.</p>
+{% if not current_user.is_authenticated %}<p class="nota">Alcuni materiali possono essere riservati agli utenti registrati:
+  <a href="{{ url_for('auth.login', next=request.path) }}">accedi</a> per vederli.</p>{% endif %}
 {% endif %}
 {% endblock %}
