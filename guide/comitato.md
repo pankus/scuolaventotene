@@ -191,8 +191,8 @@ i gruppi: *relatori* (lezioni con un account collegato), *docenti* (UD delle edi
 account e candidature ammesse), *comitato scientifico* (persone del comitato con un account e utenti
 con ruolo comitato o admin); tutti e tre = tutti. **Anteprima dei destinatari** mostra a chi andrà
 e chi resta fuori perché non ha un account; solo dopo compare **Invia**. Le email partono dal mittente
-del sito, con i destinatari in copia nascosta e i contatti del sito in copia (Cc). Chi risponde
-scrive in automatico al mittente e a tutti i contatti. Non scrivere nel testo dati personali
+del sito, con i destinatari in copia nascosta e in copia (Cc) gli indirizzi delle notifiche
+(`MAIL_NOTIFICHE` nel `.env`). Chi risponde scrive in automatico al mittente e a quegli indirizzi. Non scrivere nel testo dati personali
 dei partecipanti (date di nascita, telefoni, indirizzi).
 
 ## Bibliografia Zotero

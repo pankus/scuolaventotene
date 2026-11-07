@@ -5,7 +5,7 @@
 <h1>Scrivi ai partecipanti</h1>
 {% include "admin/_nav.html" %}
 <p class="nota">L'email parte da {{ config.MAIL_MITTENTE }}. I destinatari la ricevono in copia nascosta: nessuno
-  vede gli indirizzi degli altri. In copia (Cc) i contatti del sito: {{ config.EMAIL_CONTATTI|join(", ") }}.
+  vede gli indirizzi degli altri. In copia (Cc): {{ config.MAIL_NOTIFICHE|join(", ") or "nessuno (MAIL_NOTIFICHE vuota)" }}.
   Chi risponde scrive in automatico a {{ rispondi_a|join(", ") }}.
   Non scrivere nel testo dati personali dei partecipanti.</p>
 <form method="post" class="modulo">
