@@ -173,9 +173,15 @@ pagina (vedi *Completare le edizioni passate*).
 
 ## Utenti e ruoli
 
-Solo admin. **Utenti**: per ogni account cognome e nome, ruolo (*docente*, *relatore*,
+Solo admin. **Utenti**: per ogni account nome e cognome, ruolo (*docente*, *relatore*,
 *comitato*, *admin*) e attivo sì/no, poi **Salva**; un account disattivato non può più entrare.
 Non si può cambiare il proprio ruolo (il proprio nome sì).
+
+La colonna **Edizioni** mostra a cosa è legato l'account: UD, lezioni o comitato di un'edizione
+(dalla scheda dell'edizione) e candidature con il loro stato. In alto si filtra per **edizione** e
+**partecipazione** (relatori, docenti, comitato, candidati, senza edizione): per esempio edizione 2024 +
+docenti. Un docente o relatore *nessuna edizione* si collega nella scheda dell'edizione, campo
+«Account» della sua UD o lezione.
 **Elimina** cancella l'account (per esempio uno creato per prova) con candidature, letture e
 file caricati; non vale per chi ha valutato candidature o caricato materiali: quelli si disattivano.
 Il primo admin si crea dal server con `flask crea-admin`.

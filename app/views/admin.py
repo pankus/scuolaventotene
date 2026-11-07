@@ -12,7 +12,7 @@ from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il
 from ..forms import (CopertinaForm, DescrizioneForm, EmailPartecipantiForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
                      MaterialeUDForm, PersonaEdizioneForm, ProgrammaVoceForm, StatoCandidaturaForm,
                      ValutazioneForm)
-from ..models import (ESITI_CANDIDATURA, RUOLI, STATI_MATERIALE, VISIBILITA, Candidatura,
+from ..models import (ESITI_CANDIDATURA, GRUPPI_PARTECIPANTI, RUOLI, STATI_MATERIALE, VISIBILITA, Candidatura,
                       Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce,
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroCollezione, ZoteroItem,
                       adesso)
@@ -535,8 +535,32 @@ def lettura(pid):
 @bp.route("/utenti")
 @admin_required
 def utenti():
-    return render_template("admin/utenti.html",
-                           utenti=Utente.query.order_by(Utente.cognome, Utente.nome).all())
+    """Elenco filtrabile per edizione e partecipazione (?edizione=<id>&gruppo=<chiave>)."""
+    eid = request.args.get("edizione", 0, type=int)
+    gruppo = request.args.get("gruppo", "")
+    tutti = Utente.query.order_by(Utente.cognome, Utente.nome).all()
+    if gruppo == "nessuno":
+        elenco = [u for u in tutti if not _edizioni_di(u)]
+    elif gruppo in GRUPPI_PARTECIPANTI:
+        elenco = _partecipanti(eid, [gruppo], solo_attivi=False)[0]
+    elif eid:
+        elenco = [u for u in tutti if eid in _edizioni_di(u)]
+    else:
+        elenco = tutti
+    return render_template("admin/utenti.html", utenti=elenco, eid=eid, gruppo=gruppo,
+                           edizioni=Edizione.query.order_by(Edizione.anno.desc()).all())
+
+
+def _edizioni_di(u):
+    """Id delle edizioni a cui l'account è legato: UD, lezioni o comitato (via Persona) e candidature."""
+    return {ep.edizione_id for ep in (u.persona.edizioni if u.persona else [])} \
+        | {c.edizione_id for c in u.candidature}
+
+
+def _torna_a_utenti():
+    """Alla lista com'era filtrata; solo verso /admin/utenti (niente redirect altrove)."""
+    r = request.form.get("ritorno", "")
+    return redirect(r if r.startswith(url_for("admin.utenti")) else url_for("admin.utenti"))
 
 
 @bp.post("/utenti/<int:uid>")
@@ -548,7 +572,7 @@ def aggiorna_utente(uid):
     nome, cognome = request.form.get("nome", "").strip(), request.form.get("cognome", "").strip()
     if not (nome and cognome) or len(nome) > 100 or len(cognome) > 100:
         flash("Nome e cognome sono obbligatori (al massimo 100 caratteri).", "errore")
-        return redirect(url_for("admin.utenti"))
+        return _torna_a_utenti()
     u.nome, u.cognome = nome, cognome
     if u.id != current_user.id:
         if request.form.get("ruolo") in RUOLI:
@@ -556,7 +580,7 @@ def aggiorna_utente(uid):
         u.attivo = request.form.get("attivo") == "1"
     db.session.commit()
     flash(f"Utente {u.email} aggiornato.", "ok")
-    return redirect(url_for("admin.utenti"))
+    return _torna_a_utenti()
 
 
 @bp.post("/utenti/<int:uid>/elimina")
@@ -577,27 +601,38 @@ def elimina_utente(uid):
         for f in file:
             elimina_upload(f)
         flash(f"Utente {u.email} eliminato.", "ok")
-    return redirect(url_for("admin.utenti"))
+    return _torna_a_utenti()
 
 
 # ------------------------------------------------------------------ email ai partecipanti
 GRUPPI_EMAIL = {"relatori": "relatore", "docenti": "docente", "comitato": "comitato"}  # gruppo → ruolo EP
 
 
-def _destinatari(eid, gruppi):
-    """(utenti attivi, nomi senza account) dei gruppi scelti, per un'edizione o tutte (eid 0)."""
-    eps = EdizionePersona.query.filter(EdizionePersona.ruolo.in_([GRUPPI_EMAIL[g] for g in gruppi]))
+def _partecipanti(eid, gruppi, solo_attivi=True):
+    """(utenti, nomi senza account) dei gruppi scelti, per un'edizione o tutte (eid 0).
+    relatori/docenti/comitato: persone dell'edizione con un account; docenti anche le candidature
+    ammesse; comitato anche gli utenti con ruolo comitato o admin; candidati: candidature inviate."""
+    eps = EdizionePersona.query.filter(
+        EdizionePersona.ruolo.in_([GRUPPI_EMAIL[g] for g in gruppi if g in GRUPPI_EMAIL]))
+    cands = Candidatura.query.filter(Candidatura.stato != "bozza")
     if eid:
-        eps = eps.filter_by(edizione_id=eid)
+        eps, cands = eps.filter_by(edizione_id=eid), cands.filter_by(edizione_id=eid)
     eps = eps.all()
     utenti = {ep.persona.utente for ep in eps if ep.persona.utente}
     senza = sorted({ep.persona.nome_completo for ep in eps if not ep.persona.utente})
     if "docenti" in gruppi:
-        cands = Candidatura.query.filter_by(stato="ammessa")
-        utenti |= {c.utente for c in (cands.filter_by(edizione_id=eid) if eid else cands)}
+        utenti |= {c.utente for c in cands.filter_by(stato="ammessa")}
+    if "candidati" in gruppi:
+        utenti |= {c.utente for c in cands}
     if "comitato" in gruppi:
         utenti |= set(Utente.query.filter(Utente.ruolo.in_(("comitato", "admin"))))
-    return sorted((u for u in utenti if u.attivo), key=lambda u: (u.cognome, u.nome)), senza
+    return sorted((u for u in utenti if u.attivo or not solo_attivi),
+                  key=lambda u: (u.cognome, u.nome)), senza
+
+
+def _destinatari(eid, gruppi):
+    """Destinatari del modulo email: solo account attivi."""
+    return _partecipanti(eid, gruppi)
 
 
 @bp.route("/email", methods=["GET", "POST"])

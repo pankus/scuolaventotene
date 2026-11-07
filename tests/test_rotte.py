@@ -195,3 +195,39 @@ def test_admin_modifica_nome_utente(app):
     db.session.expire_all()
     assert (docente.nome, docente.cognome, docente.ruolo, docente.attivo) == ("Maria Gloria", "Calì", "relatore", True)
     assert (admin.nome, admin.cognome, admin.ruolo) == ("Io", "Admin", "admin")  # il proprio ruolo non cambia
+
+
+def test_utenti_edizioni_e_filtri(app):
+    from app.models import EdizionePersona, Persona
+    admin = crea_utente(ruolo="admin")
+    ed24, ed23 = crea_edizione(stato="conclusa"), crea_edizione(stato="conclusa")
+    docente, relatore, solo, candidato = crea_utente(), crea_utente(ruolo="relatore"), crea_utente(), crea_utente()
+    for ed, u, ruolo in ((ed24, docente, "docente"), (ed23, relatore, "relatore")):
+        db.session.add(EdizionePersona(edizione=ed, ruolo=ruolo, titolo_lezione="T",
+                                       persona=Persona(nome=u.nome, cognome=u.cognome, utente_id=u.id)))
+    db.session.add(Candidatura(utente=candidato, edizione=ed24, stato="inviata"))
+    db.session.commit()
+    c = client_di(app, admin)
+
+    def mostra(qs=""):
+        return c.get(f"/admin/utenti{qs}").data.decode()
+
+    html = mostra()
+    assert f"{ed24.anno} · Docente" in html and f"{ed23.anno} · Relatore" in html
+    assert f"{ed24.anno} · candidatura inviata" in html and "nessuna edizione" in html
+    assert 'aria-current="page">Utenti</a>' in html and 'aria-current="page">Cruscotto</a>' not in html
+
+    html = mostra(f"?edizione={ed24.id}&gruppo=docenti")
+    assert docente.email in html and relatore.email not in html and candidato.email not in html
+    html = mostra(f"?edizione={ed24.id}")
+    assert docente.email in html and candidato.email in html and relatore.email not in html
+    html = mostra("?gruppo=relatori")
+    assert relatore.email in html and docente.email not in html
+    html = mostra("?gruppo=nessuno")
+    assert solo.email in html and docente.email not in html and candidato.email not in html
+
+    dati = {"nome": "N", "cognome": "C", "ruolo": "docente", "attivo": "1"}
+    r = c.post(f"/admin/utenti/{solo.id}", data=dati | {"ritorno": "/admin/utenti?gruppo=nessuno"})
+    assert r.headers["Location"].endswith("/admin/utenti?gruppo=nessuno")
+    r = c.post(f"/admin/utenti/{solo.id}", data=dati | {"ritorno": "//evil.example/"})
+    assert r.headers["Location"].endswith("/admin/utenti")

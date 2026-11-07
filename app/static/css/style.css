@@ -313,6 +313,8 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .sottomenu { display: flex; gap: 1.4rem; flex-wrap: wrap; border-bottom: 1px solid var(--linea); padding-bottom: .7rem; margin-bottom: 1.8rem; font-family: var(--sans); font-size: .85rem; }
 .sottomenu a { color: var(--inchiostro-md); text-decoration: none; }
 .sottomenu a:hover { color: var(--accento); }
+.sottomenu a[aria-current="page"] { color: var(--accento); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accento); padding-bottom: .25rem; }
+.edizioni-utente { white-space: nowrap; }
 
 /* ------------------------------------------------------------------ stati */
 .badge { display: inline-block; vertical-align: middle; font-family: var(--mono); font-size: .62rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; padding: .22rem .55rem; border-radius: 999px; border: 1px solid var(--linea); color: var(--inchiostro-md); background: #fff; }

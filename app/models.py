@@ -205,6 +205,9 @@ class Persona(db.Model):
 # ruoli di una persona in un'edizione; "docente" = UD senza candidatura (edizioni passate,
 # dal programma), collegabile a un account più avanti come le lezioni dei relatori
 RUOLI_EDIZIONE = {"comitato": "Comitato scientifico", "relatore": "Relatore", "docente": "Docente (UD)"}
+# filtro di /admin/utenti: come l'account partecipa alle edizioni
+GRUPPI_PARTECIPANTI = {"relatori": "Relatori", "docenti": "Docenti", "comitato": "Comitato scientifico",
+                       "candidati": "Candidati", "nessuno": "Senza edizione"}
 
 
 class EdizionePersona(db.Model):

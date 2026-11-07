@@ -182,6 +182,7 @@ def register_template_utils(app):
             "TIPI_CANDIDATURA": models.TIPI_CANDIDATURA,
             "TIPI_PROGRAMMA": models.TIPI_PROGRAMMA,
             "RUOLI_EDIZIONE": models.RUOLI_EDIZIONE,
+            "GRUPPI_PARTECIPANTI": models.GRUPPI_PARTECIPANTI,
             "VISIBILITA": models.VISIBILITA,
             "RUOLI": models.RUOLI,
         }

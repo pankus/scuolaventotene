@@ -1,11 +1,16 @@
+{# voce attiva: aria-current sulla voce della pagina (e delle pagine che si aprono da lì) #}
+{% set _qui = request.endpoint %}
+{% macro voce(endpoint, testo, anche=()) -%}
+  <a href="{{ url_for(endpoint) }}" {% if _qui == endpoint or _qui in anche %}aria-current="page"{% endif %}>{{ testo }}</a>
+{%- endmacro %}
 <nav class="sottomenu">
-  <a href="{{ url_for('admin.dashboard') }}">Cruscotto</a>
-  <a href="{{ url_for('admin.materiali') }}">Materiali</a>
-  <a href="{{ url_for('admin.letture') }}">Letture</a>
+  {{ voce('admin.dashboard', 'Cruscotto', ('admin.modifica_edizione', 'admin.candidature', 'admin.candidatura')) }}
+  {{ voce('admin.materiali', 'Materiali') }}
+  {{ voce('admin.letture', 'Letture', ('admin.lettura', 'admin.item_zotero')) }}
   {% if current_user.is_admin %}
-  <a href="{{ url_for('admin.nuova_edizione') }}">Nuova edizione</a>
-  <a href="{{ url_for('admin.utenti') }}">Utenti</a>
-  <a href="{{ url_for('admin.email') }}">Scrivi ai partecipanti</a>
+  {{ voce('admin.nuova_edizione', 'Nuova edizione') }}
+  {{ voce('admin.utenti', 'Utenti') }}
+  {{ voce('admin.email', 'Scrivi ai partecipanti') }}
   {% endif %}
   <a href="{{ url_for('public.guida', slug='comitato') }}">Guida</a>
 </nav>
