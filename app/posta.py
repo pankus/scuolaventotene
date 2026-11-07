@@ -30,7 +30,7 @@ def _spedisci(msg):
         smtp.send_message(msg)
 
 
-def invia_email(destinatari, oggetto, template, ccn=(), rispondi_a=None, **ctx):
+def invia_email(destinatari, oggetto, template, cc=(), ccn=(), rispondi_a=(), **ctx):
     """Manda un'email di solo testo. Un errore SMTP finisce nel log e non blocca la richiesta.
     `ccn`: copia nascosta (send_message la usa come destinatari e non la trasmette)."""
     if isinstance(destinatari, str):
@@ -41,10 +41,12 @@ def invia_email(destinatari, oggetto, template, ccn=(), rispondi_a=None, **ctx):
     msg["Subject"] = oggetto
     msg["From"] = current_app.config["MAIL_MITTENTE"]
     msg["To"] = ", ".join(destinatari)
+    if cc:
+        msg["Cc"] = ", ".join(cc)
     if ccn:
         msg["Bcc"] = ", ".join(ccn)
     if rispondi_a:
-        msg["Reply-To"] = rispondi_a
+        msg["Reply-To"] = ", ".join(rispondi_a)
     msg.set_content(render_template(f"email/{template}.txt", **ctx))
     try:
         _spedisci(msg)
@@ -95,15 +97,25 @@ def email_conferma_invio(c):
                 f"Nuova candidatura: {c.utente.nome_completo}", "notifica_invio", c=c)
 
 
+def indirizzi_risposta():
+    """Mittente e contatti del sito, senza doppioni: dove arrivano le risposte ai messaggi dell'admin."""
+    cfg = current_app.config
+    return list(dict.fromkeys([cfg["MAIL_MITTENTE"], *cfg["EMAIL_CONTATTI"]]))
+
+
 def email_partecipanti(indirizzi, oggetto, testo, blocco=50):
     """Messaggio dell'admin ai partecipanti: tutti in copia nascosta, a blocchi (un collegamento
-    SMTP per blocco). Restituisce quanti indirizzi non sono partiti."""
+    SMTP per blocco). I contatti del sito sono in Cc (solo nel primo blocco, per non riceverne
+    più copie); rispondendo si scrive al mittente e ai contatti. Restituisce quanti indirizzi
+    non sono partiti."""
     cfg = current_app.config
+    rispondi_a = indirizzi_risposta()
     falliti = 0
     for i in range(0, len(indirizzi), blocco):
         parte = indirizzi[i:i + blocco]
         if not invia_email(cfg["MAIL_MITTENTE"], oggetto, "messaggio", ccn=parte,
-                           rispondi_a=(cfg["EMAIL_CONTATTI"] or [None])[0], testo=testo):
+                           cc=cfg["EMAIL_CONTATTI"] if i == 0 else (),
+                           rispondi_a=rispondi_a, testo=testo):
             falliti += len(parte)
     return falliti
 

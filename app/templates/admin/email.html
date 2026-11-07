@@ -4,8 +4,9 @@
 {% block content %}
 <h1>Scrivi ai partecipanti</h1>
 {% include "admin/_nav.html" %}
-<p class="nota">I destinatari ricevono l'email in copia nascosta: nessuno vede gli indirizzi degli altri.
-  Le risposte vanno a {{ config.EMAIL_CONTATTI[0] if config.EMAIL_CONTATTI else config.MAIL_MITTENTE }}.
+<p class="nota">L'email parte da {{ config.MAIL_MITTENTE }}. I destinatari la ricevono in copia nascosta: nessuno
+  vede gli indirizzi degli altri. In copia (Cc) i contatti del sito: {{ config.EMAIL_CONTATTI|join(", ") }}.
+  Chi risponde scrive in automatico a {{ rispondi_a|join(", ") }}.
   Non scrivere nel testo dati personali dei partecipanti.</p>
 <form method="post" class="modulo">
   {{ form.hidden_tag() }}

@@ -87,6 +87,9 @@ def test_email_partecipanti(app, inviate):
     for u in (ammesso, docente_passato, relatore, comitato, admin):
         assert u.email in ccn and u.email not in m["To"]
     assert escluso.email not in ccn and m["To"] == app.config["MAIL_MITTENTE"]
+    contatti = app.config["EMAIL_CONTATTI"]
+    assert m["Cc"] == ", ".join(contatti)
+    assert m["Reply-To"] == ", ".join([app.config["MAIL_MITTENTE"], *contatti])
     assert "Ciao a tutti" in m.get_content() and "Messaggio automatico" not in m.get_content()
 
     # altra edizione: nessun docente

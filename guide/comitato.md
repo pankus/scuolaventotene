@@ -190,8 +190,9 @@ Solo admin, dal cruscotto o dal menu: **Scrivi ai partecipanti**. Si sceglie l'e
 i gruppi: *relatori* (lezioni con un account collegato), *docenti* (UD delle edizioni passate con un
 account e candidature ammesse), *comitato scientifico* (persone del comitato con un account e utenti
 con ruolo comitato o admin); tutti e tre = tutti. **Anteprima dei destinatari** mostra a chi andrà
-e chi resta fuori perché non ha un account; solo dopo compare **Invia**. Le email partono in copia
-nascosta e le risposte vanno al primo indirizzo dei contatti. Non scrivere nel testo dati personali
+e chi resta fuori perché non ha un account; solo dopo compare **Invia**. Le email partono dal mittente
+del sito, con i destinatari in copia nascosta e i contatti del sito in copia (Cc). Chi risponde
+scrive in automatico al mittente e a tutti i contatti. Non scrivere nel testo dati personali
 dei partecipanti (date di nascita, telefoni, indirizzi).
 
 ## Bibliografia Zotero

@@ -16,7 +16,7 @@ from ..models import (ESITI_CANDIDATURA, RUOLI, STATI_MATERIALE, VISIBILITA, Can
                       Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce,
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroCollezione, ZoteroItem,
                       adesso)
-from ..posta import email_esito, email_partecipanti
+from ..posta import email_esito, email_partecipanti, indirizzi_risposta
 from ..ricerca_libri import cerca_copertina
 from ..utils import (admin_required, carica_copertina, comitato_required, elimina_upload,
                      salva_copertina, salva_upload)
@@ -616,7 +616,8 @@ def email():
                 else:
                     flash(f"Email inviata a {len(utenti)} persone.", "ok")
                 return redirect(url_for("admin.email"))
-    return render_template("admin/email.html", form=form, utenti=utenti, senza=senza)
+    return render_template("admin/email.html", form=form, utenti=utenti, senza=senza,
+                           rispondi_a=indirizzi_risposta())
 
 
 # ------------------------------------------------------------------ Zotero
