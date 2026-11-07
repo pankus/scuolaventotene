@@ -52,6 +52,9 @@ Nella scheda dell'edizione: una voce per giorno e orario, con tipo, titolo, rela
 **Comitato scientifico e relatori**: nome, cognome, affiliazione, ruolo e, per i relatori, il
 titolo della lezione. Ogni relatore aggiunto è una **lezione**: titolo, **ordine** (la
 posizione nell'archivio e nella bibliografia) e **account del relatore**.
+Se le lezioni sono già nel programma (voci *lezione* con i relatori, separati da virgola), l'admin
+le crea tutte con `flask lezioni-dal-programma`: una per relatore, anche quando la lezione è a
+due voci; il comando si può rilanciare, non crea doppioni.
 
 Per collegare l'account: il relatore si registra dal sito, l'admin gli dà il ruolo
 *Relatore* in **Utenti**, poi lo sceglie nella lezione e **Salva lezione**. Da quel momento il

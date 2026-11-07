@@ -82,6 +82,16 @@ def register_cli(app):
                 click.echo(f"{ed.anno}: {n} UD create.")
         db.session.commit()
 
+    @app.cli.command("lezioni-dal-programma")
+    def lezioni_programma():
+        """Crea le lezioni dei relatori dalle voci «lezione» del programma (idempotente)."""
+        from .edizioni_precedenti import lezioni_dal_programma
+        for ed in Edizione.query.order_by(Edizione.anno).all():
+            n = lezioni_dal_programma(ed)
+            if n:
+                click.echo(f"{ed.anno}: {n} lezioni create.")
+        db.session.commit()
+
     @app.cli.command("seed-precedenti")
     def seed_precedenti():
         """Carica le edizioni 2023–2025 dalle pagine CNR-ISMed (con locandine e call in PDF)."""

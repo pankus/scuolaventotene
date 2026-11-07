@@ -211,20 +211,33 @@ def carica(scarica=_scarica, avviso=print):
 def ud_dal_programma(ed, comitato=()):
     """Una UD (EdizionePersona con ruolo docente) per ogni voce «unità didattiche» del programma
     con il nome del docente, se manca. Restituisce quante ne ha create (senza commit)."""
+    return _dal_programma(ed, "unita_didattiche", "docente", comitato)
+
+
+def lezioni_dal_programma(ed, comitato=()):
+    """Una lezione (EdizionePersona con ruolo relatore) per ogni relatore delle voci «lezione»
+    del programma, se manca: con due relatori, due lezioni con lo stesso titolo (come in
+    seed-precedenti). Restituisce quante ne ha create (senza commit)."""
+    return _dal_programma(ed, "lezione", "relatore", comitato)
+
+
+def _dal_programma(ed, tipo, ruolo, comitato):
     db.session.flush()
-    esistenti = {(ep.persona_id, ep.titolo_lezione) for ep in ed.persone if ep.ruolo == "docente"}
+    # cognomi composti («Di Sanzo»): valgono la divisione del comitato e le persone già nel sito
+    noti = list(comitato) + [(p.nome, p.cognome, None) for p in Persona.query]
+    esistenti = {(ep.persona_id, ep.titolo_lezione) for ep in ed.persone if ep.ruolo == ruolo}
     nuove = 0
     for v in sorted(ed.programma, key=lambda v: (v.ordine or 0, v.id or 0)):
-        if v.tipo != "unita_didattiche" or not v.relatori:
+        if v.tipo != tipo or not v.relatori:
             continue
         for nome_completo in v.relatori.split(", "):
-            p = _persona(*_dividi(nome_completo.strip(), comitato))
+            p = _persona(*_dividi(nome_completo.strip(), noti))
             db.session.flush()
             if (p.id, v.titolo) in esistenti:
                 continue
-            if any(ep.persona_id == p.id for ep in ed.persone if ep.ruolo == "docente"):
-                continue  # ponytail: una UD per docente per edizione (vincolo unico di edizioni_persone)
-            ed.persone.append(EdizionePersona(persona=p, ruolo="docente", titolo_lezione=v.titolo,
+            if any(ep.persona_id == p.id for ep in ed.persone if ep.ruolo == ruolo):
+                continue  # ponytail: una lezione/UD per persona per edizione (vincolo unico di edizioni_persone)
+            ed.persone.append(EdizionePersona(persona=p, ruolo=ruolo, titolo_lezione=v.titolo,
                                               ordine=v.ordine or 0))
             db.session.flush()
             esistenti.add((p.id, v.titolo))

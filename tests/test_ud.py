@@ -5,7 +5,7 @@ from datetime import date
 
 import pytest
 
-from app.edizioni_precedenti import ud_dal_programma
+from app.edizioni_precedenti import lezioni_dal_programma, ud_dal_programma
 from app.extensions import db
 from app.models import (Candidatura, EdizionePersona, Materiale, Persona, ProgrammaVoce,
                         PropostaLettura, ZoteroItem)
@@ -47,6 +47,24 @@ def test_ud_dal_programma_idempotente(app):
     db.session.commit()
     ud = sorted((ep.titolo_lezione, ep.persona.cognome) for ep in ed.persone if ep.ruolo == "docente")
     assert ud == [("UD due", "Ceccacci"), ("UD uno", "Alvaro")]
+
+
+def test_lezioni_dal_programma(app):
+    ed = crea_edizione(stato="conclusa")
+    db.session.add(Persona(nome="Donato", cognome="Di Sanzo"))  # cognome composto già noto
+    for i, (tipo, titolo, chi) in enumerate([("lezione", "Asilo", "Stefano Gallo"),
+                                             ("lezione", "Profughi", "Donato Di Sanzo, Giovanni Ferrarese"),
+                                             ("lezione", "Senza relatori", None),
+                                             ("unita_didattiche", "Una UD", "Ada Alvaro")]):
+        db.session.add(ProgrammaVoce(edizione=ed, giorno=date(2026, 10, 30), tipo=tipo,
+                                     titolo=titolo, relatori=chi, ordine=i))
+    db.session.commit()
+    assert lezioni_dal_programma(ed) == 3
+    assert lezioni_dal_programma(ed) == 0
+    db.session.commit()
+    lezioni = sorted((ep.persona.cognome, ep.titolo_lezione) for ep in ed.persone if ep.ruolo == "relatore")
+    assert lezioni == [("Di Sanzo", "Profughi"), ("Ferrarese", "Profughi"), ("Gallo", "Asilo")]
+    assert Persona.query.filter_by(cognome="Di Sanzo").count() == 1
 
 
 # ------------------------------------------------------------------ pagina pubblica
