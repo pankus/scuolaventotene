@@ -260,7 +260,7 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
 scrittura, ricerca dei libri, relatori, materiali dopo la scuola. Fatte F1–F7 e R1–R3; prossima
 **F8**, rimandata dall'utente: si riprende solo quando lo chiede (domande aperte nel piano). Una fase per sessione: leggere la sezione «Riprendere da qui» e la tabella di stato in cima
 al piano, fare la prima fase "da fare", aggiornare tabella e «Riprendere da qui», un commit per
-fase (repository git locale, senza remote).
+fase (remote `origin` su GitHub, github.com/pankus/scuolaventotene; push solo quando lo chiede l'utente).
 
 ## Come lavorare
 

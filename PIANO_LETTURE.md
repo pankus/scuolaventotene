@@ -45,7 +45,7 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
   e relatori» qui sotto.
 - Zotero: Edizione → «Relatori» e «Docenti» (niente collezioni per lezione: lezione e UD le
   conosce il sito). Letture dei docenti: revisione del comitato. Letture dei relatori: dirette.
-- Git: repository **locale**, senza remote (creato il 2026-11-06). Un commit per fase,
+- Git: creato il 2026-11-06, remote `origin` su GitHub (pankus/scuolaventotene). Un commit per fase,
   `Co-Authored-By` in coda.
 - Database locale: migrazioni fino a `388437ba29c9`; backup prima di ogni fase in
   `instance/backup/`. Edizioni: 2023–2025 (concluse, da `seed-precedenti`; 2024 con la collezione Zotero
