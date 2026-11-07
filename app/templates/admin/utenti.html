@@ -11,7 +11,10 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <select name="ruolo">{% for k, v in RUOLI.items() %}<option value="{{ k }}" {% if k == u.ruolo %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
       <label><input type="checkbox" name="attivo" value="1" {% if u.attivo %}checked{% endif %}> attivo</label>
-      <button class="btn btn-piccolo">OK</button></form></td></tr>
+      <button class="btn btn-piccolo">OK</button></form>
+    {% if u.id != current_user.id %}<form method="post" action="{{ url_for('admin.elimina_utente', uid=u.id) }}" class="in-linea">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="link-pericolo" onclick="return confirm('Eliminare definitivamente {{ u.email }} con le sue candidature?')">elimina</button></form>{% endif %}</td></tr>
   {% endfor %}
 </table>
 {% endblock %}

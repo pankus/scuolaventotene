@@ -369,3 +369,9 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .passi a:hover { color: var(--accento); }
 .passi span { color: var(--inchiostro-lo); }
 .passi [aria-current] span { color: var(--accento); font-weight: 600; }
+
+/* ------------------------------------------------------------------ riordino (ordina.js) */
+.programma-admin .maniglia { cursor: grab; white-space: nowrap; color: var(--inchiostro-lo); font-family: var(--mono); }
+.programma-admin tbody + tbody tr:first-child td { border-top: 1px solid var(--inchiostro-md); }
+.programma-admin tr.trascinata td { opacity: .45; background: var(--accento-bg); }
+.programma-admin details form { margin-top: .5rem; }

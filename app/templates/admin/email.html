@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block title %}Scrivi ai partecipanti{% endblock %}
+{% block content %}
+<h1>Scrivi ai partecipanti</h1>
+{% include "admin/_nav.html" %}
+<p class="nota">I destinatari ricevono l'email in copia nascosta: nessuno vede gli indirizzi degli altri.
+  Le risposte vanno a {{ config.EMAIL_CONTATTI[0] if config.EMAIL_CONTATTI else config.MAIL_MITTENTE }}.
+  Non scrivere nel testo dati personali dei partecipanti.</p>
+<form method="post" class="modulo">
+  {{ form.hidden_tag() }}
+  {{ campo(form.edizione_id) }}
+  <fieldset><legend>Destinatari</legend>
+    {{ campo(form.relatori) }}{{ campo(form.docenti) }}{{ campo(form.comitato) }}</fieldset>
+  {{ campo(form.oggetto) }}
+  {{ campo(form.testo) }}
+  <div class="azioni">
+    <button class="btn btn-secondario" name="azione" value="anteprima">Anteprima dei destinatari</button>
+    {% if utenti %}<button class="btn" name="azione" value="invia"
+      onclick="return confirm('Inviare l\'email a {{ utenti|length }} persone?')">Invia a {{ utenti|length }} persone</button>{% endif %}
+  </div>
+</form>
+
+{% if utenti is not none %}
+<h2>Destinatari ({{ utenti|length }})</h2>
+{% if utenti %}<ul>{% for u in utenti %}<li>{{ u.nome_completo }} · {{ u.email }}</li>{% endfor %}</ul>
+{% else %}<p>Nessun destinatario con un account per questa scelta.</p>{% endif %}
+{% if senza %}<p class="nota">Senza account, quindi senza email (non la riceveranno): {{ senza|join(", ") }}.</p>{% endif %}
+{% endif %}
+{% endblock %}

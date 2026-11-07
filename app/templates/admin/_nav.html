@@ -5,6 +5,7 @@
   {% if current_user.is_admin %}
   <a href="{{ url_for('admin.nuova_edizione') }}">Nuova edizione</a>
   <a href="{{ url_for('admin.utenti') }}">Utenti</a>
+  <a href="{{ url_for('admin.email') }}">Scrivi ai partecipanti</a>
   {% endif %}
   <a href="{{ url_for('public.guida', slug='comitato') }}">Guida</a>
 </nav>

@@ -9,14 +9,14 @@ from sqlalchemy import or_
 
 from ..extensions import db
 from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il nome
-from ..forms import (CopertinaForm, DescrizioneForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
+from ..forms import (CopertinaForm, DescrizioneForm, EmailPartecipantiForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
                      MaterialeUDForm, PersonaEdizioneForm, ProgrammaVoceForm, StatoCandidaturaForm,
                      ValutazioneForm)
 from ..models import (ESITI_CANDIDATURA, RUOLI, STATI_MATERIALE, VISIBILITA, Candidatura,
                       Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce,
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroCollezione, ZoteroItem,
                       adesso)
-from ..posta import email_esito
+from ..posta import email_esito, email_partecipanti
 from ..ricerca_libri import cerca_copertina
 from ..utils import (admin_required, carica_copertina, comitato_required, elimina_upload,
                      salva_copertina, salva_upload)
@@ -84,7 +84,8 @@ def _form_edizione(ed):
         flash("Edizione salvata.", "ok")
         return redirect(url_for("admin.modifica_edizione", eid=ed.id))
     return render_template("admin/edizione_form.html", form=form, ed=ed,
-                           voce_form=ProgrammaVoceForm(prefix="voce"),
+                           voce_form=ProgrammaVoceForm(prefix="voce", ordine=None),
+                           voce_forms={v.id: ProgrammaVoceForm(prefix=f"v{v.id}", obj=v) for v in ed.programma},
                            persona_form=PersonaEdizioneForm(prefix="pers"),
                            lezione_forms={ep.id: _lezione_form(ep) for ep in ed.persone
                                           if ep.ruolo in ("relatore", "docente")})
@@ -110,11 +111,41 @@ def aggiungi_voce(eid):
     if f.validate_on_submit():
         v = ProgrammaVoce(edizione=ed)
         f.populate_obj(v)
+        if v.ordine is None:  # senza ordine: in fondo
+            v.ordine = max((x.ordine or 0 for x in ed.programma if x is not v), default=-1) + 1
         db.session.add(v)
         db.session.commit()
     else:
         flash("Voce di programma non valida.", "errore")
     return redirect(url_for("admin.modifica_edizione", eid=eid) + "#programma")
+
+
+@bp.post("/programma/<int:vid>")
+@admin_required
+def aggiorna_voce(vid):
+    v = db.get_or_404(ProgrammaVoce, vid)
+    f = ProgrammaVoceForm(prefix=f"v{vid}")
+    if f.validate_on_submit():
+        f.populate_obj(v)
+        v.ordine = v.ordine or 0
+        db.session.commit()
+        flash("Voce aggiornata.", "ok")
+    else:
+        flash("Voce di programma non valida.", "errore")
+    return redirect(url_for("admin.modifica_edizione", eid=v.edizione_id) + "#programma")
+
+
+@bp.post("/edizioni/<int:eid>/programma/ordine")
+@admin_required
+def ordina_programma(eid):
+    """Nuovo ordine delle voci dopo il trascinamento (ordine.js): id nell'ordine voluto."""
+    ed = db.get_or_404(Edizione, eid)
+    voci = {v.id: v for v in ed.programma}
+    for i, vid in enumerate(request.form.getlist("id", type=int)):
+        if vid in voci:
+            voci[vid].ordine = i
+    db.session.commit()
+    return "", 204
 
 
 @bp.post("/programma/<int:vid>/elimina")
@@ -520,6 +551,72 @@ def aggiorna_utente(uid):
         u.attivo = request.form.get("attivo") == "1"
         db.session.commit()
     return redirect(url_for("admin.utenti"))
+
+
+@bp.post("/utenti/<int:uid>/elimina")
+@admin_required
+def elimina_utente(uid):
+    """Per gli account di prova: via l'utente con candidature, letture e file. Chi ha valutato
+    o caricato materiali resta (si disattiva), per non perdere lo storico."""
+    u = db.get_or_404(Utente, uid)
+    if u.id == current_user.id:
+        flash("Non puoi eliminare il tuo stesso account.", "errore")
+    elif Valutazione.query.filter_by(valutatore_id=u.id).first() \
+            or Materiale.query.filter_by(caricato_da_id=u.id).first():
+        flash(f"{u.nome_completo} ha valutazioni o materiali: disattivalo invece di eliminarlo.", "errore")
+    else:
+        file = [c.file_path for c in u.candidature]
+        db.session.delete(u)
+        db.session.commit()
+        for f in file:
+            elimina_upload(f)
+        flash(f"Utente {u.email} eliminato.", "ok")
+    return redirect(url_for("admin.utenti"))
+
+
+# ------------------------------------------------------------------ email ai partecipanti
+GRUPPI_EMAIL = {"relatori": "relatore", "docenti": "docente", "comitato": "comitato"}  # gruppo → ruolo EP
+
+
+def _destinatari(eid, gruppi):
+    """(utenti attivi, nomi senza account) dei gruppi scelti, per un'edizione o tutte (eid 0)."""
+    eps = EdizionePersona.query.filter(EdizionePersona.ruolo.in_([GRUPPI_EMAIL[g] for g in gruppi]))
+    if eid:
+        eps = eps.filter_by(edizione_id=eid)
+    eps = eps.all()
+    utenti = {ep.persona.utente for ep in eps if ep.persona.utente}
+    senza = sorted({ep.persona.nome_completo for ep in eps if not ep.persona.utente})
+    if "docenti" in gruppi:
+        cands = Candidatura.query.filter_by(stato="ammessa")
+        utenti |= {c.utente for c in (cands.filter_by(edizione_id=eid) if eid else cands)}
+    if "comitato" in gruppi:
+        utenti |= set(Utente.query.filter(Utente.ruolo.in_(("comitato", "admin"))))
+    return sorted((u for u in utenti if u.attivo), key=lambda u: (u.cognome, u.nome)), senza
+
+
+@bp.route("/email", methods=["GET", "POST"])
+@admin_required
+def email():
+    """Anteprima dei destinatari, poi invio in copia nascosta."""
+    form = EmailPartecipantiForm()
+    form.edizione_id.choices = [(0, "Tutte le edizioni")] + [
+        (e.id, f"{e.anno} · {e.titolo}") for e in Edizione.query.order_by(Edizione.anno.desc())]
+    utenti = senza = None
+    if form.validate_on_submit():
+        gruppi = [g for g in GRUPPI_EMAIL if form[g].data]
+        if not gruppi:
+            flash("Scegli almeno un gruppo di destinatari.", "errore")
+        else:
+            utenti, senza = _destinatari(form.edizione_id.data, gruppi)
+            if request.form.get("azione") == "invia" and utenti:
+                falliti = email_partecipanti([u.email for u in utenti], form.oggetto.data, form.testo.data)
+                if falliti:
+                    flash(f"Inviata a {len(utenti) - falliti} persone; non partita per {falliti} "
+                          f"(errore SMTP, vedi il log).", "errore")
+                else:
+                    flash(f"Email inviata a {len(utenti)} persone.", "ok")
+                return redirect(url_for("admin.email"))
+    return render_template("admin/email.html", form=form, utenti=utenti, senza=senza)
 
 
 # ------------------------------------------------------------------ Zotero

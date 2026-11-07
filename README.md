@@ -27,7 +27,7 @@ ventotene/
     ├── posta.py            email SMTP (Infomaniak) e token
     ├── guida.py            guide in markdown, indice, link «Guida» per pagina
     ├── edizioni_precedenti.py  dati delle edizioni 2023–2025 (flask seed-precedenti)
-    ├── cli.py              init-db, crea-admin, seed-2026, seed-precedenti, ud-dal-programma, lezioni-dal-programma, zotero-sync, zotero-copertine, zotero-verifica, prova-email
+    ├── cli.py              init-db, crea-admin, seed-2026, seed-precedenti, ud-dal-programma, lezioni-dal-programma, importa-docenti, zotero-sync, zotero-copertine, zotero-verifica, prova-email
     ├── views/
     │   ├── public.py       home, edizione, la scuola, contatti, privacy, guide
     │   ├── auth.py         registrazione, accesso, verifica email, reset password
@@ -53,6 +53,16 @@ uv run flask lezioni-dal-programma # lezioni dei relatori dalle voci «lezione»
 uv run flask zotero-copertine # copertine dei libri con ISBN (Open Library, Amazon, Google Books)
 uv run flask crea-admin tuo@ismed.cnr.it
 uv run flask --debug run
+```
+
+Account dei docenti delle edizioni passate, da un file **fuori dal repository** (sono dati personali):
+una riga con l'anno, poi un'email per riga, con `; Nome; Cognome` facoltativi (servono quando
+l'email non si abbina per cognome a una UD dell'edizione). Senza `--applica` è solo una prova;
+non parte nessuna email, i docenti entrano con «Password dimenticata».
+
+```bash
+uv run flask importa-docenti /percorso/docenti.txt            # prova: mostra cosa farebbe
+uv run flask importa-docenti /percorso/docenti.txt --applica  # crea gli account
 ```
 
 In locale si può lasciare vuoto `MAIL_SERVER`: le email (con i link di conferma e di reset)

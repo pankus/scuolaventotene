@@ -30,8 +30,9 @@ def _spedisci(msg):
         smtp.send_message(msg)
 
 
-def invia_email(destinatari, oggetto, template, **ctx):
-    """Manda un'email di solo testo. Un errore SMTP finisce nel log e non blocca la richiesta."""
+def invia_email(destinatari, oggetto, template, ccn=(), rispondi_a=None, **ctx):
+    """Manda un'email di solo testo. Un errore SMTP finisce nel log e non blocca la richiesta.
+    `ccn`: copia nascosta (send_message la usa come destinatari e non la trasmette)."""
     if isinstance(destinatari, str):
         destinatari = [destinatari]
     if not destinatari:
@@ -40,6 +41,10 @@ def invia_email(destinatari, oggetto, template, **ctx):
     msg["Subject"] = oggetto
     msg["From"] = current_app.config["MAIL_MITTENTE"]
     msg["To"] = ", ".join(destinatari)
+    if ccn:
+        msg["Bcc"] = ", ".join(ccn)
+    if rispondi_a:
+        msg["Reply-To"] = rispondi_a
     msg.set_content(render_template(f"email/{template}.txt", **ctx))
     try:
         _spedisci(msg)
@@ -88,6 +93,19 @@ def email_conferma_invio(c):
     invia_email(c.utente.email, f"Candidatura ricevuta – {c.edizione.titolo}", "conferma_invio", c=c)
     invia_email(current_app.config["MAIL_NOTIFICHE"],
                 f"Nuova candidatura: {c.utente.nome_completo}", "notifica_invio", c=c)
+
+
+def email_partecipanti(indirizzi, oggetto, testo, blocco=50):
+    """Messaggio dell'admin ai partecipanti: tutti in copia nascosta, a blocchi (un collegamento
+    SMTP per blocco). Restituisce quanti indirizzi non sono partiti."""
+    cfg = current_app.config
+    falliti = 0
+    for i in range(0, len(indirizzi), blocco):
+        parte = indirizzi[i:i + blocco]
+        if not invia_email(cfg["MAIL_MITTENTE"], oggetto, "messaggio", ccn=parte,
+                           rispondi_a=(cfg["EMAIL_CONTATTI"] or [None])[0], testo=testo):
+            falliti += len(parte)
+    return falliti
 
 
 def email_esito(c):

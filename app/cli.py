@@ -1,9 +1,57 @@
+import re
+import secrets
+import unicodedata
 from datetime import date
 
 import click
 
 from .extensions import db
 from .models import Edizione, EdizionePersona, Persona, ProgrammaVoce, Utente
+
+
+def _norm(s):
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z]", "", s.lower())
+
+
+def importa_docenti(righe):
+    """Account dei docenti delle edizioni passate da un elenco: righe «anno» e righe
+    «email[; Nome; Cognome]». Abbina l'email alla UD dell'edizione se il cognome sta nella parte
+    prima della @. Restituisce [(anno, email, esito)] senza commit; nessuna email parte."""
+    resoconto, anno = [], None
+    for riga in righe:
+        riga = riga.strip()
+        if re.fullmatch(r"\d{4}", riga):
+            anno = int(riga)
+            continue
+        if not riga or "@" not in riga:
+            continue
+        email, *nomi = [x.strip() for x in riga.split(";")]
+        email = email.lower()
+        ed = Edizione.query.filter_by(anno=anno).first()
+        locale = _norm(email.split("@")[0])
+        trovate = [ep.persona for ep in (ed.persone if ed else [])
+                   if ep.ruolo == "docente" and len(_norm(ep.persona.cognome)) > 2
+                   and _norm(ep.persona.cognome) in locale]
+        persona = trovate[0] if len(trovate) == 1 else None
+        u = Utente.query.filter_by(email=email).first()
+        if u:
+            esito = "già presente"
+        elif persona or len(nomi) == 2:
+            nome, cognome = nomi if len(nomi) == 2 else (persona.nome, persona.cognome)
+            u = Utente(email=email, nome=nome, cognome=cognome, ruolo="docente")
+            u.set_password(secrets.token_urlsafe(32))  # nessuno la conosce: si entra con «password dimenticata»
+            db.session.add(u)
+            db.session.flush()
+            esito = f"creato: {nome} {cognome}"
+        else:
+            resoconto.append((anno, email, "SALTATA: nessuna UD abbinata, aggiungi «; Nome; Cognome»"))
+            continue
+        if persona and not persona.utente_id and not Persona.query.filter_by(utente_id=u.id).first():
+            persona.utente_id = u.id
+            esito += f" · collegato alla UD di {persona.nome} {persona.cognome}"
+        resoconto.append((anno, email, esito))
+    return resoconto
 
 
 def register_cli(app):
@@ -91,6 +139,20 @@ def register_cli(app):
             if n:
                 click.echo(f"{ed.anno}: {n} lezioni create.")
         db.session.commit()
+
+    @app.cli.command("importa-docenti")
+    @click.argument("file", type=click.File(encoding="utf-8"))
+    @click.option("--applica", is_flag=True, help="Salva (senza: solo prova)")
+    def importa_docenti_cmd(file, applica):
+        """Crea gli account dei docenti delle edizioni passate da un elenco di email (vedi README)."""
+        for anno, email, esito in importa_docenti(file):
+            click.echo(f"{anno}  {email:45} {esito}")
+        if applica:
+            db.session.commit()
+            click.echo("Salvato. Per entrare useranno «Password dimenticata».")
+        else:
+            db.session.rollback()
+            click.echo("Prova: niente salvato. Rilancia con --applica.")
 
     @app.cli.command("seed-precedenti")
     def seed_precedenti():

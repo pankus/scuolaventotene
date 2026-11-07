@@ -61,7 +61,8 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /area/candidatura/<id>/letture[?tipo=webpage|?p=<id>]   passo 3: invito alla lettura del docente
 /area/candidatura/<id>/letture/<id>/elimina      (finché la candidatura è modificabile e la lettura non è riveduta; dopo la scuola solo le nuove)
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
-/admin/utenti                                    ruoli e attivazione
+/admin/utenti                                    ruoli e attivazione, eliminazione (account di prova)
+/admin/email                                     email a relatori, docenti, comitato (anteprima, copia nascosta)
 /admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione o UD (admin)
 /admin/interventi/<id>/materiali, /descrizione   materiale e abstract dentro lezione/UD (admin, POST)
 /admin/candidature/<id>/materiali                materiale dentro la UD di una candidatura ammessa (admin, POST)

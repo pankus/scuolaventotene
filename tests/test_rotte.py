@@ -133,3 +133,51 @@ def test_secret_key_obbligatoria_fuori_dai_test():
 
     with pytest.raises(RuntimeError):
         create_app(Prod)
+
+
+def test_elimina_utente(app):
+    from app.models import Utente, Valutazione
+    admin, comitato = crea_utente(ruolo="admin"), crea_utente(ruolo="comitato")
+    prova = crea_utente()
+    cand = _candidatura(app, prova)
+    db.session.add(Valutazione(candidatura=cand, valutatore=comitato))
+    db.session.commit()
+    c = client_di(app, admin)
+    assert client_di(app, comitato).post(f"/admin/utenti/{prova.id}/elimina").status_code == 403
+    c.post(f"/admin/utenti/{admin.id}/elimina")      # sé stesso: no
+    c.post(f"/admin/utenti/{comitato.id}/elimina")   # ha valutato: no
+    c.post(f"/admin/utenti/{prova.id}/elimina")
+    db.session.expire_all()
+    assert db.session.get(Utente, admin.id) and db.session.get(Utente, comitato.id)
+    assert db.session.get(Utente, prova.id) is None
+    assert Candidatura.query.count() == 0 and Valutazione.query.count() == 0
+    import os
+    assert not os.path.exists(f"{app.config['UPLOAD_FOLDER']}/ud.pdf")
+
+
+def test_programma_modifica_e_ordine(app):
+    from app.models import ProgrammaVoce
+    admin, comitato = crea_utente(ruolo="admin"), crea_utente(ruolo="comitato")
+    ed, altra = crea_edizione(), crea_edizione()
+    c = client_di(app, admin)
+    for t in ("A", "B", "C"):  # senza ordine: in fondo
+        c.post(f"/admin/edizioni/{ed.id}/programma", data={"voce-titolo": t, "voce-tipo": "lezione"})
+    a, b, cc = sorted(ed.programma, key=lambda v: v.ordine)
+    assert [v.titolo for v in (a, b, cc)] == ["A", "B", "C"]
+    estranea = ProgrammaVoce(edizione=altra, titolo="X", ordine=7)
+    db.session.add(estranea)
+    db.session.commit()
+
+    assert client_di(app, comitato).post(f"/admin/edizioni/{ed.id}/programma/ordine",
+                                         data={"id": [cc.id]}).status_code == 403
+    r = c.post(f"/admin/edizioni/{ed.id}/programma/ordine", data={"id": [cc.id, estranea.id, b.id, a.id]})
+    assert r.status_code == 204
+    db.session.expire_all()
+    assert [v.titolo for v in ed.programma] == ["C", "B", "A"] and estranea.ordine == 7
+
+    assert client_di(app, comitato).post(f"/admin/programma/{a.id}").status_code == 403
+    c.post(f"/admin/programma/{a.id}", data={f"v{a.id}-titolo": "A2", f"v{a.id}-tipo": "lezione",
+                                            f"v{a.id}-giorno": "2026-09-01", f"v{a.id}-ordine": "3"})
+    db.session.expire_all()
+    assert a.titolo == "A2" and str(a.giorno) == "2026-09-01" and a.ordine == 3
+    assert "A2" in c.get(f"/admin/edizioni/{ed.id}").data.decode()

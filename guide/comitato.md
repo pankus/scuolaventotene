@@ -45,7 +45,10 @@ Lo **stato** decide cosa vede il pubblico:
 ### Programma
 
 Nella scheda dell'edizione: una voce per giorno e orario, con tipo, titolo, relatori e ordine.
-**Aggiungi voce** / **elimina**.
+**Aggiungi voce** (senza ordine va in fondo al suo giorno), **modifica**, **elimina**. Il numero
+accanto alla maniglia ⠿ è la posizione: trascinando la riga si cambia l'ordine dentro lo stesso
+giorno, e il nuovo ordine si salva subito. Per spostare una voce su un altro giorno, o senza mouse,
+si cambiano giorno e ordine da «modifica».
 
 ### Comitato, relatori e lezioni
 
@@ -172,7 +175,24 @@ pagina (vedi *Completare le edizioni passate*).
 
 Solo admin. **Utenti**: per ogni account ruolo (*docente*, *relatore*, *comitato*, *admin*) e
 attivo sì/no; un account disattivato non può più entrare. Non si può cambiare il proprio ruolo.
+**Elimina** cancella l'account (per esempio uno creato per prova) con candidature, letture e
+file caricati; non vale per chi ha valutato candidature o caricato materiali: quelli si disattivano.
 Il primo admin si crea dal server con `flask crea-admin`.
+
+Gli account dei **docenti delle edizioni passate** si creano dal server con `flask importa-docenti`
+da un elenco di email (vedi README), già collegati alla loro UD. Non parte nessuna email: per
+entrare il docente usa **Password dimenticata** con quell'indirizzo, sceglie la password e l'email
+risulta confermata.
+
+## Scrivere ai partecipanti
+
+Solo admin, dal cruscotto o dal menu: **Scrivi ai partecipanti**. Si sceglie l'edizione (o tutte) e
+i gruppi: *relatori* (lezioni con un account collegato), *docenti* (UD delle edizioni passate con un
+account e candidature ammesse), *comitato scientifico* (persone del comitato con un account e utenti
+con ruolo comitato o admin); tutti e tre = tutti. **Anteprima dei destinatari** mostra a chi andrà
+e chi resta fuori perché non ha un account; solo dopo compare **Invia**. Le email partono in copia
+nascosta e le risposte vanno al primo indirizzo dei contatti. Non scrivere nel testo dati personali
+dei partecipanti (date di nascita, telefoni, indirizzi).
 
 ## Bibliografia Zotero
 

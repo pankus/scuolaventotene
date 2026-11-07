@@ -10,12 +10,24 @@
 
 {% if ed.id %}
 <h2 id="programma">Programma</h2>
-<table class="tabella">
+<p class="nota">Trascina le voci dalla maniglia ⠿ per cambiarne l'ordine nello stesso giorno; per spostarle
+  su un altro giorno, o senza mouse, usa «modifica» (giorno e ordine).</p>
+<table class="tabella programma-admin" data-ordina="{{ url_for('admin.ordina_programma', eid=ed.id) }}">
   {% for v in ed.programma %}
-  <tr><td>{{ v.giorno|data_it }}</td><td>{{ v.ora }}</td><td>{{ TIPI_PROGRAMMA.get(v.tipo) }}</td>
+  {% if loop.changed(v.giorno) %}{% if not loop.first %}</tbody>{% endif %}<tbody>{% endif %}
+  <tr draggable="true" data-id="{{ v.id }}">
+      <td class="maniglia" title="Trascina per riordinare">⠿ <span class="posizione">{{ loop.index }}</span></td>
+      <td>{{ v.giorno|data_it }}</td><td>{{ v.ora }}</td><td>{{ TIPI_PROGRAMMA.get(v.tipo) }}</td>
       <td>{{ v.relatori or '' }} — {{ v.titolo }}</td>
-      <td><form method="post" action="{{ url_for('admin.elimina_voce', vid=v.id) }}">
+      <td><details><summary>modifica</summary>{% set vf = voce_forms[v.id] %}
+        <form method="post" action="{{ url_for('admin.aggiorna_voce', vid=v.id) }}" class="modulo modulo-riga">
+          {{ vf.hidden_tag() }}
+          {% for f in vf if f.type != 'CSRFTokenField' %}{{ campo(f) }}{% endfor %}
+          <button class="btn btn-piccolo">Salva</button>
+        </form></details>
+        <form method="post" action="{{ url_for('admin.elimina_voce', vid=v.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo">elimina</button></form></td></tr>
+  {% if loop.last %}</tbody>{% endif %}
   {% endfor %}
 </table>
 <form method="post" action="{{ url_for('admin.aggiungi_voce', eid=ed.id) }}" class="modulo modulo-riga">
@@ -52,3 +64,4 @@
 </form>
 {% endif %}
 {% endblock %}
+{% block script %}<script src="{{ url_for('static', filename='js/ordina.js') }}" defer></script>{% endblock %}

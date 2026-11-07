@@ -77,6 +77,16 @@ class MaterialeForm(FlaskForm):
     url = StringField("oppure link esterno", validators=[Optional(), URL()])
 
 
+class EmailPartecipantiForm(FlaskForm):
+    """Messaggio dell'admin a relatori, docenti e comitato (scelte dell'edizione nella vista)."""
+    edizione_id = SelectField("Edizione", coerce=int)
+    relatori = BooleanField("Relatori")
+    docenti = BooleanField("Docenti (UD delle edizioni passate e candidature ammesse)")
+    comitato = BooleanField("Comitato scientifico")
+    oggetto = StringField("Oggetto", validators=[DataRequired(), Length(max=200)])
+    testo = TextAreaField("Testo", validators=[DataRequired()], render_kw={"rows": 12})
+
+
 class MaterialeAdminForm(MaterialeForm):
     visibilita = SelectField("Visibilità", choices=_scelte(VISIBILITA))
 

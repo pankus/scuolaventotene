@@ -38,6 +38,7 @@ uv run flask seed-precedenti             # edizioni 2023–2025 (app/edizioni_pr
 uv run flask crea-admin email@ismed.cnr.it
 uv run flask prova-email tuo@indirizzo.it   # controlla la configurazione SMTP
 uv run flask ud-dal-programma            # UD dei docenti delle edizioni passate dal programma
+uv run flask importa-docenti FILE [--applica]  # account dei docenti passati da un elenco di email (file fuori dal repo)
 uv run flask lezioni-dal-programma       # lezioni dei relatori dalle voci «lezione» del programma
 uv run flask zotero-sync [--completa]    # bibliografia (in produzione gira in cron)
 uv run flask zotero-copertine            # copertine per ISBN (in cron dopo il sync)

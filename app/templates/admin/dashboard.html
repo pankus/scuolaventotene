@@ -25,6 +25,8 @@
 </table>
 
 {% if current_user.is_admin %}
+<p class="azioni"><a class="btn btn-secondario" href="{{ url_for('admin.email') }}">Scrivi ai partecipanti</a></p>
+
 <h2>Bibliografia Zotero</h2>
 <p>Ultima sincronizzazione: {{ ultima_sync or 'mai' }}</p>
 <form method="post" action="{{ url_for('admin.zotero_sync') }}" class="azioni">
