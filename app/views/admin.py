@@ -12,7 +12,7 @@ from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il
 from ..forms import (CopertinaForm, DescrizioneForm, EmailPartecipantiForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
                      MaterialeUDForm, PersonaEdizioneForm, ProgrammaVoceForm, StatoCandidaturaForm,
                      ValutazioneForm)
-from ..models import (ESITI_CANDIDATURA, GRUPPI_PARTECIPANTI, RUOLI, STATI_MATERIALE, VISIBILITA, Candidatura,
+from ..models import (ESITI_CANDIDATURA, GRUPPI_PARTECIPANTI, RUOLI, RUOLI_EDIZIONE, STATI_MATERIALE, VISIBILITA, Candidatura,
                       Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce,
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroCollezione, ZoteroItem,
                       adesso)
@@ -580,6 +580,50 @@ def aggiorna_utente(uid):
         u.attivo = request.form.get("attivo") == "1"
     db.session.commit()
     flash(f"Utente {u.email} aggiornato.", "ok")
+    return _torna_a_utenti()
+
+
+@bp.post("/utenti/<int:uid>/edizione")
+@admin_required
+def edizione_utente(uid):
+    """Con `epid`: sposta quella UD/lezione dell'account in un'altra edizione (titolo, materiali e
+    letture vanno con lei). Senza: aggiunge l'account all'edizione, creando la UD o la lezione
+    (relatore → lezione, comitato/admin → comitato, altrimenti UD del docente)."""
+    u = db.get_or_404(Utente, uid)
+    ed = db.get_or_404(Edizione, request.form.get("edizione", 0, type=int))
+    epid = request.form.get("epid", type=int)
+    if epid:
+        ep = db.get_or_404(EdizionePersona, epid)
+        if ep.persona.utente_id != u.id:
+            abort(404)
+        if ep.edizione_id == ed.id:
+            return _torna_a_utenti()
+        if EdizionePersona.query.filter_by(edizione_id=ed.id, persona_id=ep.persona_id, ruolo=ep.ruolo).first():
+            flash(f"{u.nome_completo} ha già quel ruolo nell'edizione {ed.anno}.", "errore")
+            return _torna_a_utenti()
+        da = ep.edizione.anno
+        ep.edizione = ed
+        for m in ep.materiali:
+            m.edizione_id = ed.id
+        msg = f"{RUOLI_EDIZIONE[ep.ruolo]} di {u.nome_completo} spostato dal {da} al {ed.anno}."
+        if any(l.zotero_key for l in ep.letture):
+            msg += " Le letture già in Zotero restano nella collezione della vecchia edizione."
+        flash(msg, "ok")
+    else:
+        ruolo = {"relatore": "relatore", "comitato": "comitato", "admin": "comitato"}.get(u.ruolo, "docente")
+        # la persona dell'account, o quella con lo stesso nome già nel programma e senza account
+        p = u.persona or Persona.query.filter_by(nome=u.nome, cognome=u.cognome, utente_id=None).first() \
+            or Persona(nome=u.nome, cognome=u.cognome)
+        p.utente_id = u.id
+        db.session.add(p)
+        db.session.flush()
+        if EdizionePersona.query.filter_by(edizione_id=ed.id, persona_id=p.id, ruolo=ruolo).first():
+            flash(f"{u.nome_completo} è già nell'edizione {ed.anno}.", "errore")
+            return _torna_a_utenti()
+        db.session.add(EdizionePersona(edizione=ed, persona=p, ruolo=ruolo))
+        flash(f"{u.nome_completo} aggiunto all'edizione {ed.anno} ({RUOLI_EDIZIONE[ruolo]}): "
+              f"titolo e dettagli nella scheda dell'edizione.", "ok")
+    db.session.commit()
     return _torna_a_utenti()
 
 

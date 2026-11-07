@@ -231,3 +231,33 @@ def test_utenti_edizioni_e_filtri(app):
     assert r.headers["Location"].endswith("/admin/utenti?gruppo=nessuno")
     r = c.post(f"/admin/utenti/{solo.id}", data=dati | {"ritorno": "//evil.example/"})
     assert r.headers["Location"].endswith("/admin/utenti")
+
+
+def test_utenti_sposta_e_aggiungi_edizione(app):
+    from app.models import EdizionePersona, Persona
+    admin, comitato = crea_utente(ruolo="admin"), crea_utente(ruolo="comitato")
+    ed1, ed2 = crea_edizione(stato="conclusa"), crea_edizione(stato="conclusa")
+    docente, nuovo, altro = crea_utente(), crea_utente(ruolo="relatore"), crea_utente()
+    ep = EdizionePersona(edizione=ed1, ruolo="docente", titolo_lezione="UD",
+                         persona=Persona(nome=docente.nome, cognome=docente.cognome, utente_id=docente.id))
+    db.session.add(ep)
+    db.session.add(Materiale(edizione=ed1, titolo="Slide", lezione=ep))
+    omonimo = Persona(nome=nuovo.nome, cognome=nuovo.cognome)  # dal programma, senza account
+    db.session.add(omonimo)
+    db.session.commit()
+    c = client_di(app, admin)
+    url = f"/admin/utenti/{docente.id}/edizione"
+
+    assert client_di(app, comitato).post(url, data={"epid": ep.id, "edizione": ed2.id}).status_code == 403
+    assert c.post(f"/admin/utenti/{altro.id}/edizione", data={"epid": ep.id, "edizione": ed2.id}).status_code == 404
+    c.post(url, data={"epid": ep.id, "edizione": ed2.id})
+    db.session.expire_all()
+    assert ep.edizione_id == ed2.id and ep.titolo_lezione == "UD" and ep.materiali[0].edizione_id == ed2.id
+
+    c.post(f"/admin/utenti/{nuovo.id}/edizione", data={"edizione": ed1.id})
+    c.post(f"/admin/utenti/{nuovo.id}/edizione", data={"edizione": ed1.id})  # già presente: niente doppione
+    db.session.expire_all()
+    eps = EdizionePersona.query.filter_by(persona_id=omonimo.id).all()
+    assert [(e.edizione_id, e.ruolo) for e in eps] == [(ed1.id, "relatore")] and omonimo.utente_id == nuovo.id
+    html = c.get("/admin/utenti").data.decode()
+    assert "sposta" in html and "aggiungi" in html

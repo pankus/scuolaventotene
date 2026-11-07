@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Utenti{% endblock %}
+{% from "_macros.html" import btn_icona %}
 {% block content %}
 <h1>Utenti</h1>
 {% include "admin/_nav.html" %}
@@ -17,7 +18,10 @@
   <span class="nota">{{ utenti|length }} account</span>
 </form>
 {% set ritorno = request.script_root ~ request.full_path %}
-<table class="tabella">
+{% macro scelta_edizione(attuale=None) %}<select name="edizione" aria-label="Edizione">
+        {% if not attuale %}<option value="">edizione…</option>{% endif %}
+        {% for e in edizioni %}<option value="{{ e.id }}" {% if e.id == attuale %}selected{% endif %}>{{ e.anno }}</option>{% endfor %}</select>{% endmacro %}
+<div class="scorri-x tabella-larga"><table class="tabella">
   <tr><th>Nome e cognome</th><th>Email</th><th>Edizioni</th><th>Registrato</th><th>Ruolo / stato</th></tr>
   {% for u in utenti %}
   {% set f = 'u' ~ u.id %}
@@ -30,7 +34,17 @@
     <td class="edizioni-utente">
       {% for ep in eps %}<div>{% if ep.ruolo == 'comitato' %}{{ ep.edizione.anno }} · {{ RUOLI_EDIZIONE[ep.ruolo] }}{% else %}<a href="{{ url_for('public.intervento', slug=ep.edizione.slug, epid=ep.id) }}">{{ ep.edizione.anno }} · {{ RUOLI_EDIZIONE[ep.ruolo] }}</a>{% endif %}</div>{% endfor %}
       {% for c in u.candidature|sort(attribute='edizione.anno') %}<div><a href="{{ url_for('admin.candidatura', cid=c.id) }}">{{ c.edizione.anno }} · candidatura {{ STATI_CANDIDATURA.get(c.stato, c.stato)|lower }}</a></div>{% endfor %}
-      {% if not eps and not u.candidature %}{% if u.ruolo in ('docente', 'relatore') %}<span class="badge badge-rifiutato">nessuna edizione</span>{% else %}—{% endif %}{% endif %}</td>
+      {% if not eps and not u.candidature %}{% if u.ruolo in ('docente', 'relatore') %}<span class="badge badge-rifiutato">nessuna edizione</span>{% else %}—{% endif %}{% endif %}
+      {% if eps %}<details class="cambia-edizione"><summary>cambia</summary>
+        {% for ep in eps %}<form method="post" action="{{ url_for('admin.edizione_utente', uid=u.id) }}" class="in-linea">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="ritorno" value="{{ ritorno }}">
+          <input type="hidden" name="epid" value="{{ ep.id }}">
+          {{ RUOLI_EDIZIONE[ep.ruolo] }} {{ scelta_edizione(ep.edizione_id) }}{{ btn_icona('sposta', 'Sposta in questa edizione') }}</form>{% endfor %}
+      {% endif %}
+        <form method="post" action="{{ url_for('admin.edizione_utente', uid=u.id) }}" class="in-linea">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="ritorno" value="{{ ritorno }}">
+          {{ scelta_edizione() }}{{ btn_icona('aggiungi', 'Aggiungi a questa edizione') }}</form>
+      {% if eps %}</details>{% endif %}</td>
     <td>{{ u.creato_il|data_it }}</td>
     <td><form method="post" action="{{ url_for('admin.aggiorna_utente', uid=u.id) }}" class="in-linea" id="{{ f }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -39,13 +53,16 @@
       <select name="ruolo">{% for k, v in RUOLI.items() %}<option value="{{ k }}" {% if k == u.ruolo %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
       <label><input type="checkbox" name="attivo" value="1" {% if u.attivo %}checked{% endif %}> attivo</label>
       {% else %}{{ RUOLI.get(u.ruolo) }} (tu){% endif %}
-      <button class="btn btn-piccolo">Salva</button></form>
+      {{ btn_icona('salva', 'Salva nome, ruolo e stato') }}</form>
     {% if u.id != current_user.id %}<form method="post" action="{{ url_for('admin.elimina_utente', uid=u.id) }}" class="in-linea">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="ritorno" value="{{ ritorno }}">
-      <button class="link-pericolo" onclick="return confirm('Eliminare definitivamente {{ u.email }} con le sue candidature?')">elimina</button></form>{% endif %}</td></tr>
+      {{ btn_icona('elimina', 'Elimina l\'account', 'btn-icona-pericolo', 'Eliminare definitivamente ' ~ u.email ~ ' con le sue candidature?') }}</form>{% endif %}</td></tr>
   {% endfor %}
-</table>
-<p class="nota">Un docente o relatore «senza edizione» si collega dalla scheda dell'edizione: nella sua UD o
-  lezione scegli l'account nel campo «Account» e salva.</p>
+</table></div>
+<p class="nota">Pulsanti: dischetto = salva, cestino = elimina, calendario con freccia = sposta in un'altra edizione,
+  calendario con + = aggiungi a un'edizione (passa sopra con il mouse per la descrizione).
+  «Aggiungi» aggancia l'account a un'edizione: crea la UD (docente) o la lezione (relatore), che poi
+  completi nella scheda dell'edizione; se nel programma c'è già una persona con lo stesso nome e cognome, usa quella.
+  «cambia» → «sposta» porta una UD o una lezione in un'altra edizione, con titolo, materiali e letture.</p>
 {% endblock %}
