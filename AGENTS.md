@@ -18,13 +18,13 @@ Lingua del sito, del codice di dominio e dei commenti: **italiano**.
 
 ## Stack
 
-- Python **3.14** (fissato in `.python-version` e `requires-python`), gestito con **uv**
+- Python **3.10** (quello di sistema di Ubuntu 22.04; `.python-version`, `requires-python`), gestito con **uv**: niente sintassi o API 3.11+
 - Flask 3, Flask-SQLAlchemy, Flask-Migrate (Alembic), Flask-Login, Flask-WTF (CSRF), WTForms, email-validator
 - SQLite in `instance/ventotene.db` (WAL + foreign keys attivati in `app/extensions.py`)
 - Jinja2 senza framework JS né build step; CSS scritto a mano in `app/static/css/style.css`;
   JS a mano solo dove serve (`app/static/js/letture.js`, ricerca dei libri), caricato con `{% block script %}`
 - pyzotero (bibliografia), python-docx (conteggio caratteri), markdown (testi delle edizioni)
-- Produzione: Ubuntu 22.04, Apache + mod_wsgi compilato contro il Python del `.venv` (`wsgi.py`)
+- Produzione: Ubuntu 22.04, Apache + mod_wsgi di sistema (3.10), progetto in `/var/www/scuolaventotene` con `venv/` (`wsgi.py`)
 
 ## Comandi
 
@@ -47,7 +47,7 @@ uv run pytest                            # test (cartella tests/)
 
 Dipendenze: sempre `uv add <pacchetto>` (o `uv add --dev`), mai `pip install` a mano:
 `pyproject.toml` e `uv.lock` devono restare allineati e `uv.lock` va committato.
-`mod_wsgi` **non** va aggiunto alle dipendenze: si installa solo sul server.
+`mod_wsgi` **non** va aggiunto alle dipendenze: è il pacchetto di sistema del server.
 
 ## Struttura
 

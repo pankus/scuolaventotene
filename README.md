@@ -7,7 +7,7 @@ Flask + SQLite. Per architettura, ruoli, modello dati e flussi: vedi [ARCHITETTU
 ```
 ventotene/
 ├── config.py               configurazione (variabili d'ambiente, .env)
-├── wsgi.py                 entry point Apache/mod_wsgi
+├── wsgi.py                 entry point Apache/mod_wsgi (venv/ sul server)
 ├── pyproject.toml          dipendenze (uv)
 ├── uv.lock                 versioni bloccate: da committare
 ├── migrations/             migrazioni dello schema (Flask-Migrate): da committare
@@ -63,57 +63,94 @@ Modifiche ai modelli: `uv run flask db migrate -m "descrizione"`, rileggere il f
 `uv.lock` va committato: è ciò che rende identico l'ambiente sul server.
 Nuove dipendenze: `uv add <pacchetto>` (aggiorna `pyproject.toml` e `uv.lock`).
 
-## Produzione (Apache + mod_wsgi)
+## Produzione (Ubuntu 22.04, Apache + mod_wsgi)
 
-Il progetto è fissato su **Python 3.14** (`.python-version`, `requires-python`).
-mod_wsgi deve essere compilato contro lo stesso Python del `.venv`: il pacchetto della
-distribuzione (`libapache2-mod-wsgi-py3`) usa il Python 3.10 di sistema, quindi va sostituito
-con mod_wsgi installato nel virtualenv.
+Il progetto gira su **Python 3.10**, quello di sistema di Ubuntu 22.04, con il mod_wsgi del
+pacchetto (`libapache2-mod-wsgi-py3`, compilato contro 3.10): lo stesso delle altre app sullo
+stesso Apache. In locale si usa la stessa versione (`.python-version`).
 
-Server: **Ubuntu 22.04**. Python 3.14 è installato con uv in una cartella di sistema
-(non nella home di un utente), così Apache può leggerlo.
+Prima installazione (utente del deploy con sudo; il progetto è suo, `instance/` è di `www-data`):
 
 ```bash
-sudo apt install apache2-dev build-essential          # apxs e compilatore per mod_wsgi
-export UV_PYTHON_INSTALL_DIR=/opt/uv/python           # leggibile da www-data; metterlo anche nel profilo dell utente di deploy
-sudo -E uv python install 3.14
-PY=$(uv python find 3.14)
-$PY -c 'import sysconfig; print(sysconfig.get_config_var("Py_ENABLE_SHARED"))'   # deve dare 1
+sudo apt install apache2 libapache2-mod-wsgi-py3 python3.10-venv sqlite3
+curl -LsSf https://astral.sh/uv/install.sh | sh        # uv per l'utente del deploy
 
-cd /srv/ventotene
-git pull
-uv sync --frozen --no-dev --inexact --python 3.14
-uv pip install mod_wsgi                       # compila mod_wsgi contro il Python del .venv
-ldd $(.venv/bin/mod_wsgi-express module-location) | grep libpython   # libpython deve essere trovata
-sqlite3 instance/ventotene.db ".backup instance/backup-$(date +%F).db"   # prima di migrare
-.venv/bin/flask --app app:create_app db upgrade    # applica le migrazioni nuove (dopo ogni git pull)
-.venv/bin/mod_wsgi-express module-config      # righe LoadModule / WSGIPythonHome per Apache
+cd /var/www
+sudo git clone https://github.com/pankus/scuolaventotene.git
+sudo chown -R $USER:www-data scuolaventotene
+cd scuolaventotene
+uv venv venv --python /usr/bin/python3.10               # crea anche venv/bin/activate_this.py
+UV_PROJECT_ENVIRONMENT=venv uv sync --frozen --no-dev
+
+cp .env.example .env            # compilare: SECRET_KEY nuova, SESSION_COOKIE_SECURE=1, Zotero, MAIL_*
+chmod 640 .env                  # gruppo www-data: Apache lo legge, gli altri no
+mkdir -p instance/uploads
+sudo chown -R www-data:www-data instance
+sudo -u www-data venv/bin/flask --app app:create_app init-db
+sudo -u www-data venv/bin/flask --app app:create_app crea-admin email@ismed.cnr.it
 ```
 
-Dopo un `uv python upgrade 3.14` (nuova patch di sicurezza): rilanciare `uv sync` e
-`uv pip install --reinstall mod_wsgi`, poi riavviare Apache.
+Senza `SECRET_KEY` (o con quella d'esempio) l'app non parte: con una chiave nota sessioni e
+link di reset della password si potrebbero falsificare. Generarla con
+`python3 -c "import secrets; print(secrets.token_hex(32))"`.
 
 - `--frozen`: installa esattamente le versioni di `uv.lock`, senza riscriverlo
-- `--no-dev`: esclude pytest e gli altri strumenti di sviluppo
-- `--inexact`: non rimuove mod_wsgi, che è installato a parte e non sta nel lock
-  (si compila contro Apache, quindi non si può risolvere sul Mac)
-- disattivare il modulo di sistema (`a2dismod wsgi`) e mettere l'output di `module-config`
-  in `/etc/apache2/mods-available/wsgi_venv.load`, poi `a2enmod wsgi_venv`
+- `--no-dev`: esclude pytest
+- `UV_PROJECT_ENVIRONMENT=venv`: sul server l'ambiente è `venv/` (come le altre app), non `.venv/`
+
+Virtual host (`/etc/apache2/sites-available/scuolaventotene.conf`, poi `a2ensite`,
+`a2enmod headers ssl`):
 
 ```apache
-WSGIDaemonProcess ventotene python-home=/srv/ventotene/.venv python-path=/srv/ventotene
-WSGIProcessGroup ventotene
-WSGIScriptAlias / /srv/ventotene/wsgi.py
-<Directory /srv/ventotene>
-    <Files wsgi.py> Require all granted </Files>
-</Directory>
-Alias /static /srv/ventotene/app/static
+<VirtualHost *:443>
+    ServerName scuolaventotene.example.it
+    # niente DocumentRoot sul progetto: dall'esterno si vedono solo l'app e app/static
+
+    WSGIDaemonProcess scuolaventotene user=www-data group=www-data processes=1 threads=5 \
+        python-home=/var/www/scuolaventotene/venv python-path=/var/www/scuolaventotene
+    WSGIProcessGroup scuolaventotene
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIScriptAlias / /var/www/scuolaventotene/wsgi.py
+
+    <Directory /var/www/scuolaventotene>
+        Require all denied
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
+    Alias /static /var/www/scuolaventotene/app/static
+    <Directory /var/www/scuolaventotene/app/static>
+        Require all granted
+    </Directory>
+
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000"
+
+    SSLEngine on
+    # SSLCertificateFile / SSLCertificateKeyFile come per le altre app
+</VirtualHost>
 ```
 
-Il file `.env` contiene la `SECRET_KEY` e la chiave Zotero: `chmod 640 .env`, proprietario
-l'utente del deploy, gruppo `www-data`; non va mai in git (è già nel `.gitignore`).
+Se un altro virtual host ha `DocumentRoot /var/www`, `.env`, `.git` e `instance/` sarebbero
+scaricabili da lì: controllarlo (`grep -r DocumentRoot /etc/apache2/sites-enabled`) o mettere
+il blocco `<Directory /var/www/scuolaventotene> Require all denied` anche in
+`/etc/apache2/conf-available/` (vale per tutti i virtual host). Gli upload stanno in
+`instance/uploads/` e passano solo dalle viste, che controllano i permessi.
 
-L'utente di Apache deve poter scrivere in `instance/` (database, file WAL, uploads).
+Aggiornamento:
+
+```bash
+cd /var/www/scuolaventotene
+git pull
+sudo -u www-data sqlite3 instance/ventotene.db ".backup instance/backup-$(date +%F).db"
+UV_PROJECT_ENVIRONMENT=venv uv sync --frozen --no-dev
+sudo -u www-data venv/bin/flask --app app:create_app db upgrade   # migrazioni nuove
+touch wsgi.py                                                    # ricarica il processo mod_wsgi
+```
+
+Log: `/var/log/apache2/error.log` (`wsgi.py` manda logging e stdout su stderr).
 
 Ricerca dei libri: il server chiama `www.googleapis.com` e `openlibrary.org` (e scarica le
 copertine da Google Books, Open Library, archive.org e Amazon images-na.ssl-images-amazon.com): servono le uscite HTTPS verso questi
@@ -125,12 +162,12 @@ password della casella (con la 2FA serve una password per applicazione), `MAIL_M
 alla casella o a un suo alias, `MAIL_NOTIFICHE` con gli indirizzi dei referenti. Prova:
 
 ```bash
-.venv/bin/flask --app app:create_app prova-email tuo@indirizzo.it
+sudo -u www-data venv/bin/flask --app app:create_app prova-email tuo@indirizzo.it
 ```
 
-Cron per la bibliografia:
+Cron per la bibliografia (`sudo crontab -u www-data -e`, così il database resta di `www-data`):
 
 ```
-0 * * * *  cd /srv/ventotene && .venv/bin/flask --app app:create_app zotero-sync >> instance/zotero.log 2>&1
-15 * * * * cd /srv/ventotene && .venv/bin/flask --app app:create_app zotero-copertine >> instance/zotero.log 2>&1
+0 * * * *  cd /var/www/scuolaventotene && venv/bin/flask --app app:create_app zotero-sync >> instance/zotero.log 2>&1
+15 * * * * cd /var/www/scuolaventotene && venv/bin/flask --app app:create_app zotero-copertine >> instance/zotero.log 2>&1
 ```
