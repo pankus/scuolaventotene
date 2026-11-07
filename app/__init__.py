@@ -10,6 +10,9 @@ from .extensions import csrf, db, login_manager, migrate
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_class)
+    # con la chiave di default sessioni e link di reset sarebbero falsificabili
+    if not app.testing and app.config["SECRET_KEY"] in ("", "cambiami-in-produzione"):
+        raise RuntimeError("SECRET_KEY mancante: impostarla nel .env")
     os.makedirs(app.instance_path, exist_ok=True)
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 

@@ -12,7 +12,8 @@ bp = Blueprint("auth", __name__)
 
 def _next_sicuro(default):
     nxt = request.args.get("next", "")
-    return nxt if nxt.startswith("/") and not nxt.startswith("//") else default
+    # "//host" e "/\\host" i browser li aprono come indirizzo esterno
+    return nxt if nxt.startswith("/") and not nxt.startswith(("//", "/\\")) else default
 
 
 @bp.route("/registrati", methods=["GET", "POST"])

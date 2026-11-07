@@ -6,7 +6,7 @@ import pytest
 from app.extensions import db
 from app.models import Candidatura, Materiale
 
-from conftest import crea_edizione, crea_utente, login
+from conftest import PASSWORD, crea_edizione, crea_utente, login
 
 
 def client_di(app, utente=None):
@@ -112,3 +112,24 @@ def test_scarica_materiale(app):
     assert c_docente.get(url).status_code == 404
     assert c_autore.get(url).status_code == 200
     assert c_comitato.get(url).status_code == 200
+
+
+@pytest.mark.parametrize("nxt,atteso", [("/area/profilo", "/area/profilo"), ("//evil.com", "/area/"),
+                                        ("/\\evil.com", "/area/"), ("https://evil.com", "/area/")])
+def test_login_next_solo_interno(app, nxt, atteso):
+    u = crea_utente()
+    r = app.test_client().post("/accedi", query_string={"next": nxt},
+                               data={"email": u.email, "password": PASSWORD})
+    assert r.headers["Location"] == atteso
+
+
+def test_secret_key_obbligatoria_fuori_dai_test():
+    from app import create_app
+    from config import Config
+
+    class Prod(Config):
+        SECRET_KEY = "cambiami-in-produzione"
+        SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+
+    with pytest.raises(RuntimeError):
+        create_app(Prod)
