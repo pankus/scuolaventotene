@@ -67,7 +67,7 @@ def test_dashboard_e_materiale_della_lezione(app):
     ep = crea_lezione(utente=rel)
     c = client_di(app, rel)
     html = c.get("/area/").get_data(as_text=True)
-    assert "Le mie lezioni" in html and "Esilio e migrazione" in html
+    assert "Le mie relazioni" in html and "Esilio e migrazione" in html
     r = c.post(f"/area/materiali/nuovo?lezione={ep.id}",
                data={"edizione_id": ep.edizione_id, "titolo": "Slide della lezione", "tipo": "slide",
                      "file": pdf()}, content_type="multipart/form-data")
@@ -106,7 +106,7 @@ def test_archivio_separa_lezioni(app):
                                  stato="pubblicato", visibilita="pubblico"))
     db.session.commit()
     html = client_di(app).get(f"/archivio/{ed.slug}").get_data(as_text=True)
-    ordine = [html.index(t) for t in ("<h2>Lezioni</h2>", f"/interventi/{ep1.id}", f"/interventi/{ep2.id}",
+    ordine = [html.index(t) for t in ("<h2>Relazioni</h2>", f"/interventi/{ep1.id}", f"/interventi/{ep2.id}",
                                       "<h2>Altri materiali</h2>", "Bando")]
     assert ordine == sorted(ordine)
     assert html.count("1 materiale") == 2 and "Materiale A" not in html  # sta nella pagina della lezione
@@ -326,7 +326,7 @@ def test_pulsante_lezioni_dal_programma(app):
     db.session.add(ProgrammaVoce(edizione=ed, tipo="lezione", titolo="Esuli", relatori="Anna Neri"))
     db.session.commit()
     c = client_di(app, crea_utente(ruolo="admin"))
-    assert "Crea le lezioni dal programma" in c.get(f"/admin/edizioni/{ed.id}").get_data(as_text=True)
+    assert "Crea le relazioni dal programma" in c.get(f"/admin/edizioni/{ed.id}").get_data(as_text=True)
     assert c.post(f"/admin/edizioni/{ed.id}/lezioni-dal-programma").status_code == 302
     c.post(f"/admin/edizioni/{ed.id}/lezioni-dal-programma")  # di nuovo: niente doppioni
     assert _lezioni(ed) == [("Neri", "Esuli")]

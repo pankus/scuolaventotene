@@ -344,7 +344,7 @@ def letture_lezione(iid):
     scelte = []
     if form.validate_on_submit():
         if len(iv.letture) >= MAX_LETTURE:
-            flash(f"Puoi indicare al massimo {MAX_LETTURE} letture per lezione.", "errore")
+            flash(f"Puoi indicare al massimo {MAX_LETTURE} letture per relazione.", "errore")
             return redirect(url_for("area.letture_lezione", iid=iv.id))
         p = PropostaLettura(intervento_id=iv.id, tipo=tipo)  # in sessione solo se si salva
         _compila(p, form)
@@ -368,7 +368,7 @@ def letture_lezione(iid):
                 db.session.commit()
                 if avviso:
                     flash(avviso, "errore")
-                flash("Lettura salvata nella bibliografia della lezione.", "ok")
+                flash("Lettura salvata nella bibliografia della relazione.", "ok")
                 return redirect(url_for("area.letture_lezione", iid=iv.id))
             # altrimenti: possibili doppioni, si ripropone il modulo con la scelta del record
         except (ErroreScrittura, RuntimeError) as e:
@@ -403,10 +403,10 @@ def elimina_lettura_lezione(iid, pid):
             scollega_item(modulo_sync.client(), key, col)
             db.session.commit()
         except (ErroreScrittura, RuntimeError) as e:
-            flash(f"Lettura scollegata dalla lezione, ma non tolta dalla collezione in Zotero ({e}): "
+            flash(f"Lettura scollegata dalla relazione, ma non tolta dalla collezione in Zotero ({e}): "
                   "toglila lì a mano.", "errore")
             return _dopo_scollega(iv)
-    flash("Lettura scollegata dalla lezione e tolta dalla bibliografia dell'edizione. "
+    flash("Lettura scollegata dalla relazione e tolta dalla bibliografia dell'edizione. "
           "Il record resta nella libreria Zotero.", "info")
     return _dopo_scollega(iv)
 

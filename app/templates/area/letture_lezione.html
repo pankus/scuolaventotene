@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% from "_macros.html" import campo %}
-{% block title %}Bibliografia della lezione{% endblock %}
+{% block title %}Bibliografia della relazione{% endblock %}
 {% block content %}
 <div class="stretto">
-  <p class="occhiello"><a href="{{ url_for('public.intervento', slug=iv.edizione.slug, iid=iv.id) }}">← Pagina {{ 'della UD' if iv.ud else 'della lezione' }}</a>
+  <p class="occhiello"><a href="{{ url_for('public.intervento', slug=iv.edizione.slug, iid=iv.id) }}">← Pagina {{ 'della UD' if iv.ud else 'della relazione' }}</a>
     · <a href="{{ url_for('area.dashboard') }}">Area personale</a></p>
-  <h1>Bibliografia {{ 'della UD' if iv.ud else 'della lezione' }}</h1>
+  <h1>Bibliografia {{ 'della UD' if iv.ud else 'della relazione' }}</h1>
   <p><strong>{{ iv.titolo or 'senza titolo' }}</strong> · {{ iv.nomi_autori }} · {{ iv.edizione.anno }}</p>
   <p class="nota">Ogni lettura entra subito nella bibliografia della scuola (Zotero, collezione
     «{{ 'Docenti' if iv.ud else 'Relatori' }}» dell'edizione) e compare nella pagina
-    {{ 'della UD' if iv.ud else 'della lezione' }}.</p>
+    {{ 'della UD' if iv.ud else 'della relazione' }}.</p>
 
   {% if iv.letture %}
   <table class="tabella">
@@ -18,7 +18,7 @@
     <tr><td><strong>{{ l.titolo }}</strong> <small>{{ TIPI_LETTURA.get(l.tipo, l.tipo) }}</small><br>
         <small>{{ (l.campi.autori or '')|replace('\n', '; ') }} {{ l.campi.date or '' }}</small></td>
       <td>{% if aperta %}<form method="post" action="{{ url_for('area.elimina_lettura_lezione', iid=iv.id, pid=l.id) }}" class="in-linea"
-            onsubmit="return confirm('Togliere la lettura dalla lezione? Sparisce anche dalla bibliografia dell\'edizione; il record resta nella libreria Zotero.')">
+            onsubmit="return confirm('Togliere la lettura dalla relazione? Sparisce anche dalla bibliografia dell\'edizione; il record resta nella libreria Zotero.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="link-pericolo">togli</button></form>{% endif %}</td></tr>
     {% endfor %}
@@ -50,7 +50,7 @@
     {% endif %}
     <button class="btn" type="submit">{{ 'Conferma e salva' if scelte else 'Salva la lettura' }}</button>
   </form>
-  {% else %}<p class="nota">Hai già indicato {{ max_letture }} letture per questa lezione.</p>{% endif %}
+  {% else %}<p class="nota">Hai già indicato {{ max_letture }} letture per questa relazione.</p>{% endif %}
 </div>
 {% endblock %}
 {% block script %}<script src="{{ url_for('static', filename='js/letture.js') }}" defer></script>{% endblock %}

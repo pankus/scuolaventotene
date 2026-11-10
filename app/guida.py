@@ -29,7 +29,7 @@ AIUTO = {
     "area.letture": ("docenti", "Invito alla lettura"),
     "area.dettaglio": ("docenti", "Invio, ritiro ed esito"),
     "area.nuovo_materiale": ("docenti", "Materiali del modulo"),
-    "area.letture_lezione": ("docenti", "Bibliografia della lezione"),
+    "area.letture_lezione": ("docenti", "Bibliografia della relazione"),
     "area.ud_lezione": ("docenti", "Unità didattiche dei docenti"),
     "bibliografia.index": ("docenti", "Archivio e invito alla lettura"),
     "archivio.": ("docenti", "Archivio e invito alla lettura"),

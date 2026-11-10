@@ -46,7 +46,8 @@
 
 {# Tessera della bibliografia: copertina, tipo, titolo, autori; link, DOI, citazione e abstract
    dietro le icone (i pannelli sono <details>, niente JS). ``interventi``: lezioni e UD che la
-   consigliano (bibliografia._interventi_di), in un pannello laterale con l'API popover nativa. #}
+   consigliano (bibliografia._interventi_di), in un pannello laterale con l'API popover nativa.
+   Con {% call tessera(i) %} il contenuto del blocco va sotto il testo (motivazione, comandi). #}
 {% macro tessera(i, interventi=None) %}
 <article class="tessera tessera-{{ i.tipo }}">
   {{ copertina(i) }}
@@ -55,6 +56,7 @@
     <h3 class="tessera-titolo">{{ (i.titolo or 'senza titolo')|striptags|truncate(110, True, '…') }}</h3>
     {% if i.autori %}<p class="tessera-autori">{{ i.autori|replace('; ', ', ')|truncate(90, True, '…') }}</p>{% endif %}
     {% set dati = [i.anno, i.pubblicazione]|select|list %}{% if dati %}<p class="tessera-dati">{{ dati|join(' · ') }}</p>{% endif %}
+    {% if caller is defined %}{{ caller() }}{% endif %}
   </div>
   <div class="tessera-icone">
     {% if i.url %}<a class="tessera-btn" href="{{ i.url }}" target="_blank" rel="noopener" title="Apri il link" aria-label="Apri il link">{{ icona('link') }}</a>{% endif %}
@@ -64,7 +66,7 @@
         {% if i.isbn %}<small class="isbn">ISBN {{ i.isbn }}</small>{% endif %}</div></details>
     {% if interventi %}<button type="button" class="tessera-btn tessera-interventi" popovertarget="iv-{{ i.key }}"
         title="Consigliato in {{ interventi|length }} {{ 'intervento' if interventi|length == 1 else 'interventi' }}"
-        aria-label="Lezioni e unità didattiche che lo consigliano">{{ icona('interventi') }}<span>{{ interventi|length }}</span></button>
+        aria-label="Relazioni e unità didattiche che lo consigliano">{{ icona('interventi') }}<span>{{ interventi|length }}</span></button>
     <aside id="iv-{{ i.key }}" popover class="offcanvas" aria-label="Interventi">
       <button type="button" class="offcanvas-chiudi" popovertarget="iv-{{ i.key }}" popovertargetaction="hide" aria-label="Chiudi">{{ icona('chiudi') }}</button>
       <p class="offcanvas-occhiello">Consigliato in</p>

@@ -40,7 +40,7 @@
             <ul>
               <li><a href="{{ url_for('area.dashboard') }}" {% if _ep == 'area.dashboard' %}aria-current="page"{% endif %}>Area personale</a></li>
               <li><a href="{{ url_for('area.profilo') }}" {% if _ep == 'area.profilo' %}aria-current="page"{% endif %}>Profilo</a></li>
-              {% if _u.is_relatore %}<li><a href="{{ url_for('area.dashboard') }}#lezioni">Le mie lezioni</a></li>{% endif %}
+              {% if _u.is_relatore %}<li><a href="{{ url_for('area.dashboard') }}#lezioni">Le mie relazioni</a></li>{% endif %}
               {% for c in _u.candidature|sort(attribute='edizione.anno', reverse=True) %}
               <li><a href="{{ url_for('area.dettaglio', cid=c.id) }}">Candidatura {{ c.edizione.anno }}</a> {{ stato(c.stato, STATI_CANDIDATURA) }}</li>
               {% endfor %}

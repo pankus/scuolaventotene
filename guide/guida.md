@@ -1,7 +1,7 @@
 # Guida
 
 Come usare il sito della Scuola di formazione di Ventotene: per i **docenti** che si candidano
-e partecipano alla scuola, e per i **relatori** che vi tengono una lezione. Per consultare
+e partecipano alla scuola, e per i **relatori** che vi tengono una relazione. Per consultare
 l'archivio e l'invito alla lettura non serve un account.
 
 ## Il sito in breve
@@ -44,7 +44,7 @@ pubblico.
 ### L'area personale
 
 Riassume tutto: le edizioni con candidature aperte (pulsante **Candidati**), le vostre
-candidature con lo stato, i materiali inviati e, per i relatori, **Le mie lezioni**.
+candidature con lo stato, i materiali inviati e, per i relatori, **Le mie relazioni**.
 
 ## Candidarsi
 
@@ -135,54 +135,54 @@ comitato e si correggono o si eliminano finché il comitato non li ha riveduti.
 
 ## Relatori
 
-Il relatore si registra come tutti; poi l'amministrazione collega l'account alla sua lezione
-(lo stesso account può essere docente in un'altra edizione). Da quel momento l'area personale mostra **Le mie lezioni**.
+Il relatore si registra come tutti; poi l'amministrazione collega l'account alla sua relazione
+(lo stesso account può essere docente in un'altra edizione). Da quel momento l'area personale mostra **Le mie relazioni**.
 
-### Le mie lezioni
+### Le mie relazioni
 
-Per ogni lezione: edizione, titolo, materiali caricati con il loro stato, e i collegamenti a
+Per ogni relazione: edizione, titolo, materiali caricati con il loro stato, e i collegamenti a
 **Carica un materiale**, **Bibliografia** e **UD dei docenti**. Se l'elenco è vuoto, l'account
 non è ancora collegato: scrivete all'amministrazione della scuola. Materiali e bibliografia si
 modificano fino alla **chiusura dei contenuti** dell'edizione; dopo restano consultabili e le
 correzioni le fa l'amministrazione.
 
-### Materiali della lezione
+### Materiali della relazione
 
-Slide, testi o link della lezione: si caricano come i materiali dei docenti, restano in
-revisione e vengono pubblicati nell'**Archivio**, nella sezione «Lezioni».
+Slide, testi o link della relazione: si caricano come i materiali dei docenti, restano in
+revisione e vengono pubblicati nell'**Archivio**, nella sezione «Relazioni».
 
-### Bibliografia della lezione
+### Bibliografia della relazione
 
-Fino a 10 letture per lezione, con gli stessi tipi e la stessa ricerca dei docenti. Le letture dei
+Fino a 10 letture per relazione, con gli stessi tipi e la stessa ricerca dei docenti. Le letture dei
 relatori **entrano subito** nella bibliografia della scuola (Zotero, sottocollezione
 «Relatori» dell'edizione), senza revisione. Se il sito trova un record simile (stesso ISBN o
 stesso titolo) chiede **È già nella bibliografia?**: se è lo stesso libro sceglietelo, se è
-un'altra opera scegliete «crea un nuovo record». **togli** leva la lettura dalla lezione e
+un'altra opera scegliete «crea un nuovo record». **togli** leva la lettura dalla relazione e
 dalla bibliografia dell'edizione (sottocollezione «Relatori» in Zotero), a meno che un'altra
-lezione della stessa edizione non la consigli; il record resta nella libreria Zotero. Lo stesso
-comando, **scollega dalla lezione**, c'è sotto ogni lettura nella pagina pubblica della lezione,
+relazione della stessa edizione non la consigli; il record resta nella libreria Zotero. Lo stesso
+comando, **scollega dalla relazione**, c'è sotto ogni lettura nella pagina pubblica della relazione,
 finché i contenuti dell'edizione sono aperti.
 
 ### Unità didattiche dei docenti
 
 Le unità didattiche dei docenti **ammessi** nelle edizioni in cui insegnate: titolo,
-discipline, abstract e documento, per preparare la lezione. È materiale riservato: non va
+discipline, abstract e documento, per preparare la relazione. È materiale riservato: non va
 diffuso. I dati personali dei docenti (email, telefono, nascita, residenza) non sono visibili.
 
 ## Archivio e invito alla lettura
 
-- **Archivio**: un'edizione per riga; la pagina dell'edizione elenca le «Lezioni» e le «Unità
+- **Archivio**: un'edizione per riga; la pagina dell'edizione elenca le «Relazioni» e le «Unità
   didattiche dei docenti», con quanti materiali e letture ha ciascuna, e gli «Altri materiali»
-  (bando, locandine). Ogni lezione e UD apre la sua pagina: abstract, materiali da scaricare e
+  (bando, locandine). Ogni relazione e UD apre la sua pagina: abstract, materiali da scaricare e
   letture consigliate con le copertine. Alcuni materiali sono visibili solo agli utenti registrati.
 - **Invito alla lettura**: si apre sull'ultima edizione chiusa, con prima i «Riferimenti di
-  base», poi le letture dei relatori (divise per lezione) e infine quelle dei docenti. Dal menu
+  base», poi le letture dei relatori (divise per relazione) e infine quelle dei docenti. Dal menu
   **Mostra** si sceglie un'altra edizione, una sezione di Zotero o tutta la bibliografia; la
   ricerca vale per autore, titolo o abstract. Ogni lettura è una scheda con copertina (o un
   segnaposto), tipo, titolo, autori e anno; le icone in basso aprono il link, il DOI, la citazione
   completa con l'ISBN e l'abstract; l'icona del libro con un numero apre un pannello laterale con
-  le lezioni e le unità didattiche che consigliano quella lettura. La pagina di ogni edizione mostra la propria bibliografia
-  divisa per lezione.
+  le relazioni e le unità didattiche che consigliano quella lettura. La pagina di ogni edizione mostra la propria bibliografia
+  divisa per relazione.
 
 ## Dati personali e contatti
 

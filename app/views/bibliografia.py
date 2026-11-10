@@ -48,7 +48,7 @@ def _interventi_di(keys):
         if ed.stato == "bozza" or iv.candidatura:
             continue
         out.setdefault(p.zotero_key, []).append(dict(
-            anno=ed.anno, tipo="UD" if iv.ud else "Lezione", titolo=iv.titolo or "senza titolo",
+            anno=ed.anno, tipo="UD" if iv.ud else "Relazione", titolo=iv.titolo or "senza titolo",
             autori=iv.nomi_autori, url=url_for("public.intervento", slug=ed.slug, iid=iv.id)))
     for p, c in approvate.join(Candidatura).add_entity(Candidatura):
         ed = c.edizione

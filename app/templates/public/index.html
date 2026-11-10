@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import tessera with context %}
 {% block content %}
 {% if corrente %}
 <section class="eroe">
@@ -7,7 +8,7 @@
   <p class="occhiello">{{ corrente.numero }}ª edizione · {{ corrente.luogo }} · {{ corrente.data_inizio|data_it('%d.%m') }} – {{ corrente.data_fine|data_it('%d.%m.%Y') }}</p>
   <h1>{{ corrente.titolo }}{% if corrente.sottotitolo %} <span class="accento">{{ corrente.sottotitolo }}</span>{% endif %}</h1>
   <p class="domanda">Una scuola di formazione per insegnanti delle secondarie, in Italia e all'estero.</p>
-  <p class="lead">Quattro giorni sull'isola del confino: al mattino le lezioni di storici e storiche delle
+  <p class="lead">Quattro giorni sull'isola del confino: al mattino le relazioni di storici e storiche delle
     migrazioni, al pomeriggio le unità didattiche proposte dai docenti, discusse insieme.</p>
   <div class="azioni">
     {% if corrente.candidature_aperte %}
@@ -51,7 +52,7 @@
   <div class="griglia-3">
     <div>
       <p class="etichetta">La scuola</p>
-      <h3>Lezioni e laboratori</h3>
+      <h3>Relazioni e laboratori</h3>
       <p>Relazioni di studiosi al mattino, discussione delle unità didattiche al pomeriggio, visita dell'isola.</p>
       <a href="{{ url_for('public.la_scuola') }}">Come funziona →</a>
     </div>
@@ -70,15 +71,31 @@
   </div>
 </section>
 
+{% set n = namespace(i=1) %}
 {% if precedenti %}
+{% set n.i = n.i + 1 %}
 <section class="sezione">
-  <span class="num">§ 2</span>
+  <span class="num">§ {{ n.i }}</span>
   <h2>Edizioni precedenti</h2>
   <ul class="elenco-edizioni">
   {% for e in precedenti %}
     <li><a href="{{ url_for('public.edizione', slug=e.slug) }}"><span class="anno">{{ e.anno }}</span><span>{{ e.titolo }}</span></a></li>
   {% endfor %}
   </ul>
+</section>
+{% endif %}
+
+{% if letture %}
+{% set n.i = n.i + 1 %}
+<section class="sezione" id="letture">
+  <span class="num">§ {{ n.i }}</span>
+  <h2>Invito alla lettura</h2>
+  <p class="tesi">I riferimenti di base scelti dal comitato scientifico, per cominciare.</p>
+  <div class="tessere tessere-piccole">{% for i in letture %}{{ tessera(i) }}{% endfor %}</div>
+  <p class="azioni">
+    {% if n_letture > letture|length %}<a href="{{ url_for('bibliografia.index', mostra='c' ~ base_key) }}">Tutti i riferimenti di base ({{ n_letture }}) →</a>{% endif %}
+    <a href="{{ url_for('bibliografia.index') }}">Bibliografia completa →</a>
+  </p>
 </section>
 {% endif %}
 {% endblock %}

@@ -1,6 +1,7 @@
 """Sito pubblico: home, pagina edizione, la scuola, contatti, privacy, guide."""
 from flask import Blueprint, abort, current_app, redirect, render_template, send_from_directory, url_for
 from flask_login import current_user
+from sqlalchemy import case, or_
 
 from ..guida import GUIDE, leggi
 
@@ -23,8 +24,25 @@ def index():
     corrente = edizione_corrente()
     precedenti = (Edizione.query.filter(Edizione.stato != "bozza")
                   .order_by(Edizione.anno.desc()).all())
+    letture, n_letture = _riferimenti_base(8)
     return render_template("public/index.html", corrente=corrente,
-                           precedenti=[e for e in precedenti if e != corrente])
+                           precedenti=[e for e in precedenti if e != corrente],
+                           letture=letture, n_letture=n_letture,
+                           base_key=current_app.config.get("ZOTERO_COLLEZIONE_BASE"))
+
+
+def _riferimenti_base(quanti):
+    """(item, totale) della collezione «Riferimenti di base» e sottocollezioni per la homepage:
+    prima quelli con la copertina, poi per autore."""
+    from .bibliografia import _sotto_albero  # bibliografia importa già da qui
+    key = current_app.config.get("ZOTERO_COLLEZIONE_BASE")
+    if not key:
+        return [], 0
+    keys = _sotto_albero(key, ZoteroCollezione.query.all())
+    q = ZoteroItem.query.filter(ZoteroItem.eliminato.is_(False),
+                                ZoteroItem.collezioni.any(ZoteroCollezione.key.in_(keys)))
+    senza = case((or_(ZoteroItem.copertina_path.is_(None), ZoteroItem.copertina_path == ""), 1), else_=0)
+    return q.order_by(senza, ZoteroItem.primo_autore, ZoteroItem.anno).limit(quanti).all(), q.count()
 
 
 @bp.route("/edizioni/<slug>")

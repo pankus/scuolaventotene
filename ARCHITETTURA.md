@@ -32,7 +32,7 @@ docente nel 2025. Permessi: `Utente.comitato_di(ed)`, `edizioni_comitato()`, `le
 ## 3. Mappa del sito
 
 ```
-/                         home: edizione in vetrina + edizioni precedenti
+/                         home: edizione in vetrina, edizioni precedenti, invito alla lettura (8 riferimenti di base)
 /la-scuola                presentazione, chi può partecipare, come candidarsi
 /edizioni/<anno>          bando, date, programma, comitato, invito alla lettura dell'edizione
 /edizioni/<anno>/bando    PDF del bando

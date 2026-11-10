@@ -296,6 +296,11 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .tessera-pannello > div { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + .4rem); padding: .8rem .9rem; background: var(--carta); border: 1px solid var(--linea); border-radius: var(--r); box-shadow: 0 10px 24px rgba(5, 28, 44, .12); font-size: .9rem; line-height: 1.4; max-height: 18rem; overflow-y: auto; }
 .tessera-pannello .csl-bib-body, .tessera-pannello .csl-entry { display: inline; }
 .tessera-pannello .isbn { display: block; margin: .5rem 0 0; font-family: var(--mono); font-size: .7rem; color: var(--inchiostro-md); }
+.tessere-piccole { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 2rem 1.4rem; }
+.tessere-piccole .copertina { max-width: 8.5rem; }
+.tessere-piccole .copertina-vuota { font-size: .66rem; }
+.tessere-piccole .tessera-titolo { font-size: 1rem; }
+.tessera .motivazione { font-size: .9rem; line-height: 1.35; margin: .4rem 0 0; }
 .tessera-interventi { gap: .25rem; font-family: var(--mono); font-size: .7rem; }
 .offcanvas { position: fixed; inset: 0 0 0 auto; width: min(26rem, 100vw); height: 100dvh; max-height: none; margin: 0; padding: 2.2rem 1.6rem 1.6rem;
   background: var(--carta); color: var(--inchiostro); border: 0; border-left: 3px solid var(--accento); box-shadow: -12px 0 32px rgba(5, 28, 44, .14); overflow-y: auto;
@@ -324,11 +329,6 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .foglio-tipo, .foglio-piede { font-family: var(--mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--inchiostro-md); }
 .foglio-desc { font-family: var(--sans); font-size: .85rem; color: var(--inchiostro-md); }
 .foglio-piede { margin-top: auto; padding-top: .6rem; color: var(--inchiostro-lo); }
-.scaffale { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 2rem 2.5rem; }
-.scaffale li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1.2rem; align-items: start; }
-.scaffale .copertina-vuota { font-size: .62rem; }
-.scaffale-testo { font-size: 1.05rem; }
-.scaffale-testo .csl-bib-body, .scaffale-testo .csl-entry { display: inline; }
 .motivazione { font-style: italic; color: var(--inchiostro-md); border-left: 2px solid var(--accento-bd); padding-left: .8rem; margin: .6rem 0 .4rem; }
 .modifica-item { font-family: var(--sans) !important; font-size: .75rem !important; margin-left: .5rem; color: var(--accento-dk); }
 .anteprima-copertina { width: 8rem; margin: .4rem 0 .8rem; }

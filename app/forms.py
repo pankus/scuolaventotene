@@ -130,7 +130,7 @@ class EdizioneForm(FlaskForm):
     data_fine = DateField("Fine", validators=[Optional()])
     scadenza_candidature = DateField("Scadenza candidature", validators=[Optional()])
     data_esiti = DateField("Comunicazione esiti entro", validators=[Optional()])
-    chiusura_contenuti = DateField("Chiusura dei contenuti (materiali e letture di lezioni e UD; vuota = sempre aperti)",
+    chiusura_contenuti = DateField("Chiusura dei contenuti (materiali e letture di relazioni e UD; vuota = sempre aperti)",
                                    validators=[Optional()])
     posti_borsisti = IntegerField("Posti borsisti", validators=[Optional()])
     ammessi_uditori = BooleanField("Ammessi uditori")
@@ -160,7 +160,7 @@ class PersonaEdizioneForm(FlaskForm):
     cognome = StringField("Cognome", validators=[DataRequired()])
     affiliazione = StringField("Affiliazione", validators=[Optional()])
     ruolo = SelectField("Ruolo", choices=_scelte(RUOLI_EDIZIONE))
-    titolo_lezione = StringField("Titolo della lezione o della UD (crea un nuovo intervento)",
+    titolo_lezione = StringField("Titolo della relazione o della UD (crea un nuovo intervento)",
                                  validators=[Optional(), Length(max=255)])
 
 

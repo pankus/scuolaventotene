@@ -150,3 +150,20 @@ def test_pannello_interventi(app, client):
     assert 'popovertarget="iv-D1"' in html and f"/edizioni/{ed.slug}/unita-didattiche/{ammessa.id}" in html
     assert docente.cognome not in html
     assert 'popovertarget="iv-W1"' not in html and 'popovertarget="iv-A1"' not in html
+
+
+def test_homepage_riferimenti_di_base(app, client):
+    assert "Invito alla lettura</h2>" not in client.get("/").get_data(as_text=True)  # base non configurata
+    base = ZoteroCollezione(key="BASE", nome="Riferimenti di base")
+    sotto = ZoteroCollezione(key="SUB", nome="Classici", parent_key="BASE")
+    db.session.add_all([base, sotto,
+                        ZoteroItem(key="CEST", titolo="Base nel cestino", tipo="book", eliminato=True, collezioni=[base]),
+                        ZoteroItem(key="SUB1", titolo="Classico della sottosezione", tipo="book", collezioni=[sotto])])
+    db.session.add_all(ZoteroItem(key=f"B{n}", titolo=f"Base {n}", tipo="book", primo_autore=f"Autore {n}",
+                                  collezioni=[base]) for n in range(9))
+    db.session.commit()
+    app.config["ZOTERO_COLLEZIONE_BASE"] = "BASE"
+    html = client.get("/").get_data(as_text=True)
+    assert "Invito alla lettura</h2>" in html and html.count('class="tessera ') == 8
+    assert "Base nel cestino" not in html
+    assert "/bibliografia?mostra=cBASE" in html and "Tutti i riferimenti di base (10)" in html

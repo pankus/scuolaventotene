@@ -84,6 +84,11 @@ instance/            database e uploads/ — non versionata, non toccare a mano
 (`Utente`, `Candidatura`, `Edizione`, `Materiale`, `valutazioni`, `salva_upload`,
 `problemi_invio`…). Mantenere lo stesso stile; l'inglese resta solo per le API delle librerie.
 
+**Terminologia.** Nei testi visibili (pagine, etichette, messaggi, email, guide) si scrive
+«relazione», mai «lezione». Nel codice restano i nomi interni (`Utente.lezioni()`,
+`_mia_lezione`, `/area/lezioni/...`, comando `lezioni-dal-programma`) e il valore salvato
+`"lezione"` delle voci del programma (`TIPI_PROGRAMMA`, etichetta «Relazione»).
+
 **Stati e vocabolari controllati** stanno in `app/models.py` come dizionari `chiave → etichetta`
 e arrivano ai template tramite il context processor in `utils.register_template_utils`. Per un
 nuovo stato o tipo: aggiungerlo al dizionario (e al context processor se è un dizionario nuovo),

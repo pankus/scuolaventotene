@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% from "_macros.html" import copertina, campo, modifica_item with context %}
-{% set tipo_nome = 'Unità didattica' if ud else 'Lezione' %}
+{% from "_macros.html" import campo, tessera with context %}
+{% set tipo_nome = 'Unità didattica' if ud else 'Relazione' %}
 {% block title %}{{ titolo }} · {{ ed.anno }}{% endblock %}
 {% block content %}
 <section class="eroe intervento-eroe">
@@ -30,7 +30,7 @@
 {% set n.i = n.i + 1 %}
 <section class="sezione" id="abstract">
   <span class="num">§ {{ n.i }}</span>
-  <h2>{{ "L'unità didattica" if ud else 'La lezione' }}</h2>
+  <h2>{{ "L'unità didattica" if ud else 'La relazione' }}</h2>
   {% if abstract %}
     {# l'abstract delle candidature è scritto dal docente: testo semplice, mai HTML #}
     <div class="misura">{% if iv %}{{ abstract|markdown }}{% else %}<p>{{ abstract }}</p>{% endif %}</div>
@@ -70,7 +70,7 @@
   {% endif %}
   {% if form %}
   <details class="riquadro-admin"{% if form.errors %} open{% endif %}>
-    <summary>Carica un materiale in questa {{ 'UD' if ud else 'lezione' }} (admin)</summary>
+    <summary>Carica un materiale in questa {{ 'UD' if ud else 'relazione' }} (admin)</summary>
     <form method="post" enctype="multipart/form-data" class="modulo"
           action="{{ url_for('admin.materiale_intervento', iid=iv.id) if iv else url_for('admin.materiale_candidatura', cid=c.id) }}">
       {{ form.hidden_tag() }}
@@ -87,23 +87,17 @@
   <span class="num">§ {{ n.i }}</span>
   <h2>Letture consigliate</h2>
   {% if letture %}
-  <ul class="scaffale">
+  <div class="tessere tessere-piccole">
     {% for i, motivazione, pid in letture %}
-    <li>
-      {{ copertina(i) }}
-      <div class="scaffale-testo">
-        {% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}{% if i.autori %}, {% endif %}<em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
+    {% call tessera(i) %}
         {% if motivazione %}<p class="motivazione">{{ motivazione }}</p>{% endif %}
-        {% if i.url %}<a class="nota" href="{{ i.url }}" target="_blank" rel="noopener">{{ 'sito' if i.tipo == 'webpage' else 'link' }}</a>{% endif %}
-        {{ modifica_item(i) }}
         {% if gestisce_letture %}<form method="post" action="{{ url_for('area.elimina_lettura_lezione', iid=iv.id, pid=pid) }}" class="in-linea"
-              onsubmit="return confirm('Scollegare la lettura dalla lezione? Sparisce anche dalla bibliografia dell\'edizione; il record resta nella libreria Zotero.')">
+              onsubmit="return confirm('Scollegare la lettura dalla relazione? Sparisce anche dalla bibliografia dell\'edizione; il record resta nella libreria Zotero.')">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="torna" value="pagina">
-          <button class="link-pericolo">scollega dalla lezione</button></form>{% endif %}
-      </div>
-    </li>
+          <button class="link-pericolo">scollega dalla relazione</button></form>{% endif %}
+    {% endcall %}
     {% endfor %}
-  </ul>
+  </div>
   {% else %}<p class="nota">Nessuna lettura ancora.</p>{% endif %}
   {% if gestisce_letture %}<p class="nota"><a href="{{ url_for('area.letture_lezione', iid=iv.id) }}">Aggiungi letture →</a></p>{% endif %}
 </section>

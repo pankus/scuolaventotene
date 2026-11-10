@@ -78,7 +78,7 @@ def test_pagina_ud_e_lezione(app):
     assert "Bozza nascosta" not in html and "Solo comitato" not in html
     assert "Carica un materiale" not in html  # niente riquadro admin per gli anonimi
     lez = crea_ud(ed=ud.edizione, tipo="relazione", titolo="Esilio e migrazione")
-    assert "Lezione" in client_di(app).get(f"/edizioni/{ud.edizione.slug}/interventi/{lez.id}").get_data(as_text=True)
+    assert "Relazione" in client_di(app).get(f"/edizioni/{ud.edizione.slug}/interventi/{lez.id}").get_data(as_text=True)
 
 
 def test_pagina_404(app):

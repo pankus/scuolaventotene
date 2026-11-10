@@ -137,7 +137,7 @@ def register_cli(app):
         for ed in Edizione.query.order_by(Edizione.anno).all():
             n = lezioni_dal_programma(ed)
             if n:
-                click.echo(f"{ed.anno}: {n} lezioni create.")
+                click.echo(f"{ed.anno}: {n} relazioni create.")
         db.session.commit()
 
     @app.cli.command("ud-dalle-candidature")

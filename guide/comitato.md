@@ -13,7 +13,7 @@ e l'**amministrazione**. Per le pagine dei docenti e dei relatori vedi la
 | Rivedere le letture proposte dai docenti | sì | sì |
 | Vedere i materiali in revisione | sì | sì |
 | Assegnare l'esito delle candidature | | sì |
-| Creare e modificare edizioni, programma, persone, lezioni | | sì |
+| Creare e modificare edizioni, programma, persone, relazioni | | sì |
 | Pubblicare, rifiutare o eliminare materiali | | sì |
 | Ruoli e attivazione degli utenti, sincronizzazione Zotero | | sì |
 
@@ -39,7 +39,7 @@ candidature**, data degli esiti, posti borsisti, uditori sì/no, **caratteri min
 della proposta, presentazione in Markdown, bando in PDF, **chiusura dei contenuti**.
 
 **Chiusura dei contenuti**: fino a quella data (compresa) relatori e docenti modificano materiali
-e letture delle proprie lezioni e UD; dopo solo l'admin. Vuota = sempre aperti. La proposta di UD
+e letture delle proprie relazioni e UD; dopo solo l'admin. Vuota = sempre aperti. La proposta di UD
 resta legata alla scadenza delle candidature.
 
 Lo **stato** decide cosa vede il pubblico:
@@ -58,28 +58,28 @@ accanto alla maniglia ⠿ è la posizione: trascinando la riga si cambia l'ordin
 giorno, e il nuovo ordine si salva subito. Per spostare una voce su un altro giorno, o senza mouse,
 si cambiano giorno e ordine da «modifica».
 
-### Persone, lezioni e UD
+### Persone, relazioni e UD
 
 **Persone dell'edizione**: nome, cognome, affiliazione e ruolo (*comitato scientifico*,
 *relatore*, *docente (UD)*). La stessa persona può avere più ruoli, anche nella stessa edizione.
 Con **account** si collega la persona al suo account sul sito (vale per tutti i suoi ruoli e
-tutte le edizioni): il relatore così carica materiali e bibliografia delle sue lezioni, il membro
+tutte le edizioni): il relatore così carica materiali e bibliografia delle sue relazioni, il membro
 del comitato vede e valuta le candidature di questa edizione. Se nell'aggiungere un relatore o un
-docente si scrive anche un titolo, il sito crea una nuova lezione o UD con quella persona come
+docente si scrive anche un titolo, il sito crea una nuova relazione o UD con quella persona come
 autore, anche se ne ha già un'altra.
 
-**Lezioni e unità didattiche**: ogni lezione o UD ha titolo, **ordine** (la posizione
+**Relazioni e unità didattiche**: ogni relazione o UD ha titolo, **ordine** (la posizione
 nell'archivio e nella bibliografia) e uno o più **autori**, scelti tra le persone dell'edizione con
-il ruolo giusto (relatori per le lezioni, docenti per le UD; il sito rifiuta gli altri).
+il ruolo giusto (relatori per le relazioni, docenti per le UD; il sito rifiuta gli altri).
 **Aggiungi autore** e **togli** cambiano gli autori; tutti gli autori vedono e caricano gli stessi
-materiali e la stessa bibliografia. **elimina** toglie la lezione con le sue letture; i materiali
+materiali e la stessa bibliografia. **elimina** toglie la relazione con le sue letture; i materiali
 restano tra gli altri materiali dell'edizione.
 
-Le lezioni nascono dal programma: quando si salva una voce *lezione* con i relatori (separati da
-virgola), il sito crea la lezione con tutti i relatori della voce come autori. Se si cambia il
-titolo della voce, cambia anche quello della lezione. Per le voci scritte prima, o per ricreare
-una lezione rimossa, il pulsante **Crea le lezioni dal programma** (sotto il programma) fa lo
-stesso per tutte le voci, senza doppioni. Eliminare una voce non elimina la lezione.
+Le relazioni nascono dal programma: quando si salva una voce *relazione* con i relatori (separati da
+virgola), il sito crea la relazione con tutti i relatori della voce come autori. Se si cambia il
+titolo della voce, cambia anche quello della relazione. Per le voci scritte prima, o per ricreare
+una relazione rimossa, il pulsante **Crea le relazioni dal programma** (sotto il programma) fa lo
+stesso per tutte le voci, senza doppioni. Eliminare una voce non elimina la relazione.
 
 Le UD con ruolo **Docente (UD)** sono quelle dei docenti senza candidatura sul sito (edizioni
 2023–2025, create dal programma con `flask ud-dal-programma`); l'account del docente si può già
@@ -87,7 +87,7 @@ collegare, ma per ora non gli dà accesso alla UD.
 
 ### Completare le edizioni passate
 
-Ogni lezione e ogni UD ha la sua **pagina pubblica** (link dai titoli del programma
+Ogni relazione e ogni UD ha la sua **pagina pubblica** (link dai titoli del programma
 dell'edizione, dall'archivio e dall'elenco delle persone qui sopra): abstract, materiali e
 letture consigliate con le copertine. L'admin, aperta la pagina, trova tre riquadri:
 **Modifica l'abstract** (markdown), **Carica un materiale** (PDF, PowerPoint o link, già
@@ -133,7 +133,7 @@ porta la candidatura da *inviata* a *in valutazione*.
 Solo l'admin: riquadro **Esito**, stato e note interne. Quando lo stato diventa *ammessa*,
 *riserva* o *non ammessa* il docente (e l'eventuale co-autore) riceve l'email con l'esito. Le note
 interne non vengono mai mostrate al docente. Quando un borsista è *ammesso*, la sua UD entra tra le
-lezioni e UD dell'edizione con i docenti come autori (ruolo *Docente (UD)*); la pagina pubblica
+relazioni e UD dell'edizione con i docenti come autori (ruolo *Docente (UD)*); la pagina pubblica
 resta quella della candidatura.
 
 ## Invito alla lettura
@@ -186,11 +186,11 @@ sito controlla solo la copia locale e lo segnala.
 
 ## Materiali
 
-**Materiali**: tutti i materiali, prima quelli in revisione, con l'origine (relatore e lezione,
+**Materiali**: tutti i materiali, prima quelli in revisione, con l'origine (relatore e relazione,
 docente e unità didattica, o staff). L'admin sceglie per ciascuno **stato** (*in revisione*,
 *pubblicato*, *rifiutato*) e **visibilità** (*pubblico*, *solo utenti registrati*, *solo
 comitato*) e può eliminarlo. Sotto l'elenco l'admin carica direttamente i materiali dello
-staff, già pubblicati. Il materiale di una lezione o di una UD si carica invece dalla sua
+staff, già pubblicati. Il materiale di una relazione o di una UD si carica invece dalla sua
 pagina (vedi *Completare le edizioni passate*).
 
 ## Utenti e ruoli
@@ -200,16 +200,16 @@ Solo admin. **Utenti**: per ogni account nome e cognome, *amministratore* sì/no
 l'amministrazione (il proprio nome sì). Gli altri ruoli valgono per edizione e si danno dalla
 colonna **Edizioni e ruoli**.
 
-La colonna **Edizioni e ruoli** mostra a cosa è legato l'account: UD, lezioni o comitato di un'edizione
+La colonna **Edizioni e ruoli** mostra a cosa è legato l'account: UD, relazioni o comitato di un'edizione
 (dalla scheda dell'edizione) e candidature con il loro stato. In alto si filtra per **edizione** e
 **partecipazione** (relatori, docenti, comitato, candidati, senza edizione): per esempio edizione 2024 +
 docenti. Per agganciare un account a un'edizione: **Aggiungi a**, scegli l'anno e il ruolo. Con
 *Comitato scientifico* l'account entra nel comitato di quell'edizione; con *Relatore* o *Docente (UD)*
-il sito crea la sua lezione o UD, da completare poi nella scheda dell'edizione;
+il sito crea la sua relazione o UD, da completare poi nella scheda dell'edizione;
 se nel programma c'è già una persona con lo stesso nome e cognome, usa quella. Con **Modifica edizioni** →
-**Sposta** un ruolo passa a un'altra edizione con le lezioni o UD di cui la persona è l'unico autore
+**Sposta** un ruolo passa a un'altra edizione con le relazioni o UD di cui la persona è l'unico autore
 (titolo, materiali e letture; le letture già in Zotero restano nella collezione della vecchia
-edizione). Se una lezione ha altri autori il sito non sposta nulla: prima si toglie l'autore.
+edizione). Se una relazione ha altri autori il sito non sposta nulla: prima si toglie l'autore.
 **Elimina account** cancella l'account (per esempio uno creato per prova) con candidature, letture e
 file caricati; non vale per chi ha valutato candidature o caricato materiali: quelli si disattivano.
 Il primo admin si crea dal server con `flask crea-admin`.
@@ -222,7 +222,7 @@ risulta confermata.
 ## Scrivere ai partecipanti
 
 Solo admin, dal cruscotto o dal menu: **Scrivi ai partecipanti**. Si sceglie l'edizione (o tutte) e
-i gruppi: *relatori* (lezioni con un account collegato), *docenti* (UD delle edizioni passate con un
+i gruppi: *relatori* (relazioni con un account collegato), *docenti* (UD delle edizioni passate con un
 account e candidature ammesse), *comitato scientifico* (persone del comitato con un account, più gli
 amministratori); tutti e tre = tutti. **Anteprima dei destinatari** mostra a chi andrà
 e chi resta fuori perché non ha un account; solo dopo compare **Invia**. Le email partono dal mittente
@@ -242,13 +242,13 @@ Edizione 2026     collezione dell'edizione
 └─ Docenti        letture dei docenti approvate, con il tag delle proposte
 ```
 
-Lezione e unità didattica di ogni lettura le conosce solo il sito. Si può lavorare in Zotero
+Relazione e unità didattica di ogni lettura le conosce solo il sito. Si può lavorare in Zotero
 come sempre (correggere, spostare, fondere doppioni): alla sincronizzazione il sito si adegua,
 e se due item vengono fusi le proposte passano al superstite.
 
 ### Correggere una voce e la copertina
 
-Solo admin. In **Invito alla lettura** e nelle pagine di lezioni e UD ogni voce ha il link
+Solo admin. In **Invito alla lettura** e nelle pagine di relazioni e UD ogni voce ha il link
 **modifica**. La pagina ha due parti:
 
 - **Scheda** (libri e siti web): titolo, autori e curatori (uno per riga, «Cognome, Nome»),

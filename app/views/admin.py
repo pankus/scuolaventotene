@@ -176,7 +176,7 @@ def ordina_programma(eid):
 def lezioni_programma(eid):
     ed = db.get_or_404(Edizione, eid)
     if not _crea_lezioni(ed):
-        flash("Nessuna lezione da creare: tutte le voci «lezione» hanno già la loro.", "ok")
+        flash("Nessuna relazione da creare: tutte le voci «relazione» hanno già la loro.", "ok")
     return redirect(url_for("admin.modifica_edizione", eid=eid) + "#interventi")
 
 
@@ -185,7 +185,7 @@ def _crea_lezioni(ed):
     n = lezioni_dal_programma(ed)
     db.session.commit()
     if n:
-        flash(f"Create {n} lezioni dal programma." if n > 1 else "Creata 1 lezione dal programma.", "ok")
+        flash(f"Create {n} relazioni dal programma." if n > 1 else "Creata 1 relazione dal programma.", "ok")
     return n
 
 

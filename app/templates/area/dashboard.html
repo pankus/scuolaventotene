@@ -17,10 +17,10 @@
 {% endif %}
 
 {% if current_user.is_relatore %}
-<h2 id="lezioni">Le mie lezioni</h2>
+<h2 id="lezioni">Le mie relazioni</h2>
 {% if lezioni %}
 <table class="tabella">
-  <tr><th>Edizione</th><th>Lezione</th><th>Materiali</th><th></th></tr>
+  <tr><th>Edizione</th><th>Relazione</th><th>Materiali</th><th></th></tr>
   {% for iv in lezioni %}
   <tr><td>{{ iv.edizione.anno }}</td><td><a href="{{ url_for('public.intervento', slug=iv.edizione.slug, iid=iv.id) }}">{{ iv.titolo or 'senza titolo' }}</a></td>
     <td>{% for m in iv.materiali %}{{ m.titolo }} {{ stato(m.stato, STATI_MATERIALE) }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>
@@ -30,7 +30,7 @@
       <a href="{{ url_for('area.ud_lezione', iid=iv.id) }}">UD dei docenti</a></td></tr>
   {% endfor %}
 </table>
-{% else %}<p class="nota">Il tuo account non è ancora collegato a una lezione: lo fa l'amministrazione della scuola.</p>{% endif %}
+{% else %}<p class="nota">Il tuo account non è ancora collegato a una relazione: lo fa l'amministrazione della scuola.</p>{% endif %}
 {% endif %}
 
 {% for e in aperte %}

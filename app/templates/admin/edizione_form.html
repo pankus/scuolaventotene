@@ -37,15 +37,15 @@
 </form>
 <form method="post" action="{{ url_for('admin.lezioni_programma', eid=ed.id) }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <button class="btn btn-piccolo">Crea le lezioni dal programma</button>
-  <span class="nota">Una lezione per ogni relatore delle voci «lezione» che non ce l'ha ancora.</span>
+  <button class="btn btn-piccolo">Crea le relazioni dal programma</button>
+  <span class="nota">Una relazione per ogni relatore delle voci «relazione» che non ce l'ha ancora.</span>
 </form>
 
 <h2 id="persone">Persone dell'edizione</h2>
 <p class="nota">I ruoli valgono per edizione: la stessa persona può essere comitato e relatore qui e
   docente in un'altra edizione. L'account si collega alla persona (vale per tutti i suoi ruoli): il
-  relatore così carica materiali e bibliografia delle sue lezioni, il comitato vede e valuta solo le
-  candidature di questa edizione. Con un titolo, «Aggiungi» crea anche una lezione (relatore) o una UD
+  relatore così carica materiali e bibliografia delle sue relazioni, il comitato vede e valuta solo le
+  candidature di questa edizione. Con un titolo, «Aggiungi» crea anche una relazione (relatore) o una UD
   (docente), anche se la persona ne ha già una.</p>
 <ul class="persone">
   {% for ep in ed.persone|sort(attribute='ruolo') %}{% set af = account_forms[ep.id] %}
@@ -66,9 +66,9 @@
   <button class="btn btn-piccolo">Aggiungi</button>
 </form>
 
-<h2 id="interventi">Lezioni e unità didattiche</h2>
-<p class="nota">Ogni lezione o UD ha uno o più autori, scelti tra le persone dell'edizione con il ruolo
-  giusto (relatori per le lezioni, docenti per le UD). Materiali, abstract e letture si aggiungono dalla
+<h2 id="interventi">Relazioni e unità didattiche</h2>
+<p class="nota">Ogni relazione o UD ha uno o più autori, scelti tra le persone dell'edizione con il ruolo
+  giusto (relatori per le relazioni, docenti per le UD). Materiali, abstract e letture si aggiungono dalla
   loro pagina. Le UD delle candidature ammesse sono a parte, nella graduatoria.</p>
 <ul class="persone">
   {% for iv in ed.interventi %}{% set ivf = intervento_forms[iv.id] %}
@@ -93,7 +93,7 @@
       {{ ivf.hidden_tag() }}{{ campo(ivf.titolo) }}{{ campo(ivf.ordine) }}
       <button class="btn btn-piccolo">Salva</button>
     </form></li>
-  {% else %}<li class="nota">Nessuna lezione o UD: aggiungi un relatore o un docente con il titolo, o crea le lezioni dal programma.</li>
+  {% else %}<li class="nota">Nessuna relazione o UD: aggiungi un relatore o un docente con il titolo, o crea le relazioni dal programma.</li>
   {% endfor %}
 </ul>
 {% endif %}

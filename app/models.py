@@ -210,7 +210,7 @@ class Edizione(db.Model):
 
 TIPI_PROGRAMMA = {
     "accoglienza": "Accoglienza",
-    "lezione": "Lezione",
+    "lezione": "Relazione",
     "unita_didattiche": "Presentazione unità didattiche",
     "visita": "Visita",
     "chiusura": "Chiusura",
@@ -287,7 +287,7 @@ def ep_di(ed, persona, ruolo):
 
 
 # --------------------------------------------------------------------------- interventi
-TIPI_INTERVENTO = {"relazione": "Lezione", "ud": "Unità didattica"}
+TIPI_INTERVENTO = {"relazione": "Relazione", "ud": "Unità didattica"}
 RUOLO_AUTORE = {"relazione": "relatore", "ud": "docente"}  # ruolo nell'edizione richiesto agli autori
 
 intervento_autori = db.Table(
@@ -345,7 +345,7 @@ class Intervento(db.Model):
 
     @property
     def nome_lezione(self):
-        return f"{self.nomi_autori or 'senza autori'} – {self.titolo or 'lezione'}"
+        return f"{self.nomi_autori or 'senza autori'} – {self.titolo or 'relazione'}"
 
 
 # --------------------------------------------------------------------------- candidature

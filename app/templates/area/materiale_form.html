@@ -4,7 +4,7 @@
 {% block content %}
 <div class="stretto">
   <h1>Invia un materiale</h1>
-  {% if lezione %}<p>Per la lezione <strong>{{ lezione.titolo or 'senza titolo' }}</strong>
+  {% if lezione %}<p>Per la relazione <strong>{{ lezione.titolo or 'senza titolo' }}</strong>
     ({{ lezione.edizione.anno }}).</p>{% endif %}
   {% if cand %}<p>Per la tua unità didattica <strong>{{ cand.titolo_ud or 'senza titolo' }}</strong>
     ({{ cand.edizione.anno }}).</p>{% endif %}
