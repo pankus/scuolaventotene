@@ -5,7 +5,7 @@ import pytest
 
 from app import zotero_sync
 from app.extensions import db
-from app.models import Candidatura, EdizionePersona, Materiale, Persona, PropostaLettura
+from app.models import Candidatura, EdizionePersona, Materiale, Persona, PropostaLettura, ZoteroItem
 from app.zotero_sync import sincronizza
 
 from conftest import crea_edizione, crea_intervento, crea_utente
@@ -204,7 +204,38 @@ def test_togli_lettura_resta_in_zotero(app, zot, relatore):
     ep, c = relatore
     c.post(f"/area/lezioni/{ep.id}/letture", data=LIBRO)
     (p,) = ep.letture
+    key, relatori = p.zotero_key, ep.edizione.zotero_relatori_key
     c.post(f"/area/lezioni/{ep.id}/letture/{p.id}/elimina")
+    assert PropostaLettura.query.count() == 0 and key in zot.record  # resta nella libreria
+    assert relatori not in zot.record[key]["data"]["collections"]    # ma non in «Relatori»
+    assert relatori not in [col.key for col in db.session.get(ZoteroItem, key).collezioni]
+
+
+def test_togli_lettura_usata_da_altra_lezione(app, zot, relatore):
+    ep, c = relatore
+    c.post(f"/area/lezioni/{ep.id}/letture", data=LIBRO)
+    (p,) = ep.letture
+    altra = crea_lezione(ed=ep.edizione, titolo="Altra lezione", ordine=2)
+    db.session.add(PropostaLettura(intervento_id=altra.id, campi={"title": "x"}, zotero_key=p.zotero_key,
+                                   stato="approvata"))
+    db.session.commit()
+    c.post(f"/area/lezioni/{ep.id}/letture/{p.id}/elimina")
+    assert ep.edizione.zotero_relatori_key in zot.record[p.zotero_key]["data"]["collections"]
+
+
+def test_scollega_dalla_pagina_della_lezione(app, zot, relatore):
+    ep, c = relatore
+    c.post(f"/area/lezioni/{ep.id}/letture", data=LIBRO)
+    (p,) = ep.letture
+    sincronizza(zot=zot)
+    pagina = f"/edizioni/{ep.edizione.slug}/interventi/{ep.id}"
+    azione = f"/area/lezioni/{ep.id}/letture/{p.id}/elimina"
+    assert azione in c.get(pagina).get_data(as_text=True)                    # autore
+    assert azione in client_di(app, crea_utente(ruolo="admin")).get(pagina).get_data(as_text=True)
+    assert azione not in client_di(app).get(pagina).get_data(as_text=True)   # anonimo
+    assert azione not in client_di(app, crea_utente(ruolo="relatore")).get(pagina).get_data(as_text=True)
+    r = c.post(azione, data={"torna": "pagina"})
+    assert r.headers["Location"].endswith(pagina + "#letture")
     assert PropostaLettura.query.count() == 0 and p.zotero_key in zot.record
 
 

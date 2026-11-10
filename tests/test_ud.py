@@ -185,7 +185,7 @@ def test_scarica_copertine(app):
     assert scarica_copertine(salva=salva, candidati=candidati) == (1, 1)
     stato = {z.key: z.copertina_path for z in ZoteroItem.query}
     assert stato == {"A": "copertine/ok.jpg", "B": "", "C": None, "W": None}
-    html = client_di(app).get("/bibliografia").get_data(as_text=True)
+    html = client_di(app).get("/bibliografia?tutto=1").get_data(as_text=True)
     assert "/bibliografia/copertine/A" in html and "copertina-vuota" in html
 
 

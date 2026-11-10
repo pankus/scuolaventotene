@@ -201,7 +201,8 @@ tenuti con `eliminato=True` (vanno chiesti a `/items/trash`), eliminati definiti
 Citazioni già formattate (`include=bib`). La chiave ha permesso di scrittura (controllo:
 `flask zotero-verifica`); la scrittura è in `app/zotero_scrittura.py` (`crea_item` con tag `ZOTERO_TAG_PROPOSTE`,
 `aggiorna_item` con 412 → `ErroreScrittura`, `candidati_duplicati`): solo campi bibliografici,
-mai dati del docente; la usa la revisione del comitato (`/admin/letture`, `collega_item` per i
+mai dati del docente; `scollega_item` toglie un item da una collezione (lettura scollegata da una
+lezione, se nessun'altra lettura dell'edizione lo usa); la usa la revisione del comitato (`/admin/letture`, `collega_item` per i
 record già presenti), che scrive nella sottocollezione «Docenti» dell'edizione
 (`crea_collezione`, `Edizione.zotero_docenti_key`); struttura: Edizione → «Relatori», «Docenti»; più una collezione di primo livello dei
 riferimenti di base (`ZOTERO_COLLEZIONE_BASE`), in fondo all'invito alla lettura di ogni edizione.
@@ -252,7 +253,8 @@ crea una lezione o UD con il suo autore.
   verificati, limite, modificabili dopo l'invio fino alla scadenza, email di conferma),
   `Candidatura.modificabile`, modifica della proposta dopo l'invio (scartata se fuori bando).
 - `test_relatori.py`: account del relatore collegato alla lezione (solo admin), materiali e
-  bibliografia della lezione (solo le proprie, doppioni, niente tag), pagina edizione per lezione,
+  bibliografia della lezione (solo le proprie, doppioni, niente tag), scollega dalla lezione (anche
+  dalla pagina pubblica; fuori da «Relatori» se nessun'altra lezione la usa), pagina edizione per lezione,
   UD dei docenti ammessi senza dati personali, vincolo `una_origine`.
 - `test_guida.py`: ogni pagina di area/admin/auth ha la sua sezione in `AIUTO`, i titoli
   esistono, guida del comitato riservata, menu dell'account, `/esci` solo POST.
@@ -264,8 +266,9 @@ crea una lezione o UD con il suo autore.
   materiali e abstract caricati dall'admin, copertine per ISBN (`scarica_copertine` con fonti finte).
 - `test_item_admin.py`: voce della bibliografia corretta dall'admin (permessi, scrittura in
   Zotero, 412), copertina caricata/tolta/rifiutata, ricerca per ISBN che non perde la vecchia.
-- `test_bibliografia.py`: sezioni con sottosezioni, copertine (solo item vivi), ISBN e link,
-  nessun dato del docente, letture nella scheda candidatura del comitato.
+- `test_bibliografia.py`: pagina a sezioni dell'ultima edizione chiusa (base → relatori → docenti),
+  select «Mostra», sezioni con sottosezioni (`?tutto=1` per l'elenco completo), copertine (solo item
+  vivi), ISBN e link, nessun dato del docente, letture nella scheda candidatura del comitato.
 
 Per i test di rotta usare un client per utente (`client_di` in `test_rotte.py`). La fixture
 azzera `g._login_user` a ogni richiesta: l'app context resta aperto per tutto il test e

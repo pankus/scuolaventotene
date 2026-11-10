@@ -118,7 +118,7 @@ def test_pagina_bibliografia(app, client, fake_zot):
     _libreria(fake_zot)
     fake_zot.cestina("B")
     sincronizza(completa=True, zot=fake_zot)
-    r = client.get("/bibliografia")
+    r = client.get("/bibliografia?tutto=1")
     assert r.status_code == 200
     assert b"Libro uno" in r.data and b"Libro due" not in r.data   # il cestino non si vede
     assert client.get("/bibliografia?collezione=C1&q=uno").status_code == 200

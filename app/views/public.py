@@ -53,11 +53,11 @@ def _edizione_pubblica(slug):
 
 
 def _letture_consigliate(letture):
-    """[(ZoteroItem, motivazione)] delle letture approvate già in Zotero, item vivi."""
+    """[(ZoteroItem, motivazione, id della proposta)] delle letture approvate già in Zotero, item vivi."""
     approvate = [p for p in letture if p.stato == "approvata" and p.zotero_key]
     items = {i.key: i for i in ZoteroItem.query.filter(
         ZoteroItem.key.in_([p.zotero_key for p in approvate]), ZoteroItem.eliminato.is_(False))}
-    return [(items[p.zotero_key], p.motivazione) for p in approvate if p.zotero_key in items]
+    return [(items[p.zotero_key], p.motivazione, p.id) for p in approvate if p.zotero_key in items]
 
 
 def _pagina_intervento(ed, titolo, **dati):
@@ -85,7 +85,16 @@ def intervento(slug, iid):
         ed, iv.titolo or "Senza titolo", iv=iv, ud=iv.ud,
         autore=iv.nomi_autori, affiliazione=affiliazioni,
         abstract=iv.descrizione, materiali=iv.materiali, letture=iv.letture,
-        form_descrizione=DescrizioneForm(obj=iv) if admin else None)
+        form_descrizione=DescrizioneForm(obj=iv) if admin else None, gestisce_letture=_gestisce_letture(iv))
+
+
+def _gestisce_letture(iv):
+    """Admin, o autore della lezione finché i contenuti dell'edizione sono aperti
+    (stessa regola di ``area._mia_lezione(iid, modifica=True)``)."""
+    u = current_user
+    if not u.is_authenticated:
+        return False
+    return u.is_admin or (iv in u.lezioni() and u.puo_modificare(iv.edizione))
 
 
 @bp.route("/edizioni/<slug>/unita-didattiche/<int:cid>")
@@ -100,12 +109,13 @@ def unita_didattica(slug, cid):
         abstract=c.abstract, materiali=c.materiali, letture=c.letture)
 
 
-def _letture_edizione(ed):
+def _letture_edizione(ed, base_prima=False):
     """Invito alla lettura: [(titolo sezione o None, item)] dal sotto-albero della collezione
     dell'edizione. Prima i record della radice, poi una sezione per sottocollezione in ordine di
     nome ("Relatori"; nelle edizioni vecchie una per lezione), per ultima "Docenti". Un item
     compare una volta sola. In fondo i «Riferimenti di base», comuni a tutte le edizioni
-    (collezione ZOTERO_COLLEZIONE_BASE), anche per le edizioni senza collezione."""
+    (collezione ZOTERO_COLLEZIONE_BASE), anche per le edizioni senza collezione; con
+    ``base_prima`` (pagina /bibliografia) vanno in testa e tengono per sé gli item comuni."""
     radice = ed.zotero_collection_key and db.session.get(ZoteroCollezione, ed.zotero_collection_key)
     base_key = current_app.config.get("ZOTERO_COLLEZIONE_BASE")
     base = base_key and db.session.get(ZoteroCollezione, base_key)
@@ -125,10 +135,10 @@ def _letture_edizione(ed):
     if radice:
         sezioni.append((None, [radice]))
         for c in sorted(figli.get(radice.key, []),
-                        key=lambda c: (c.key == ed.zotero_docenti_key, c.nome.lower())):
+                        key=lambda c: (c.key == ed.zotero_docenti_key or c.nome == "Docenti", c.nome.lower())):
             sezioni.append((c.nome, discendenti(c)))
     if base:
-        sezioni.append(("Riferimenti di base", discendenti(base)))
+        sezioni.insert(0 if base_prima else len(sezioni), ("Riferimenti di base", discendenti(base)))
     visti, out = set(), []
     for titolo, cols in sezioni:
         items = sorted({i.key: i for c in cols for i in c.items

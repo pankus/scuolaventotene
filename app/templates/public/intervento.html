@@ -81,14 +81,14 @@
   {% endif %}
 </section>
 
-{% if letture or (form and iv) %}
+{% if letture or gestisce_letture %}
 {% set n.i = n.i + 1 %}
 <section class="sezione" id="letture">
   <span class="num">§ {{ n.i }}</span>
   <h2>Letture consigliate</h2>
   {% if letture %}
   <ul class="scaffale">
-    {% for i, motivazione in letture %}
+    {% for i, motivazione, pid in letture %}
     <li>
       {{ copertina(i) }}
       <div class="scaffale-testo">
@@ -96,12 +96,16 @@
         {% if motivazione %}<p class="motivazione">{{ motivazione }}</p>{% endif %}
         {% if i.url %}<a class="nota" href="{{ i.url }}" target="_blank" rel="noopener">{{ 'sito' if i.tipo == 'webpage' else 'link' }}</a>{% endif %}
         {{ modifica_item(i) }}
+        {% if gestisce_letture %}<form method="post" action="{{ url_for('area.elimina_lettura_lezione', iid=iv.id, pid=pid) }}" class="in-linea"
+              onsubmit="return confirm('Scollegare la lettura dalla lezione? Sparisce anche dalla bibliografia dell\'edizione; il record resta nella libreria Zotero.')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="torna" value="pagina">
+          <button class="link-pericolo">scollega dalla lezione</button></form>{% endif %}
       </div>
     </li>
     {% endfor %}
   </ul>
   {% else %}<p class="nota">Nessuna lettura ancora.</p>{% endif %}
-  {% if form and iv %}<p class="nota"><a href="{{ url_for('area.letture_lezione', iid=iv.id) }}">Aggiungi letture (admin) →</a></p>{% endif %}
+  {% if gestisce_letture %}<p class="nota"><a href="{{ url_for('area.letture_lezione', iid=iv.id) }}">Aggiungi letture →</a></p>{% endif %}
 </section>
 {% endif %}
 {% endblock %}

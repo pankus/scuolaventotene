@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import voce_biblio with context %}
+{% from "_macros.html" import tessera with context %}
 {% block title %}Invito alla lettura{% endblock %}
 {% block content %}
 <h1>Invito alla lettura</h1>
@@ -9,26 +9,39 @@
 
 <form class="filtri" method="get">
   <input type="search" name="q" value="{{ q }}" placeholder="Cerca autore, titolo, abstract">
-  <select name="collezione">
-    <option value="">Tutte le sezioni</option>{# una sezione include le sue sottosezioni #}
-    {% for c, lv in collezioni %}<option value="{{ c.key }}" {% if c.key == col %}selected{% endif %}>{{ '— ' * lv }}{{ c.nome }}</option>{% endfor %}
+  <select name="mostra" aria-label="Mostra" onchange="this.form.requestSubmit()">
+    <optgroup label="Edizioni">
+      {% for e in edizioni %}<option value="e{{ e.id }}" {% if ed and e.id == ed.id %}selected{% endif %}>Edizione {{ e.anno }}{% if loop.first %} (ultima){% endif %}</option>{% endfor %}
+    </optgroup>
+    <optgroup label="Sezioni di Zotero">{# una sezione include le sue sottosezioni #}
+      {% for c, lv in collezioni %}<option value="c{{ c.key }}" {% if c.key == col %}selected{% endif %}>{{ '— ' * lv }}{{ c.nome }}</option>{% endfor %}
+    </optgroup>
+    <option value="tutto" {% if tutto or (q and not col) %}selected{% endif %}>Tutta la bibliografia</option>
   </select>
   {% if tag %}<input type="hidden" name="tag" value="{{ tag }}">{% endif %}
-  <button class="btn btn-piccolo">Filtra</button>
-  {% if q or col or tag %}<a href="{{ url_for('bibliografia.index') }}">Azzera</a>{% endif %}
+  <button class="btn btn-piccolo">Mostra</button>
+  {% if q or col or tag or tutto or request.args.edizione or request.args.mostra %}<a href="{{ url_for('bibliografia.index') }}">Azzera</a>{% endif %}
 </form>
 {% if tag %}<p>Tag: <strong>{{ tag }}</strong></p>{% endif %}
 
-<p class="nota">{{ pagina.total }} titoli</p>
-<ol class="biblio">
-{% for i in pagina.items %}{{ voce_biblio(i) }}
-{% else %}<li>Nessun titolo{% if not ultima_sync %}: la bibliografia non è ancora stata sincronizzata{% endif %}.</li>{% endfor %}
-</ol>
-{% if pagina.pages > 1 %}
-<nav class="paginazione">
-  {% if pagina.has_prev %}<a href="{{ url_for('bibliografia.index', page=pagina.prev_num, q=q, collezione=col, tag=tag) }}">← precedenti</a>{% endif %}
-  <span>pagina {{ pagina.page }} di {{ pagina.pages }}</span>
-  {% if pagina.has_next %}<a href="{{ url_for('bibliografia.index', page=pagina.next_num, q=q, collezione=col, tag=tag) }}">successivi →</a>{% endif %}
-</nav>
+{% if sezioni is not none %}
+  {% for titolo, items in sezioni %}
+  <section class="sezione-biblio">
+    <h2>{% if titolo != 'Riferimenti di base' %}<small>Edizione {{ ed.anno }}</small>{% endif %}{{ titolo or 'Letture' }}
+      <span class="nota">{{ items|length }}</span></h2>
+    <div class="tessere">{% for i in items %}{{ tessera(i) }}{% endfor %}</div>
+  </section>
+  {% else %}<p>Nessun titolo{% if not ultima_sync %}: la bibliografia non è ancora stata sincronizzata{% endif %}.</p>
+  {% endfor %}
+{% else %}
+  <p class="nota">{{ pagina.total }} titoli</p>
+  <div class="tessere">{% for i in pagina.items %}{{ tessera(i) }}{% else %}<p>Nessun titolo.</p>{% endfor %}</div>
+  {% if pagina.pages > 1 %}
+  <nav class="paginazione">
+    {% if pagina.has_prev %}<a href="{{ url_for('bibliografia.index', page=pagina.prev_num, q=q, collezione=col, tag=tag, tutto=1 if tutto else None) }}">← precedenti</a>{% endif %}
+    <span>pagina {{ pagina.page }} di {{ pagina.pages }}</span>
+    {% if pagina.has_next %}<a href="{{ url_for('bibliografia.index', page=pagina.next_num, q=q, collezione=col, tag=tag, tutto=1 if tutto else None) }}">successivi →</a>{% endif %}
+  </nav>
+  {% endif %}
 {% endif %}
 {% endblock %}

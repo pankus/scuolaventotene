@@ -4,7 +4,9 @@ import json
 from flask import Blueprint, abort, current_app, render_template, request, send_from_directory
 from sqlalchemy import or_
 
-from ..models import SyncStato, ZoteroCollezione, ZoteroItem
+from ..extensions import db
+from ..models import Edizione, SyncStato, ZoteroCollezione, ZoteroItem
+from .public import _letture_edizione
 
 bp = Blueprint("bibliografia", __name__)
 
@@ -35,10 +37,38 @@ def _sotto_albero(key, collezioni):
 
 @bp.route("/bibliografia")
 def index():
+    """Di default le letture dell'ultima edizione chiusa, a sezioni (riferimenti di base,
+    relatori, docenti); con ricerca, sezione di Zotero o «tutta» una griglia unica paginata."""
     q = request.args.get("q", "").strip()
     col = request.args.get("collezione", "")
     tag = request.args.get("tag", "")
+    tutto = request.args.get("tutto") == "1"
+    eid = request.args.get("edizione", type=int)
     collezioni = ZoteroCollezione.query.all()
+    edizioni = (Edizione.query.filter(Edizione.zotero_collection_key.isnot(None),
+                                      Edizione.stato.in_(("chiusa", "conclusa")))
+                .order_by(Edizione.anno.desc()).all())
+    # select «Mostra»: e<id> = edizione a sezioni, c<key> = sezione di Zotero, tutto
+    mostra = request.args.get("mostra", "")
+    if mostra == "tutto":
+        tutto = True
+    elif mostra.startswith("c"):
+        col = mostra[1:]
+    elif mostra[1:].isdigit():
+        eid = int(mostra[1:])
+    if q and eid and not col:  # ricerca dentro l'edizione scelta
+        e = db.session.get(Edizione, eid)
+        col = e.zotero_collection_key if e else ""
+    comuni = dict(collezioni=_albero(collezioni), edizioni=edizioni, q=q, col=col, tag=tag, tutto=tutto,
+                  ultima_sync=SyncStato.get("zotero_ultima_sync"),
+                  url_gruppo=current_app.config.get("ZOTERO_GROUP_URL"))
+
+    if not (q or col or tag or tutto):
+        ed = db.session.get(Edizione, eid) if eid else (edizioni[0] if edizioni else None)
+        if eid and (not ed or ed not in edizioni):
+            abort(404)
+        sezioni = _letture_edizione(ed, base_prima=True) if ed else []
+        return render_template("bibliografia/index.html", ed=ed, sezioni=sezioni, pagina=None, **comuni)
 
     query = ZoteroItem.query.filter_by(eliminato=False)
     if col:
@@ -51,12 +81,8 @@ def index():
     if tag:
         query = query.filter(ZoteroItem.tags.like(f"%{json.dumps(tag, ensure_ascii=False)}%"))
     query = query.order_by(ZoteroItem.primo_autore, ZoteroItem.anno)
-    pagina = query.paginate(per_page=50, error_out=False)
-
-    return render_template("bibliografia/index.html", pagina=pagina, q=q, col=col, tag=tag,
-                           collezioni=_albero(collezioni),
-                           ultima_sync=SyncStato.get("zotero_ultima_sync"),
-                           url_gruppo=current_app.config.get("ZOTERO_GROUP_URL"))
+    pagina = query.paginate(per_page=48, error_out=False)
+    return render_template("bibliografia/index.html", ed=None, sezioni=None, pagina=pagina, **comuni)
 
 
 @bp.route("/bibliografia/copertine/<key>")

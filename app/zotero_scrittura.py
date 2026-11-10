@@ -176,6 +176,25 @@ def collega_item(zot, key, collezioni=(), tag_proposte=True):
     return _aggiorna_cache(zot, key)
 
 
+def scollega_item(zot, key, collezione):
+    """Toglie l'item dalla collezione (lettura scollegata da una lezione). Il record resta in
+    Zotero e nelle altre collezioni; niente da fare se non c'è o non c'è più."""
+    try:
+        data = dict(zot.item(key)["data"])
+    except ze.ResourceNotFoundError:
+        return None
+    if collezione not in data.get("collections", []):
+        return None
+    data["collections"] = [k for k in data["collections"] if k != collezione]
+    try:
+        zot.update_item(data, last_modified=data["version"])
+    except ze.PreConditionFailedError as e:
+        raise ErroreScrittura("L'item è cambiato in Zotero proprio ora: riprova.") from e
+    except ze.PyZoteroError as e:
+        raise ErroreScrittura(f"Zotero ha rifiutato la modifica: {e}") from e
+    return _aggiorna_cache(zot, key)
+
+
 def crea_collezione(zot, nome, parent=None):
     """Crea la collezione in Zotero e la aggiunge alla cache (flush; commit del chiamante)."""
     try:

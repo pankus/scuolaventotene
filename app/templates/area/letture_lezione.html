@@ -18,7 +18,7 @@
     <tr><td><strong>{{ l.titolo }}</strong> <small>{{ TIPI_LETTURA.get(l.tipo, l.tipo) }}</small><br>
         <small>{{ (l.campi.autori or '')|replace('\n', '; ') }} {{ l.campi.date or '' }}</small></td>
       <td>{% if aperta %}<form method="post" action="{{ url_for('area.elimina_lettura_lezione', iid=iv.id, pid=l.id) }}" class="in-linea"
-            onsubmit="return confirm('Togliere la lettura dalla lezione? Il record resta in Zotero.')">
+            onsubmit="return confirm('Togliere la lettura dalla lezione? Sparisce anche dalla bibliografia dell\'edizione; il record resta nella libreria Zotero.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="link-pericolo">togli</button></form>{% endif %}</td></tr>
     {% endfor %}

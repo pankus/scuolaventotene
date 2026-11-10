@@ -40,7 +40,7 @@ def test_sezione_include_le_sottosezioni(app, client):
 
 def test_scheda_con_copertina_isbn_e_link(app, client):
     libreria(app)
-    html = client.get("/bibliografia").get_data(as_text=True)
+    html = client.get("/bibliografia?tutto=1").get_data(as_text=True)
     assert 'src="/bibliografia/copertine/D1"' in html and "ISBN 9780306406157" in html
     assert 'href="https://archivio.example/"' in html
     r = client.get("/bibliografia/copertine/D1")
@@ -56,7 +56,7 @@ def test_nessun_dato_del_docente(app, client):
     db.session.add(PropostaLettura(candidatura=c, campi={"title": "Libro del docente"},
                                    motivazione="La uso in terza", zotero_key="D1", stato="approvata"))
     db.session.commit()
-    html = client.get("/bibliografia").get_data(as_text=True)
+    html = client.get("/bibliografia?tutto=1").get_data(as_text=True)
     assert docente.cognome not in html and "La uso in terza" not in html
 
 
@@ -99,3 +99,30 @@ def test_riferimenti_di_base_nella_ricerca(app):
     db.session.add(ZoteroItem(key="B1", titolo="Manuale di base", tipo="book", collezioni=[base]))
     db.session.commit()
     assert [z["key"] for z in cerca_zotero("manuale")] == ["B1"]
+
+
+def test_pagina_a_sezioni_ultima_edizione_chiusa(app, client):
+    """Di default: ultima edizione chiusa, riferimenti di base → relatori → docenti, a tessere."""
+    libreria(app)
+    base = ZoteroCollezione(key="BASE", nome="Riferimenti di base")
+    db.session.add_all([base, ZoteroItem(key="B1", titolo="Manuale di base", tipo="book", collezioni=[base]),
+                        ZoteroCollezione(key="NUOVA", nome="Edizione nuova")])
+    vecchia, chiusa, aperta = (crea_edizione(stato=s) for s in ("conclusa", "chiusa", "aperta"))
+    vecchia.anno, chiusa.anno, aperta.anno = 2024, 2025, 2026
+    chiusa.zotero_collection_key, aperta.zotero_collection_key = "ED", "NUOVA"
+    vecchia.zotero_collection_key = "ALT"
+    app.config["ZOTERO_COLLEZIONE_BASE"] = "BASE"
+    db.session.commit()
+
+    html = client.get("/bibliografia").get_data(as_text=True)
+    assert 'class="tessera' in html and "Fuori edizione" not in html
+    assert html.index("Manuale di base") < html.index("Libro del relatore") < html.index("Libro del docente")
+    assert "Edizione 2025 (ultima)" in html and f'value="e{aperta.id}"' not in html  # l'aperta no
+    html = client.get(f"/bibliografia?mostra=e{vecchia.id}").get_data(as_text=True)
+    assert "Fuori edizione" in html and "Libro del relatore" not in html
+    assert client.get(f"/bibliografia?mostra=e{aperta.id}").status_code == 404
+    html = client.get("/bibliografia?mostra=cDOC").get_data(as_text=True)
+    assert "Libro del docente" in html and "Libro del relatore" not in html
+    # ricerca dentro l'edizione scelta
+    html = client.get(f"/bibliografia?mostra=e{chiusa.id}&q=libro").get_data(as_text=True)
+    assert "Libro del docente" in html and "Fuori edizione" not in html

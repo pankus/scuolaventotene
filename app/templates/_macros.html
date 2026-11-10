@@ -31,6 +31,41 @@
 {% if current_user.is_authenticated and current_user.is_admin %}<a class="modifica-item" href="{{ url_for('admin.item_zotero', key=i.key, torna=request.full_path) }}">modifica</a>{% endif %}
 {%- endmacro %}
 
+{# icone a tratto (currentColor) per i pulsanti delle tessere #}
+{% macro icona(nome) -%}
+<svg class="icona" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+{%- if nome == 'link' %}<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/>
+{%- elif nome == 'cita' %}<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/>
+{%- elif nome == 'abstract' %}<path d="M21 6H3M17 10H3M21 14H3M17 18H3"/>
+{%- elif nome == 'modifica' %}<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>
+{%- endif %}</svg>
+{%- endmacro %}
+
+{# Tessera della bibliografia: copertina, tipo, titolo, autori; link, DOI, citazione e abstract
+   dietro le icone (i pannelli sono <details>, niente JS) #}
+{% macro tessera(i) %}
+<article class="tessera tessera-{{ i.tipo }}">
+  {{ copertina(i) }}
+  <div class="tessera-testo">
+    <span class="tessera-tipo">{{ TIPI_LETTURA.get(i.tipo, i.tipo) }}</span>
+    <h3 class="tessera-titolo">{{ (i.titolo or 'senza titolo')|striptags|truncate(110, True, '…') }}</h3>
+    {% if i.autori %}<p class="tessera-autori">{{ i.autori|replace('; ', ', ')|truncate(90, True, '…') }}</p>{% endif %}
+    {% set dati = [i.anno, i.pubblicazione]|select|list %}{% if dati %}<p class="tessera-dati">{{ dati|join(' · ') }}</p>{% endif %}
+  </div>
+  <div class="tessera-icone">
+    {% if i.url %}<a class="tessera-btn" href="{{ i.url }}" target="_blank" rel="noopener" title="Apri il link" aria-label="Apri il link">{{ icona('link') }}</a>{% endif %}
+    {% if i.doi %}<a class="tessera-btn tessera-doi" href="https://doi.org/{{ i.doi }}" target="_blank" rel="noopener" title="DOI {{ i.doi }}" aria-label="DOI {{ i.doi }}">DOI</a>{% endif %}
+    <details class="tessera-pannello"><summary class="tessera-btn" title="Citazione" aria-label="Citazione">{{ icona('cita') }}</summary>
+      <div>{% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}{% if i.autori %}, {% endif %}<em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
+        {% if i.isbn %}<small class="isbn">ISBN {{ i.isbn }}</small>{% endif %}</div></details>
+    {% if i.abstract %}<details class="tessera-pannello"><summary class="tessera-btn" title="Abstract" aria-label="Abstract">{{ icona('abstract') }}</summary>
+      <div>{{ i.abstract|truncate(900, True, '…') }}</div></details>{% endif %}
+    {% if current_user.is_authenticated and current_user.is_admin %}<a class="tessera-btn" href="{{ url_for('admin.item_zotero', key=i.key, torna=request.full_path) }}" title="Modifica (admin)" aria-label="Modifica (admin)">{{ icona('modifica') }}</a>{% endif %}
+  </div>
+</article>
+{%- endmacro %}
+
 {% macro voce_biblio(i) %}
 <li class="con-copertina">
   {{ copertina(i) }}

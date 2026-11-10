@@ -272,6 +272,31 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .copertina-vuota .cv-titolo { font-family: var(--serif); font-size: 1.45em; font-style: italic; overflow-wrap: anywhere; hyphens: auto; }
 .copertina-web { border-left-color: var(--inchiostro-lo); }
 .biblio .isbn { font-family: var(--mono); font-size: .7rem; color: var(--inchiostro-md); margin-left: .4rem; }
+/* tessere della pagina /bibliografia: copertina, testo, icone; i dettagli sono <details> */
+.sezione-biblio { margin: 2.6rem 0 3rem; }
+.sezione-biblio h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .7rem; padding-bottom: .5rem; border-bottom: 1px solid var(--inchiostro); }
+.sezione-biblio h2 small { flex-basis: 100%; font-family: var(--mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accento); }
+.sezione-biblio h2 .nota { font-family: var(--mono); font-size: .75rem; }
+.tessere { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); gap: 2.4rem 1.6rem; margin-top: 1.4rem; }
+.tessera { position: relative; display: flex; flex-direction: column; gap: .75rem; }
+.tessera .copertina { transition: transform .2s, box-shadow .2s; }
+.tessera:hover .copertina { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(5, 28, 44, .14); }
+.tessera .copertina-vuota { font-size: .8rem; padding: 1em .9em; }
+.tessera-bookSection .copertina-vuota, .tessera-journalArticle .copertina-vuota { border-left-color: var(--inchiostro); }
+.tessera-testo { display: flex; flex-direction: column; gap: .25rem; }
+.tessera-tipo { font-family: var(--mono); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accento); }
+.tessera-titolo { margin: 0; font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.12rem; line-height: 1.25; }
+.tessera-autori, .tessera-dati { margin: 0; font-family: var(--sans); font-size: .8rem; color: var(--inchiostro-md); }
+.tessera-dati { font-size: .75rem; color: var(--inchiostro-lo); }
+.tessera-icone { display: flex; gap: .4rem; align-items: center; margin-top: auto; }
+.tessera-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 2rem; height: 2rem; padding: 0 .4rem; border: 1px solid var(--linea); border-radius: 999px; background: var(--carta); color: var(--inchiostro-md); cursor: pointer; list-style: none; text-decoration: none; transition: border-color .15s, color .15s; }
+.tessera-btn::-webkit-details-marker { display: none; }
+.tessera-btn:hover, .tessera-btn:focus-visible, .tessera-pannello[open] > .tessera-btn { border-color: var(--accento); color: var(--accento); outline: 0; }
+.tessera-doi { font-family: var(--mono); font-size: .62rem; letter-spacing: .05em; }
+.tessera-pannello > div { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + .4rem); padding: .8rem .9rem; background: var(--carta); border: 1px solid var(--linea); border-radius: var(--r); box-shadow: 0 10px 24px rgba(5, 28, 44, .12); font-size: .9rem; line-height: 1.4; max-height: 18rem; overflow-y: auto; }
+.tessera-pannello .csl-bib-body, .tessera-pannello .csl-entry { display: inline; }
+.tessera-pannello .isbn { display: block; margin: .5rem 0 0; font-family: var(--mono); font-size: .7rem; color: var(--inchiostro-md); }
+@media (prefers-reduced-motion: reduce) { .tessera .copertina, .tessera-btn { transition: none; } .tessera:hover .copertina { transform: none; } }
 /* ------------------------------------------------------------------ pagina di lezione / UD */
 .firma-intervento { font-size: 1.5rem; font-style: italic; margin: 0; }
 .firma-intervento small { display: block; font-family: var(--sans); font-style: normal; font-size: .8rem; color: var(--inchiostro-md); margin-top: .3rem; }

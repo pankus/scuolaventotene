@@ -41,8 +41,8 @@ def test_permessi(app, libro, ruolo, atteso):
 
 
 def test_link_modifica_solo_admin(app, libro, admin):
-    assert "/admin/bibliografia/" in admin.get("/bibliografia").get_data(as_text=True)
-    assert "/admin/bibliografia/" not in client_di(app).get("/bibliografia").get_data(as_text=True)
+    assert "/admin/bibliografia/" in admin.get("/bibliografia?tutto=1").get_data(as_text=True)
+    assert "/admin/bibliografia/" not in client_di(app).get("/bibliografia?tutto=1").get_data(as_text=True)
 
 
 def test_modifica_scheda_in_zotero(app, libro, admin, zot):

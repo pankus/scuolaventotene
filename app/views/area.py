@@ -16,7 +16,8 @@ from ..models import (TIPI_LETTURA, Candidatura, Edizione, Intervento, Materiale
 from ..posta import email_conferma_invio, email_invito_coautore
 from ..ricerca_libri import cerca
 from ..utils import copertina_ammessa, conta_caratteri, elimina_upload, salva_upload
-from ..zotero_scrittura import CAMPI_MODULO, ErroreScrittura, salva_lettura, scelte_duplicati
+from ..zotero_scrittura import (CAMPI_MODULO, SOTTOCOLLEZIONI, ErroreScrittura, salva_lettura, scelte_duplicati,
+                                scollega_item)
 
 bp = Blueprint("area", __name__)
 
@@ -383,12 +384,36 @@ def letture_lezione(iid):
 
 @bp.post("/lezioni/<int:iid>/letture/<int:pid>/elimina")
 def elimina_lettura_lezione(iid, pid):
-    """Toglie la lettura dal sito; il record resta in Zotero (fonte di verità)."""
+    """Scollega la lettura dalla lezione: via dal sito e, se nessun'altra lettura
+    dell'edizione usa lo stesso record, via dalla sottocollezione «Relatori» (o «Docenti» per
+    una UD) dell'edizione in Zotero, così non resta nella bibliografia dell'edizione. Il record
+    resta nella libreria Zotero e nelle altre collezioni."""
     iv = _mia_lezione(iid, modifica=True)
     p = next((x for x in iv.letture if x.id == pid), None) or abort(404)
+    key, ed = p.zotero_key, iv.edizione
+    col = getattr(ed, SOTTOCOLLEZIONI["docenti" if iv.ud else "relatori"][1])
     db.session.delete(p)
     db.session.commit()
-    flash("Lettura tolta dalla lezione. Il record resta in Zotero: se va eliminato, fallo lì.", "info")
+    altre = key and (PropostaLettura.query.join(Intervento).filter(
+        Intervento.edizione_id == ed.id, PropostaLettura.zotero_key == key).first()
+        or PropostaLettura.query.join(Candidatura).filter(
+        Candidatura.edizione_id == ed.id, PropostaLettura.zotero_key == key).first())
+    if key and col and not altre:
+        try:
+            scollega_item(modulo_sync.client(), key, col)
+            db.session.commit()
+        except (ErroreScrittura, RuntimeError) as e:
+            flash(f"Lettura scollegata dalla lezione, ma non tolta dalla collezione in Zotero ({e}): "
+                  "toglila lì a mano.", "errore")
+            return _dopo_scollega(iv)
+    flash("Lettura scollegata dalla lezione e tolta dalla bibliografia dell'edizione. "
+          "Il record resta nella libreria Zotero.", "info")
+    return _dopo_scollega(iv)
+
+
+def _dopo_scollega(iv):
+    if request.form.get("torna") == "pagina":
+        return redirect(url_for("public.intervento", slug=iv.edizione.slug, iid=iv.id) + "#letture")
     return redirect(url_for("area.letture_lezione", iid=iv.id))
 
 

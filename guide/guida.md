@@ -157,8 +157,11 @@ Fino a 10 letture per lezione, con gli stessi tipi e la stessa ricerca dei docen
 relatori **entrano subito** nella bibliografia della scuola (Zotero, sottocollezione
 «Relatori» dell'edizione), senza revisione. Se il sito trova un record simile (stesso ISBN o
 stesso titolo) chiede **È già nella bibliografia?**: se è lo stesso libro sceglietelo, se è
-un'altra opera scegliete «crea un nuovo record». **togli** leva la lettura dalla lezione nel
-sito; il record resta in Zotero.
+un'altra opera scegliete «crea un nuovo record». **togli** leva la lettura dalla lezione e
+dalla bibliografia dell'edizione (sottocollezione «Relatori» in Zotero), a meno che un'altra
+lezione della stessa edizione non la consigli; il record resta nella libreria Zotero. Lo stesso
+comando, **scollega dalla lezione**, c'è sotto ogni lettura nella pagina pubblica della lezione,
+finché i contenuti dell'edizione sono aperti.
 
 ### Unità didattiche dei docenti
 
@@ -172,10 +175,13 @@ diffuso. I dati personali dei docenti (email, telefono, nascita, residenza) non 
   didattiche dei docenti», con quanti materiali e letture ha ciascuna, e gli «Altri materiali»
   (bando, locandine). Ogni lezione e UD apre la sua pagina: abstract, materiali da scaricare e
   letture consigliate con le copertine. Alcuni materiali sono visibili solo agli utenti registrati.
-- **Invito alla lettura**: ricerca per autore, titolo o abstract, filtro per **sezione** (una
-  sezione per edizione, che comprende «Relatori» e «Docenti»). Ogni voce riporta la citazione,
-  l'ISBN e il link quando ci sono, e la copertina dei libri (o un segnaposto se non c'è). La pagina
-  di ogni edizione mostra la propria bibliografia divisa per lezione.
+- **Invito alla lettura**: si apre sull'ultima edizione chiusa, con prima i «Riferimenti di
+  base», poi le letture dei relatori (divise per lezione) e infine quelle dei docenti. Dal menu
+  **Mostra** si sceglie un'altra edizione, una sezione di Zotero o tutta la bibliografia; la
+  ricerca vale per autore, titolo o abstract. Ogni lettura è una scheda con copertina (o un
+  segnaposto), tipo, titolo, autori e anno; le icone in basso aprono il link, il DOI, la citazione
+  completa con l'ISBN e l'abstract. La pagina di ogni edizione mostra la propria bibliografia
+  divisa per lezione.
 
 ## Dati personali e contatti
 
