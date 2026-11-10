@@ -124,6 +124,8 @@ class EdizioneForm(FlaskForm):
     data_fine = DateField("Fine", validators=[Optional()])
     scadenza_candidature = DateField("Scadenza candidature", validators=[Optional()])
     data_esiti = DateField("Comunicazione esiti entro", validators=[Optional()])
+    chiusura_contenuti = DateField("Chiusura dei contenuti (materiali e letture di lezioni e UD; vuota = sempre aperti)",
+                                   validators=[Optional()])
     posti_borsisti = IntegerField("Posti borsisti", validators=[Optional()])
     ammessi_uditori = BooleanField("Ammessi uditori")
     caratteri_min = IntegerField("Caratteri minimi proposta", validators=[Optional()])

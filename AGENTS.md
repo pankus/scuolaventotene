@@ -97,8 +97,8 @@ per edizione (vincolo unico); proposta di UD tra `caratteri_min` e `caratteri_ma
 (6000–8000 nel 2026), contata spazi inclusi; data di nascita, telefono, residenza ed email confermata obbligatori
 per inviare; invio solo entro `scadenza_candidature`; dopo l'invio la proposta si modifica
 fino alla scadenza o all'esito (`Candidatura.modificabile`), e una modifica che non passa
-`problemi_invio` viene scartata; letture del docente in qualsiasi momento, massimo 10 in tutto,
-finché la candidatura non è ritirata (`Candidatura.letture_aperte`), modificabili finché non
+`problemi_invio` viene scartata; letture del docente anche dopo l'invio, massimo 10 in tutto,
+finché la candidatura non è ritirata e i contenuti sono aperti (`Candidatura.letture_aperte`), modificabili finché non
 rivedute; valutazione su tre criteri 0–25
 (originalità, potenzialità didattiche, valorizzazione delle fonti), massimo 75, una valutazione
 per membro del comitato, graduatoria sulla media. I controlli sul contenuto prima dell'invio
@@ -121,6 +121,10 @@ Pagina pubblica di lezione/UD: `public.intervento` (EP) e `public.unita_didattic
 candidature ammesse, niente dati personali, abstract del docente come testo, mai `markdown`);
 l'admin vi carica materiali e abstract (`admin.materiale_intervento`, `materiale_candidatura`,
 `descrizione_intervento`) e apre le letture di ogni EP (`area._mia_lezione`).
+**Chiusura dei contenuti**: `Edizione.chiusura_contenuti` (vuota = aperti); dopo quella data
+materiali e letture di lezioni e UD li modifica solo l'admin (`Utente.puo_modificare(ed)`,
+`_mia_lezione(epid, modifica=True)`, `Candidatura.dopo_la_scuola`, `letture_aperte`). La proposta
+di UD resta legata alla scadenza del bando (`modificabile`).
 Il docente carica materiali solo dalla propria candidatura dopo la scuola
 (`Candidatura.dopo_la_scuola`), il relatore dalla propria lezione, lo staff da `/admin/materiali`.
 Proteggere le viste con `@login_required`, `@comitato_required` o `@admin_required`

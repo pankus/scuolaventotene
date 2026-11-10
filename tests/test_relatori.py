@@ -309,3 +309,44 @@ def test_pulsante_solo_admin(app, ruolo):
     ed = crea_edizione(stato="chiusa")
     c = client_di(app, crea_utente(ruolo=ruolo))
     assert c.post(f"/admin/edizioni/{ed.id}/lezioni-dal-programma").status_code == 403
+
+
+# ------------------------------------------------------------------ chiusura dei contenuti
+def test_contenuti_chiusi_dopo_la_data(app):
+    from datetime import date, timedelta
+    rel = crea_utente()
+    ep = crea_lezione(utente=rel)
+    ed = ep.edizione
+    assert ed.contenuti_aperti and rel.puo_modificare(ed)
+    ed.chiusura_contenuti = date.today()
+    db.session.commit()
+    assert ed.contenuti_aperti  # il giorno stesso si può ancora
+    ed.chiusura_contenuti = date.today() - timedelta(days=1)
+    db.session.commit()
+    assert not ed.contenuti_aperti and not rel.puo_modificare(ed)
+
+    c = client_di(app, rel)
+    assert c.get(f"/area/lezioni/{ep.id}/letture").status_code == 200  # si consulta
+    assert c.post(f"/area/lezioni/{ep.id}/letture", data={"title": "X"}).status_code == 403
+    assert c.get(f"/area/materiali/nuovo?lezione={ep.id}").status_code == 403
+    assert "contenuti chiusi" in c.get("/area/").get_data(as_text=True)
+
+    admin = crea_utente(ruolo="admin")
+    assert admin.puo_modificare(ed)
+    r = client_di(app, admin).post(f"/area/materiali/nuovo?lezione={ep.id}",
+                                   data={"edizione_id": ed.id, "titolo": "Slide", "tipo": "slide",
+                                         "file": pdf()}, content_type="multipart/form-data")
+    assert r.status_code == 302 and Materiale.query.one().lezione_id == ep.id
+
+
+def test_docente_contenuti_chiusi(app):
+    from datetime import date, timedelta
+    ed = crea_edizione(stato="conclusa")
+    c = Candidatura(utente=crea_utente(), edizione=ed, stato="ammessa")
+    db.session.add(c)
+    db.session.commit()
+    assert c.dopo_la_scuola and c.letture_aperte
+    ed.chiusura_contenuti = date.today() - timedelta(days=1)
+    db.session.commit()
+    assert not c.dopo_la_scuola and not c.letture_aperte
+    assert client_di(app, c.utente).get(f"/area/materiali/nuovo?candidatura={c.id}").status_code == 404

@@ -17,15 +17,17 @@
     {% for l in ep.letture %}
     <tr><td><strong>{{ l.titolo }}</strong> <small>{{ TIPI_LETTURA.get(l.tipo, l.tipo) }}</small><br>
         <small>{{ (l.campi.autori or '')|replace('\n', '; ') }} {{ l.campi.date or '' }}</small></td>
-      <td><form method="post" action="{{ url_for('area.elimina_lettura_lezione', epid=ep.id, pid=l.id) }}" class="in-linea"
+      <td>{% if aperta %}<form method="post" action="{{ url_for('area.elimina_lettura_lezione', epid=ep.id, pid=l.id) }}" class="in-linea"
             onsubmit="return confirm('Togliere la lettura dalla lezione? Il record resta in Zotero.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="link-pericolo">togli</button></form></td></tr>
+        <button class="link-pericolo">togli</button></form>{% endif %}</td></tr>
     {% endfor %}
   </table>
   {% endif %}
 
-  {% if ep.letture|length < max_letture %}
+  {% if not aperta %}<p class="avviso avviso-info">Contenuti dell'edizione chiusi il {{ ep.edizione.chiusura_contenuti|data_it }}:
+    per correzioni scrivi all'amministrazione della scuola.</p>
+  {% elif ep.letture|length < max_letture %}
   <h2>{{ 'Aggiungi un sito web' if tipo == 'webpage' else 'Aggiungi un libro' }}</h2>
   <p><a href="{{ url_for('area.letture_lezione', epid=ep.id, tipo='webpage' if tipo == 'book' else 'book') }}">oppure {{ 'aggiungi un sito web' if tipo == 'book' else 'aggiungi un libro' }}</a></p>
   <form method="post" class="modulo">

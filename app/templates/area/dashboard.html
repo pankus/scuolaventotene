@@ -24,7 +24,8 @@
   {% for ep in lezioni %}
   <tr><td>{{ ep.edizione.anno }}</td><td><a href="{{ url_for('public.intervento', slug=ep.edizione.slug, epid=ep.id) }}">{{ ep.titolo_lezione or 'senza titolo' }}</a></td>
     <td>{% for m in ep.materiali %}{{ m.titolo }} {{ stato(m.stato, STATI_MATERIALE) }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>
-    <td><a class="btn btn-piccolo" href="{{ url_for('area.nuovo_materiale', lezione=ep.id) }}">Carica un materiale</a><br>
+    <td>{% if current_user.puo_modificare(ep.edizione) %}<a class="btn btn-piccolo" href="{{ url_for('area.nuovo_materiale', lezione=ep.id) }}">Carica un materiale</a>
+      {% else %}<small class="nota">contenuti chiusi il {{ ep.edizione.chiusura_contenuti|data_it }}</small>{% endif %}<br>
       <a href="{{ url_for('area.letture_lezione', epid=ep.id) }}">Bibliografia ({{ ep.letture|length }})</a> ·
       <a href="{{ url_for('area.ud_lezione', epid=ep.id) }}">UD dei docenti</a></td></tr>
   {% endfor %}

@@ -36,14 +36,18 @@ Zotero (ultima sincronizzazione, pulsanti di sincronizzazione per l'admin).
 **Nuova edizione** oppure **Modifica** accanto a un'edizione nel cruscotto (solo admin). Campi principali:
 numero, anno, **slug** (l'indirizzo: `/edizioni/2026`), titolo, date, **scadenza delle
 candidature**, data degli esiti, posti borsisti, uditori sì/no, **caratteri minimi e massimi**
-della proposta, presentazione in Markdown, bando in PDF.
+della proposta, presentazione in Markdown, bando in PDF, **chiusura dei contenuti**.
+
+**Chiusura dei contenuti**: fino a quella data (compresa) relatori e docenti modificano materiali
+e letture delle proprie lezioni e UD; dopo solo l'admin. Vuota = sempre aperti. La proposta di UD
+resta legata alla scadenza delle candidature.
 
 Lo **stato** decide cosa vede il pubblico:
 
 - *Bozza*: invisibile;
 - *Candidature aperte*: si può inviare fino alla scadenza compresa;
 - *Candidature chiuse*: niente più invii; i docenti ammessi possono caricare i materiali del
-  modulo;
+  modulo, fino alla chiusura dei contenuti;
 - *Conclusa (archivio)*: come chiusa, in archivio.
 
 ### Programma

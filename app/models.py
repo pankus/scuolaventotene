@@ -73,6 +73,11 @@ class Utente(UserMixin, db.Model):
     def is_admin(self):
         return self.admin
 
+    def puo_modificare(self, ed):
+        """Materiali e letture di lezioni e UD dell'edizione: l'admin sempre, gli autori fino
+        alla chiusura dei contenuti."""
+        return self.admin or ed.contenuti_aperti
+
     def edizioni_comitato(self):
         """Id delle edizioni in cui la persona dell'account è nel comitato scientifico."""
         eps = self.persona.edizioni if self.persona else []
@@ -140,6 +145,9 @@ class Edizione(db.Model):
     data_fine = db.Column(db.Date)
     scadenza_candidature = db.Column(db.Date)
     data_esiti = db.Column(db.Date)
+    # fino a questa data autori di lezioni e UD ne modificano materiali e letture (vuota = sempre);
+    # dopo solo l'admin
+    chiusura_contenuti = db.Column(db.Date)
     posti_borsisti = db.Column(db.Integer, default=8)
     ammessi_uditori = db.Column(db.Boolean, default=True)
     caratteri_min = db.Column(db.Integer, default=6000)
@@ -166,6 +174,10 @@ class Edizione(db.Model):
         if self.stato != "aperta":
             return False
         return self.scadenza_candidature is None or date.today() <= self.scadenza_candidature
+
+    @property
+    def contenuti_aperti(self):
+        return self.chiusura_contenuti is None or date.today() <= self.chiusura_contenuti
 
     def persone_con_ruolo(self, ruolo):
         return [ep.persona for ep in self.persone if ep.ruolo == ruolo]
@@ -305,8 +317,10 @@ class Candidatura(db.Model):
 
     @property
     def dopo_la_scuola(self):
-        """Dopo la scuola il docente ammesso carica i materiali del modulo e altre letture."""
-        return self.stato == "ammessa" and self.edizione.stato in ("chiusa", "conclusa")
+        """Dopo la scuola, fino alla chiusura dei contenuti, il docente ammesso carica i
+        materiali del modulo."""
+        ed = self.edizione
+        return self.stato == "ammessa" and ed.stato in ("chiusa", "conclusa") and ed.contenuti_aperti
 
     @property
     def modificabile(self):
@@ -316,9 +330,9 @@ class Candidatura(db.Model):
 
     @property
     def letture_aperte(self):
-        """Il docente aggiunge letture in qualsiasi momento (fino a MAX_LETTURE in tutto),
-        finché la candidatura non è ritirata."""
-        return self.stato != "ritirata"
+        """Il docente aggiunge letture (fino a MAX_LETTURE in tutto) finché la candidatura non è
+        ritirata e i contenuti dell'edizione sono aperti."""
+        return self.stato != "ritirata" and self.edizione.contenuti_aperti
 
     @property
     def punteggio_medio(self):

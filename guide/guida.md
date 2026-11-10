@@ -80,8 +80,8 @@ Facoltativo ma raccomandato: fino a **10** libri o siti web utili per il tema de
 - **Motivazione**: perché lo consigliate. Resta nel sito, non entra in Zotero.
 
 Il comitato rivede le proposte; quelle approvate entrano nella bibliografia dell'edizione
-**senza il vostro nome**. Potete aggiungerne **in qualsiasi momento**, anche dopo la scadenza
-o dopo la scuola, fino a 10 in tutto, e modificarle o eliminarle finché il comitato non le ha
+**senza il vostro nome**. Potete aggiungerne anche dopo la scadenza o dopo la scuola, fino alla
+**chiusura dei contenuti** dell'edizione, fino a 10 in tutto, e modificarle o eliminarle finché il comitato non le ha
 rivedute; ne vedete lo stato e l'eventuale nota del comitato. Si chiude solo se ritirate la
 candidatura.
 
@@ -105,7 +105,7 @@ ammessa*) arriva per email e compare nell'area personale.
 ## Dopo la scuola
 
 Quando l'edizione è chiusa, i docenti **ammessi** trovano nella propria candidatura la sezione
-**Dopo la scuola**.
+**Dopo la scuola**, fino alla chiusura dei contenuti fissata per l'edizione.
 
 ### Materiali del modulo
 
@@ -129,7 +129,9 @@ Il relatore si registra come tutti; poi l'amministrazione collega l'account alla
 
 Per ogni lezione: edizione, titolo, materiali caricati con il loro stato, e i collegamenti a
 **Carica un materiale**, **Bibliografia** e **UD dei docenti**. Se l'elenco è vuoto, l'account
-non è ancora collegato: scrivete all'amministrazione della scuola.
+non è ancora collegato: scrivete all'amministrazione della scuola. Materiali e bibliografia si
+modificano fino alla **chiusura dei contenuti** dell'edizione; dopo restano consultabili e le
+correzioni le fa l'amministrazione.
 
 ### Materiali della lezione
 
