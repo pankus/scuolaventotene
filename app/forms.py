@@ -154,14 +154,19 @@ class PersonaEdizioneForm(FlaskForm):
     cognome = StringField("Cognome", validators=[DataRequired()])
     affiliazione = StringField("Affiliazione", validators=[Optional()])
     ruolo = SelectField("Ruolo", choices=_scelte(RUOLI_EDIZIONE))
-    titolo_lezione = StringField("Titolo della lezione o della UD", validators=[Optional(), Length(max=255)])
+    titolo_lezione = StringField("Titolo della lezione o della UD (crea un nuovo intervento)",
+                                 validators=[Optional(), Length(max=255)])
 
 
-class LezioneForm(FlaskForm):
-    """Lezione di un relatore nell'edizione: titolo, ordine e account collegato."""
-    titolo_lezione = StringField("Titolo della lezione", validators=[Optional(), Length(max=255)])
+class InterventoForm(FlaskForm):
+    """Lezione o UD dell'edizione: titolo e ordine (gli autori si aggiungono a parte)."""
+    titolo = StringField("Titolo", validators=[Optional(), Length(max=255)])
     ordine = IntegerField("Ordine", default=0, validators=[Optional()])
-    utente_id = SelectField("Account del relatore", coerce=int)  # scelte: utenti con ruolo relatore
+
+
+class AccountPersonaForm(FlaskForm):
+    """Account collegato alla persona (uno per persona, vale per tutte le edizioni)."""
+    utente_id = SelectField("Account", coerce=int)
 
 
 class LetturaForm(FlaskForm):

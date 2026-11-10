@@ -13,7 +13,8 @@ from datetime import date as D
 from werkzeug.datastructures import FileStorage
 
 from .extensions import db
-from .models import EdizionePersona, Edizione, Materiale, Persona, ProgrammaVoce, ZoteroCollezione
+from .models import (RUOLO_AUTORE, EdizionePersona, Edizione, Intervento, Materiale, Persona, ProgrammaVoce,
+                     ZoteroCollezione)
 from .utils import salva_upload
 
 SEDE = ("Centro di ricerca e documentazione sul confino politico e la detenzione "
@@ -39,7 +40,7 @@ OBIETTIVO = (
 )
 
 # Programma: (giorno, ora, tipo, titolo, relatori). Le voci "lezione" con relatori diventano
-# anche lezioni del sito (EdizionePersona con ruolo relatore), per collegarvi materiali e account.
+# anche lezioni del sito (interventi con i relatori come autori), per collegarvi materiali e account.
 EDIZIONI = [
     {
         "numero": 1, "anno": 2023, "inizio": D(2023, 10, 29), "fine": D(2023, 11, 1), "posti": 10,
@@ -179,16 +180,10 @@ def carica(scarica=_scarica, avviso=print):
         db.session.add(ed)
         for nome, cognome, aff in e["comitato"]:
             ed.persone.append(EdizionePersona(persona=_persona(nome, cognome, aff), ruolo="comitato"))
-        n_lezione = 0
         for i, (giorno, ora, tipo, titolo, relatori) in enumerate(e["programma"]):
             db.session.add(ProgrammaVoce(edizione=ed, giorno=giorno, ora=ora, tipo=tipo,
                                          titolo=titolo, relatori=relatori, ordine=i))
-            if tipo == "lezione":
-                n_lezione += 1
-                for nome_completo in relatori.split(", "):
-                    nome, cognome = _dividi(nome_completo, e["comitato"])
-                    ed.persone.append(EdizionePersona(persona=_persona(nome, cognome), ruolo="relatore",
-                                                      titolo_lezione=titolo, ordine=n_lezione))
+        lezioni_dal_programma(ed, e["comitato"])
         ud_dal_programma(ed, e["comitato"])
         for titolo, url in e["allegati"]:
             try:
@@ -209,39 +204,46 @@ def carica(scarica=_scarica, avviso=print):
 
 
 def ud_dal_programma(ed, comitato=()):
-    """Una UD (EdizionePersona con ruolo docente) per ogni voce «unità didattiche» del programma
-    con il nome del docente, se manca. Restituisce quante ne ha create (senza commit)."""
-    return _dal_programma(ed, "unita_didattiche", "docente", comitato)
+    """Una UD (intervento di tipo ud) per ogni voce «unità didattiche» del programma con il nome
+    del docente, se manca. Restituisce quante ne ha create (senza commit)."""
+    return _dal_programma(ed, "unita_didattiche", "ud", comitato)
 
 
 def lezioni_dal_programma(ed, comitato=()):
-    """Una lezione (EdizionePersona con ruolo relatore) per ogni relatore delle voci «lezione»
-    del programma, se manca: con due relatori, due lezioni con lo stesso titolo (come in
-    seed-precedenti). Restituisce quante ne ha create (senza commit)."""
-    return _dal_programma(ed, "lezione", "relatore", comitato)
+    """Una lezione per ogni voce «lezione» del programma, se manca, con tutti i relatori della
+    voce come autori. Restituisce quante ne ha create (senza commit)."""
+    return _dal_programma(ed, "lezione", "relazione", comitato)
 
 
-def _dal_programma(ed, tipo, ruolo, comitato):
+def ep_di(ed, persona, ruolo):
+    """La riga EdizionePersona (edizione, persona, ruolo), creata se manca."""
+    ep = next((ep for ep in ed.persone if ep.persona is persona and ep.ruolo == ruolo), None)
+    if ep is None:
+        ep = EdizionePersona(persona=persona, ruolo=ruolo)
+        ed.persone.append(ep)
+    return ep
+
+
+def _dal_programma(ed, tipo_voce, tipo, comitato):
     db.session.flush()
     # cognomi composti («Di Sanzo»): valgono la divisione del comitato e le persone già nel sito
     noti = list(comitato) + [(p.nome, p.cognome, None) for p in Persona.query]
-    esistenti = {(ep.persona_id, ep.titolo_lezione) for ep in ed.persone if ep.ruolo == ruolo}
+    # ponytail: l'intervento si riconosce dal titolo della voce (aggiorna_voce lo tiene allineato);
+    # se l'admin cambia solo il titolo dell'intervento, ricreando dal programma ne nasce un altro
+    esistenti = {iv.titolo: iv for iv in ed.interventi if iv.tipo == tipo}
     nuove = 0
     for v in sorted(ed.programma, key=lambda v: (v.ordine or 0, v.id or 0)):
-        if v.tipo != tipo or not v.relatori:
+        if v.tipo != tipo_voce or not v.relatori:
             continue
+        iv = esistenti.get(v.titolo)
+        if iv is None:
+            iv = esistenti[v.titolo] = Intervento(edizione=ed, tipo=tipo, titolo=v.titolo, ordine=v.ordine or 0)
+            db.session.add(iv)
+            nuove += 1
         for nome_completo in v.relatori.split(", "):
             p = _persona(*_dividi(nome_completo.strip(), noti))
-            db.session.flush()
-            if (p.id, v.titolo) in esistenti:
-                continue
-            if any(ep.persona_id == p.id for ep in ed.persone if ep.ruolo == ruolo):
-                continue  # ponytail: una lezione/UD per persona per edizione (vincolo unico di edizioni_persone)
-            ed.persone.append(EdizionePersona(persona=p, ruolo=ruolo, titolo_lezione=v.titolo,
-                                              ordine=v.ordine or 0))
-            db.session.flush()
-            esistenti.add((p.id, v.titolo))
-            nuove += 1
+            iv.aggiungi_autore(ep_di(ed, p, RUOLO_AUTORE[tipo]))
+        db.session.flush()
     return nuove
 
 

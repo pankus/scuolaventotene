@@ -58,25 +58,32 @@ accanto alla maniglia ⠿ è la posizione: trascinando la riga si cambia l'ordin
 giorno, e il nuovo ordine si salva subito. Per spostare una voce su un altro giorno, o senza mouse,
 si cambiano giorno e ordine da «modifica».
 
-### Comitato, relatori e lezioni
+### Persone, lezioni e UD
 
-**Comitato scientifico e relatori**: nome, cognome, affiliazione, ruolo e, per i relatori, il
-titolo della lezione. Ogni relatore aggiunto è una **lezione**: titolo, **ordine** (la
-posizione nell'archivio e nella bibliografia) e **account del relatore**.
+**Persone dell'edizione**: nome, cognome, affiliazione e ruolo (*comitato scientifico*,
+*relatore*, *docente (UD)*). La stessa persona può avere più ruoli, anche nella stessa edizione.
+Con **account** si collega la persona al suo account sul sito (vale per tutti i suoi ruoli e
+tutte le edizioni): il relatore così carica materiali e bibliografia delle sue lezioni, il membro
+del comitato vede e valuta le candidature di questa edizione. Se nell'aggiungere un relatore o un
+docente si scrive anche un titolo, il sito crea una nuova lezione o UD con quella persona come
+autore, anche se ne ha già un'altra.
+
+**Lezioni e unità didattiche**: ogni lezione o UD ha titolo, **ordine** (la posizione
+nell'archivio e nella bibliografia) e uno o più **autori**, scelti tra le persone dell'edizione con
+il ruolo giusto (relatori per le lezioni, docenti per le UD; il sito rifiuta gli altri).
+**Aggiungi autore** e **togli** cambiano gli autori; tutti gli autori vedono e caricano gli stessi
+materiali e la stessa bibliografia. **elimina** toglie la lezione con le sue letture; i materiali
+restano tra gli altri materiali dell'edizione.
+
 Le lezioni nascono dal programma: quando si salva una voce *lezione* con i relatori (separati da
-virgola), il sito crea la lezione di ogni relatore che non ce l'ha ancora, una per relatore anche
-quando la lezione è a due voci. Se si cambia il titolo della voce, cambia anche quello della
-lezione. Per le voci scritte prima, o per ricreare una lezione rimossa, il pulsante **Crea le
-lezioni dal programma** (sotto il programma) fa lo stesso per tutte le voci, senza doppioni.
-Eliminare una voce non elimina la lezione: si rimuove da qui.
+virgola), il sito crea la lezione con tutti i relatori della voce come autori. Se si cambia il
+titolo della voce, cambia anche quello della lezione. Per le voci scritte prima, o per ricreare
+una lezione rimossa, il pulsante **Crea le lezioni dal programma** (sotto il programma) fa lo
+stesso per tutte le voci, senza doppioni. Eliminare una voce non elimina la lezione.
 
-Per collegare l'account: il relatore si registra dal sito, l'admin lo sceglie nella lezione e
-**Salva lezione**. Da quel momento il
-relatore carica i materiali e la bibliografia della lezione e vede le UD dei docenti ammessi.
-
-Ruolo **Docente (UD)**: l'unità didattica di un docente senza candidatura sul sito (edizioni
-2023–2025, create dal programma con `flask ud-dal-programma`). Titolo e ordine si correggono
-come per le lezioni; l'account del docente si può già collegare, ma per ora non gli dà accesso.
+Le UD con ruolo **Docente (UD)** sono quelle dei docenti senza candidatura sul sito (edizioni
+2023–2025, create dal programma con `flask ud-dal-programma`); l'account del docente si può già
+collegare, ma per ora non gli dà accesso alla UD.
 
 ### Completare le edizioni passate
 
@@ -196,8 +203,9 @@ docenti. Per agganciare un account a un'edizione: **aggiungi**, scegli l'anno e 
 *Comitato scientifico* l'account entra nel comitato di quell'edizione; con *Relatore* o *Docente (UD)*
 il sito crea la sua lezione o UD, da completare poi nella scheda dell'edizione;
 se nel programma c'è già una persona con lo stesso nome e cognome, usa quella. Con **cambia** →
-**sposta** una UD o una lezione passa a un'altra edizione con titolo, materiali e letture (le letture
-già in Zotero restano nella collezione della vecchia edizione).
+**sposta** un ruolo passa a un'altra edizione con le lezioni o UD di cui la persona è l'unico autore
+(titolo, materiali e letture; le letture già in Zotero restano nella collezione della vecchia
+edizione). Se una lezione ha altri autori il sito non sposta nulla: prima si toglie l'autore.
 **Elimina** cancella l'account (per esempio uno creato per prova) con candidature, letture e
 file caricati; non vale per chi ha valutato candidature o caricato materiali: quelli si disattivano.
 Il primo admin si crea dal server con `flask crea-admin`.

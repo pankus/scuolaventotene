@@ -18,7 +18,7 @@ def inviate(monkeypatch):
 
 def _ud(ed, nome, cognome, ruolo="docente"):
     p = Persona(nome=nome, cognome=cognome)
-    db.session.add(EdizionePersona(edizione=ed, persona=p, ruolo=ruolo, titolo_lezione="UD"))
+    db.session.add(EdizionePersona(edizione=ed, persona=p, ruolo=ruolo))
     db.session.commit()
     return p
 

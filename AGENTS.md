@@ -112,18 +112,26 @@ all'account (più le candidature per i docenti); una persona può averne più d'
 edizione. Il comitato vede solo le proprie edizioni: `Utente.comitato_di(ed)` per ogni candidatura,
 lettura o materiale; `is_comitato` (admin o comitato di almeno un'edizione) apre solo il back-office;
 nelle liste `_edizioni_visibili()` / `_filtra_edizioni()` in `admin.py`. Il relatore non entra nel back-office. Docente = insegnante che si candida; relatore =
-storico che tiene una lezione: le sue lezioni sono `Utente.lezioni()` (via `Persona.utente_id`),
-e ogni accesso a una lezione passa da lì. Il relatore vede le UD solo dei docenti **ammessi**
+storico che tiene una lezione.
+**Interventi**: lezioni e UD sono `Intervento` (edizione, tipo `relazione | ud`, titolo, abstract,
+ordine) con uno o più autori nella tabella `intervento_autori` → righe `EdizionePersona`. Vincolo:
+ogni autore ha un ruolo in **quella** edizione (relatore per la lezione, docente per la UD,
+`RUOLO_AUTORE`); lo controlla solo `Intervento.aggiungi_autore`, da usare sempre. La stessa EP
+può firmare più interventi. Materiali e letture appartengono all'intervento (`intervento_id`) e
+li gestiscono tutti gli autori. Le lezioni dell'account sono `Utente.lezioni()` (interventi di
+tipo relazione, via `Persona.utente_id`) e ogni accesso a una lezione passa da lì
+(`area._mia_lezione`). Il relatore vede le UD solo dei docenti **ammessi**
 nelle edizioni in cui insegna (`area._relatore_di`), mai email, telefono, nascita, residenza.
-UD senza candidatura (edizioni passate) = `EdizionePersona` con ruolo `docente` (`RUOLI_EDIZIONE`),
-create dal programma (`ud_dal_programma`); l'account collegato per ora non dà permessi.
-Pagina pubblica di lezione/UD: `public.intervento` (EP) e `public.unita_didattica` (solo
+UD senza candidatura (edizioni passate) = `Intervento` di tipo `ud`, create dal programma
+(`ud_dal_programma`); per ora l'account dei docenti autori non dà permessi sulla UD.
+Pagina pubblica di lezione/UD: `public.intervento` (Intervento) e `public.unita_didattica` (solo
 candidature ammesse, niente dati personali, abstract del docente come testo, mai `markdown`);
 l'admin vi carica materiali e abstract (`admin.materiale_intervento`, `materiale_candidatura`,
-`descrizione_intervento`) e apre le letture di ogni EP (`area._mia_lezione`).
+`descrizione_intervento`), apre le letture di ogni intervento (`area._mia_lezione`) e ne gestisce
+titolo e autori nella scheda dell'edizione (`aggiorna_intervento`, `autori_intervento`).
 **Chiusura dei contenuti**: `Edizione.chiusura_contenuti` (vuota = aperti); dopo quella data
 materiali e letture di lezioni e UD li modifica solo l'admin (`Utente.puo_modificare(ed)`,
-`_mia_lezione(epid, modifica=True)`, `Candidatura.dopo_la_scuola`, `letture_aperte`). La proposta
+`_mia_lezione(iid, modifica=True)`, `Candidatura.dopo_la_scuola`, `letture_aperte`). La proposta
 di UD resta legata alla scadenza del bando (`modificabile`).
 Il docente carica materiali solo dalla propria candidatura dopo la scuola
 (`Candidatura.dopo_la_scuola`), il relatore dalla propria lezione, lo staff da `/admin/materiali`.
@@ -216,7 +224,10 @@ Cartella `tests/`, pytest (`uv run pytest`). `conftest.py` crea l'app con
 `create_app(TestConfig)` (SQLite in memoria, CSRF disattivato) e `UPLOAD_FOLDER` su `tmp_path`,
 e offre gli helper `crea_utente`, `crea_edizione`, `login`. `crea_utente(ruolo="admin")` crea un
 amministratore; `crea_utente(ruolo="comitato")` mette l'utente nel comitato di tutte le edizioni del
-test (anche create dopo), `edizioni=[...]` solo di quelle.
+test (anche create dopo), `edizioni=[...]` solo di quelle. `crea_intervento(ed, tipo, titolo, utente=…)`
+crea una lezione o UD con il suo autore.
+- `test_interventi.py`: autori multipli, vincolo edizione/ruolo, materiali condivisi, più
+  interventi per persona, sposta rifiutato se condiviso, eliminazione.
 - `test_ruoli.py`: ruoli per edizione (relatore un anno e docente un altro, relatore e comitato
   insieme), comitato limitato alle proprie edizioni, materiali riservati.
 - `test_regole.py`: `candidature_aperte`, `problemi_invio` (profilo, UD, limiti caratteri),

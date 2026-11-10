@@ -32,7 +32,8 @@
       {% if u.scuola %}<small class="nota">{{ u.scuola }}</small>{% endif %}</td>
     <td>{{ u.email }}</td>
     <td class="edizioni-utente">
-      {% for ep in eps %}<div>{% if ep.ruolo == 'comitato' %}{{ ep.edizione.anno }} · {{ RUOLI_EDIZIONE[ep.ruolo] }}{% else %}<a href="{{ url_for('public.intervento', slug=ep.edizione.slug, epid=ep.id) }}">{{ ep.edizione.anno }} · {{ RUOLI_EDIZIONE[ep.ruolo] }}</a>{% endif %}</div>{% endfor %}
+      {% for ep in eps %}<div>{{ ep.edizione.anno }} · {{ RUOLI_EDIZIONE[ep.ruolo] }}{% for iv in ep.interventi %}
+        · <a href="{{ url_for('public.intervento', slug=ep.edizione.slug, iid=iv.id) }}">{{ iv.titolo|truncate(40) if iv.titolo else 'senza titolo' }}</a>{% endfor %}</div>{% endfor %}
       {% for c in u.candidature|sort(attribute='edizione.anno') %}<div><a href="{{ url_for('admin.candidatura', cid=c.id) }}">{{ c.edizione.anno }} · candidatura {{ STATI_CANDIDATURA.get(c.stato, c.stato)|lower }}</a></div>{% endfor %}
       {% if not eps and not u.candidature %}{% if not u.admin %}<span class="badge badge-rifiutato">nessuna edizione</span>{% else %}—{% endif %}{% endif %}
       {% if eps %}<details class="cambia-edizione"><summary>cambia</summary>
@@ -64,5 +65,6 @@
   calendario con + = aggiungi a un'edizione (passa sopra con il mouse per la descrizione).
   «Aggiungi» aggancia l'account a un'edizione con il ruolo scelto: comitato, oppure crea la UD (docente) o la lezione (relatore), che poi
   completi nella scheda dell'edizione; se nel programma c'è già una persona con lo stesso nome e cognome, usa quella.
-  «cambia» → «sposta» porta una UD o una lezione in un'altra edizione, con titolo, materiali e letture.</p>
+  «cambia» → «sposta» porta il ruolo in un'altra edizione con le sue lezioni o UD (titolo, materiali e
+  letture), se ne è l'unico autore.</p>
 {% endblock %}

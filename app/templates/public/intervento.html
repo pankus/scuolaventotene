@@ -33,12 +33,12 @@
   <h2>{{ "L'unità didattica" if ud else 'La lezione' }}</h2>
   {% if abstract %}
     {# l'abstract delle candidature è scritto dal docente: testo semplice, mai HTML #}
-    <div class="misura">{% if ep %}{{ abstract|markdown }}{% else %}<p>{{ abstract }}</p>{% endif %}</div>
+    <div class="misura">{% if iv %}{{ abstract|markdown }}{% else %}<p>{{ abstract }}</p>{% endif %}</div>
   {% else %}<p class="nota">Abstract non ancora inserito.</p>{% endif %}
   {% if form_descrizione %}
   <details class="riquadro-admin">
     <summary>Modifica l'abstract (admin)</summary>
-    <form method="post" action="{{ url_for('admin.descrizione_intervento', epid=ep.id) }}" class="modulo">
+    <form method="post" action="{{ url_for('admin.descrizione_intervento', iid=iv.id) }}" class="modulo">
       {{ form_descrizione.hidden_tag() }}{{ campo(form_descrizione.descrizione, rows=8) }}
       <button class="btn btn-piccolo">Salva abstract</button>
     </form>
@@ -72,7 +72,7 @@
   <details class="riquadro-admin"{% if form.errors %} open{% endif %}>
     <summary>Carica un materiale in questa {{ 'UD' if ud else 'lezione' }} (admin)</summary>
     <form method="post" enctype="multipart/form-data" class="modulo"
-          action="{{ url_for('admin.materiale_intervento', epid=ep.id) if ep else url_for('admin.materiale_candidatura', cid=c.id) }}">
+          action="{{ url_for('admin.materiale_intervento', iid=iv.id) if iv else url_for('admin.materiale_candidatura', cid=c.id) }}">
       {{ form.hidden_tag() }}
       {% for f in form if f.type not in ('CSRFTokenField', 'HiddenField') %}{{ campo(f) }}{% endfor %}
       <button class="btn btn-piccolo">Pubblica</button>
@@ -81,7 +81,7 @@
   {% endif %}
 </section>
 
-{% if letture or (form and ep) %}
+{% if letture or (form and iv) %}
 {% set n.i = n.i + 1 %}
 <section class="sezione" id="letture">
   <span class="num">§ {{ n.i }}</span>
@@ -101,7 +101,7 @@
     {% endfor %}
   </ul>
   {% else %}<p class="nota">Nessuna lettura ancora.</p>{% endif %}
-  {% if form and ep %}<p class="nota"><a href="{{ url_for('area.letture_lezione', epid=ep.id) }}">Aggiungi letture (admin) →</a></p>{% endif %}
+  {% if form and iv %}<p class="nota"><a href="{{ url_for('area.letture_lezione', iid=iv.id) }}">Aggiungi letture (admin) →</a></p>{% endif %}
 </section>
 {% endif %}
 {% endblock %}

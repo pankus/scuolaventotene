@@ -4,8 +4,9 @@ Entità principali
 - Utente            docenti registrati, membri del comitato, amministratori
 - Edizione          un'edizione annuale della scuola (bando, date, stato)
 - ProgrammaVoce     voci del programma (lezioni, sessioni UD, visite)
-- Persona / EdizionePersona   comitato scientifico e relatori per edizione; per un relatore
-                    l'EdizionePersona è la sua lezione, e Persona.utente lega l'account
+- Persona / EdizionePersona   ruolo di una persona in un'edizione (comitato, relatore, docente);
+                    Persona.utente lega l'account
+- Intervento        lezione (relazione) o UD di un'edizione, con uno o più autori (EdizionePersona)
 - Candidatura       domanda di partecipazione (borsista / uditore) + proposta UD
 - Valutazione       punteggi del comitato (originalità, potenzialità, fonti)
 - Materiale         PDF/PowerPoint dell'archivio, caricati da admin o docenti
@@ -104,12 +105,15 @@ class Utente(UserMixin, db.Model):
         voci |= {(c.edizione.anno, "Docente") for c in self.candidature if c.stato != "ritirata"}
         return [f"{r} {anno}" for anno, r in sorted(voci, key=lambda v: (-v[0], v[1]))]
 
+    def interventi(self, tipo=None):
+        """Interventi di cui la persona dell'account è autore (tutti o di un `tipo`)."""
+        eps = self.persona.edizioni if self.persona else []
+        tutti = {iv for ep in eps for iv in ep.interventi if tipo in (None, iv.tipo)}
+        return sorted(tutti, key=lambda iv: (-iv.edizione.anno, iv.posizione))
+
     def lezioni(self):
-        """Le lezioni (EdizionePersona con ruolo relatore) della persona legata all'account."""
-        if not self.persona:
-            return []
-        return sorted((ep for ep in self.persona.edizioni if ep.ruolo == "relatore"),
-                      key=lambda ep: (-ep.edizione.anno, ep.posizione))
+        """Le lezioni (interventi di tipo relazione) di cui l'account è autore."""
+        return self.interventi("relazione")
 
     @property
     def nome_completo(self):
@@ -166,6 +170,8 @@ class Edizione(db.Model):
                                 order_by="(ProgrammaVoce.giorno, ProgrammaVoce.ordine)")
     persone = db.relationship("EdizionePersona", back_populates="edizione",
                               cascade="all, delete-orphan")
+    interventi = db.relationship("Intervento", back_populates="edizione", cascade="all, delete-orphan",
+                                 order_by="(Intervento.ordine, Intervento.id)")
     candidature = db.relationship("Candidatura", back_populates="edizione")
     materiali = db.relationship("Materiale", back_populates="edizione")
 
@@ -234,8 +240,8 @@ class Persona(db.Model):
 
 
 RUOLO_ADMIN = "Amministratore"
-# ruoli di una persona in un'edizione; "docente" = UD senza candidatura (edizioni passate,
-# dal programma), collegabile a un account più avanti come le lezioni dei relatori
+# ruoli di una persona in un'edizione; "docente" = autore di UD senza candidatura (edizioni
+# passate, dal programma)
 RUOLI_EDIZIONE = {"comitato": "Comitato scientifico", "relatore": "Relatore", "docente": "Docente (UD)"}
 # filtro di /admin/utenti: come l'account partecipa alle edizioni
 GRUPPI_PARTECIPANTI = {"relatori": "Relatori", "docenti": "Docenti", "comitato": "Comitato scientifico",
@@ -243,6 +249,8 @@ GRUPPI_PARTECIPANTI = {"relatori": "Relatori", "docenti": "Docenti", "comitato":
 
 
 class EdizionePersona(db.Model):
+    """Ruolo di una persona in un'edizione: una riga per (edizione, persona, ruolo). Come autore
+    la stessa riga può firmare più interventi dell'edizione."""
     __tablename__ = "edizioni_persone"
     __table_args__ = (db.UniqueConstraint("edizione_id", "persona_id", "ruolo"),)
 
@@ -250,25 +258,72 @@ class EdizionePersona(db.Model):
     edizione_id = db.Column(db.Integer, db.ForeignKey("edizioni.id", ondelete="CASCADE"), nullable=False)
     persona_id = db.Column(db.Integer, db.ForeignKey("persone.id", ondelete="CASCADE"), nullable=False)
     ruolo = db.Column(db.String(20), nullable=False, default="comitato")  # RUOLI_EDIZIONE
-    # relatori: la lezione; docenti: la UD
-    titolo_lezione = db.Column(db.String(255))
-    descrizione = db.Column(db.Text)  # abstract (markdown), scritto dall'admin
-    ordine = db.Column(db.Integer, default=0)
 
     edizione = db.relationship("Edizione", back_populates="persone")
     persona = db.relationship("Persona", back_populates="edizioni")
-    materiali = db.relationship("Materiale", back_populates="lezione")
-    letture = db.relationship("PropostaLettura", back_populates="lezione",
+    interventi = db.relationship("Intervento", secondary="intervento_autori", back_populates="autori")
+
+
+# --------------------------------------------------------------------------- interventi
+TIPI_INTERVENTO = {"relazione": "Lezione", "ud": "Unità didattica"}
+RUOLO_AUTORE = {"relazione": "relatore", "ud": "docente"}  # ruolo nell'edizione richiesto agli autori
+
+intervento_autori = db.Table(
+    "intervento_autori",
+    db.Column("intervento_id", db.Integer, db.ForeignKey("interventi.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("ep_id", db.Integer, db.ForeignKey("edizioni_persone.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
+class Intervento(db.Model):
+    """Lezione (relazione di uno o più relatori) o UD (di uno o più docenti) di un'edizione.
+    Vincolo: ogni autore è una riga EdizionePersona della stessa edizione con il ruolo del tipo
+    (RUOLO_AUTORE). SQLite non lo controlla tra due tabelle: gli autori si aggiungono solo con
+    `aggiungi_autore`."""
+    __tablename__ = "interventi"
+
+    id = db.Column(db.Integer, primary_key=True)
+    edizione_id = db.Column(db.Integer, db.ForeignKey("edizioni.id", ondelete="CASCADE"), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False, default="relazione")  # TIPI_INTERVENTO
+    titolo = db.Column(db.String(255))
+    descrizione = db.Column(db.Text)  # abstract (markdown), scritto dall'admin
+    ordine = db.Column(db.Integer, default=0)
+
+    edizione = db.relationship("Edizione", back_populates="interventi")
+    autori = db.relationship("EdizionePersona", secondary=intervento_autori, back_populates="interventi",
+                             order_by="EdizionePersona.id")
+    materiali = db.relationship("Materiale", back_populates="intervento")
+    letture = db.relationship("PropostaLettura", back_populates="intervento",
                               cascade="all, delete-orphan", order_by="PropostaLettura.id")
+
+    def aggiungi_autore(self, ep):
+        stessa = ep.edizione is self.edizione or (ep.edizione_id is not None and ep.edizione_id == self.edizione_id)
+        if not stessa or ep.ruolo != RUOLO_AUTORE[self.tipo]:
+            raise ValueError(f"{ep.persona.nome_completo} non è {RUOLI_EDIZIONE[RUOLO_AUTORE[self.tipo]].lower()} "
+                             f"dell'edizione di questo intervento.")
+        if ep not in self.autori:
+            self.autori.append(ep)
+
+    def di(self, utente):
+        """L'account è tra gli autori."""
+        return any(ep.persona.utente_id == utente.id for ep in self.autori)
+
+    @property
+    def ud(self):
+        return self.tipo == "ud"
 
     @property
     def posizione(self):
-        """Chiave d'ordinamento delle lezioni (ordine può mancare nelle righe vecchie)."""
-        return (self.ordine or 0, self.id)
+        """Chiave d'ordinamento (ordine può mancare nelle righe vecchie)."""
+        return (self.ordine or 0, self.id or 0)
+
+    @property
+    def nomi_autori(self):
+        return ", ".join(ep.persona.nome_completo for ep in self.autori)
 
     @property
     def nome_lezione(self):
-        return f"{self.persona.nome_completo} – {self.titolo_lezione or 'lezione'}"
+        return f"{self.nomi_autori or 'senza autori'} – {self.titolo or 'lezione'}"
 
 
 # --------------------------------------------------------------------------- candidature
@@ -393,17 +448,17 @@ MOMENTI_PROPOSTA = {"iscrizione": "Con la candidatura", "post_scuola": "Dopo la 
 
 
 class PropostaLettura(db.Model):
-    """Lettura consigliata da un docente (legata alla candidatura, rivista dal comitato) o dal
-    relatore di una lezione (scritta subito in Zotero). Il legame persona↔libro resta solo qui."""
+    """Lettura consigliata da un docente (legata alla candidatura, rivista dal comitato) o dagli
+    autori di un intervento (scritta subito in Zotero). Il legame persona↔libro resta solo qui."""
     __tablename__ = "proposte_lettura"
-    __table_args__ = (db.CheckConstraint("(candidatura_id IS NULL) <> (lezione_id IS NULL)",
+    __table_args__ = (db.CheckConstraint("(candidatura_id IS NULL) <> (intervento_id IS NULL)",
                                          name="una_origine"),)
 
     id = db.Column(db.Integer, primary_key=True)
     candidatura_id = db.Column(db.Integer, db.ForeignKey("candidature.id", ondelete="CASCADE"),
                                index=True)
-    lezione_id = db.Column(db.Integer, db.ForeignKey("edizioni_persone.id", ondelete="CASCADE"),
-                           index=True)
+    intervento_id = db.Column(db.Integer, db.ForeignKey("interventi.id", ondelete="CASCADE"),
+                              index=True)
     tipo = db.Column(db.String(20), nullable=False, default="book")
     # campi Zotero (title, date, publisher, place, ISBN, series, url, websiteTitle, accessDate)
     # più "autori" e "curatori" come testo, una persona per riga ("Cognome, Nome")
@@ -419,7 +474,7 @@ class PropostaLettura(db.Model):
     deciso_da_id = db.Column(db.Integer, db.ForeignKey("utenti.id", ondelete="SET NULL"))
 
     candidatura = db.relationship("Candidatura", back_populates="letture")
-    lezione = db.relationship("EdizionePersona", back_populates="letture")
+    intervento = db.relationship("Intervento", back_populates="letture")
     deciso_da = db.relationship("Utente")
 
     @property
@@ -462,14 +517,14 @@ class Materiale(db.Model):
     visibilita = db.Column(db.String(20), nullable=False, default="pubblico")
     stato = db.Column(db.String(20), nullable=False, default="in_revisione")
     caricato_da_id = db.Column(db.Integer, db.ForeignKey("utenti.id"))
-    # origine: lezione (relatore) o candidatura (docente, dopo la scuola); nessuna = staff
-    lezione_id = db.Column(db.Integer, db.ForeignKey("edizioni_persone.id", ondelete="SET NULL"))
+    # origine: intervento (lezione o UD) o candidatura (docente, dopo la scuola); nessuna = staff
+    intervento_id = db.Column(db.Integer, db.ForeignKey("interventi.id", ondelete="SET NULL"))
     candidatura_id = db.Column(db.Integer, db.ForeignKey("candidature.id", ondelete="SET NULL"))
     creato_il = db.Column(db.DateTime, default=adesso)
 
     edizione = db.relationship("Edizione", back_populates="materiali")
     caricato_da = db.relationship("Utente")
-    lezione = db.relationship("EdizionePersona", back_populates="materiali")
+    intervento = db.relationship("Intervento", back_populates="materiali")
     candidatura = db.relationship("Candidatura", back_populates="materiali")
 
     def visibile_a(self, user):

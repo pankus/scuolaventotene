@@ -29,7 +29,7 @@ def edizione(slug):
     materiali = _materiali_visibili(ed)
     n_mat = {}
     for m in materiali:
-        chiave = ("ep", m.lezione_id) if m.lezione_id else ("c", m.candidatura_id) if m.candidatura_id else None
+        chiave = ("iv", m.intervento_id) if m.intervento_id else ("c", m.candidatura_id) if m.candidatura_id else None
         n_mat[chiave] = n_mat.get(chiave, 0) + 1
 
     def voce(url, titolo, autore, chiave, letture):
@@ -37,19 +37,19 @@ def edizione(slug):
                 "materiali": n_mat.get(chiave, 0),
                 "letture": sum(1 for p in letture if p.stato == "approvata" and p.zotero_key)}
 
-    eps = sorted((ep for ep in ed.persone if ep.ruolo in ("relatore", "docente")), key=lambda ep: ep.posizione)
-    lezioni = [voce(url_for("public.intervento", slug=ed.slug, epid=ep.id), ep.titolo_lezione,
-                    ep.persona.nome_completo, ("ep", ep.id), ep.letture)
-               for ep in eps if ep.ruolo == "relatore"]
-    ud = [voce(url_for("public.intervento", slug=ed.slug, epid=ep.id), ep.titolo_lezione,
-               ep.persona.nome_completo, ("ep", ep.id), ep.letture)
-          for ep in eps if ep.ruolo == "docente"]
+    def voce_iv(iv):
+        return voce(url_for("public.intervento", slug=ed.slug, iid=iv.id), iv.titolo, iv.nomi_autori,
+                    ("iv", iv.id), iv.letture)
+
+    ivs = sorted(ed.interventi, key=lambda iv: iv.posizione)
+    lezioni = [voce_iv(iv) for iv in ivs if not iv.ud]
+    ud = [voce_iv(iv) for iv in ivs if iv.ud]
     ud += [voce(url_for("public.unita_didattica", slug=ed.slug, cid=c.id), c.titolo_ud,
                 c.utente.nome_completo, ("c", c.id), c.letture)
            for c in sorted(ed.candidature, key=lambda c: c.titolo_ud or "")
            if c.stato == "ammessa" and c.titolo_ud]
     return render_template("archivio/edizione.html", ed=ed, lezioni=lezioni, ud=ud,
-                           altri=[m for m in materiali if not m.lezione_id and not m.candidatura_id])
+                           altri=[m for m in materiali if not m.intervento_id and not m.candidatura_id])
 
 
 @bp.route("/materiali/<int:mid>/scarica")

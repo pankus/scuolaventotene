@@ -17,11 +17,10 @@ def test_carica_le_tre_edizioni(app, client):
     assert (e23.slug, e23.stato, e23.data_inizio.isoformat()) == ("2023", "conclusa", "2023-10-29")
     assert e24.zotero_collection_key == "COL24" and e23.zotero_collection_key is None
     assert len(e24.programma) == len(EDIZIONI[1]["programma"])
-    # lezioni: una per relatore, nell'ordine del programma; lezione a due voci = due relatori
-    lezioni = sorted((ep for ep in e24.persone if ep.ruolo == "relatore"), key=lambda ep: ep.posizione)
-    assert [ep.persona.cognome for ep in lezioni] == ["Gallo", "Deplano", "Onidi", "Colucci", "Inesi",
-                                                      "Di Sanzo", "Ferrarese"]
-    assert lezioni[5].titolo_lezione == lezioni[6].titolo_lezione
+    # lezioni: una per voce, nell'ordine del programma; lezione a due voci = due autori
+    lezioni = sorted((iv for iv in e24.interventi if not iv.ud), key=lambda iv: iv.posizione)
+    assert [[a.persona.cognome for a in iv.autori] for iv in lezioni] == [
+        ["Gallo"], ["Deplano"], ["Onidi"], ["Colucci"], ["Inesi"], ["Di Sanzo", "Ferrarese"]]
     # la stessa persona in più edizioni
     assert Persona.query.filter_by(cognome="Gallo").count() == 1
     assert Materiale.query.filter_by(stato="pubblicato", tipo="bando").count() == 3

@@ -42,7 +42,7 @@ def test_carica_materiale_del_modulo(app):
                           "tipo": "slide", "file": pdf()}, content_type="multipart/form-data")
     assert r.headers["Location"].endswith(f"/area/candidatura/{c.id}")
     m = Materiale.query.one()
-    assert (m.candidatura_id, m.lezione_id, m.edizione_id, m.stato, m.visibilita) == \
+    assert (m.candidatura_id, m.intervento_id, m.edizione_id, m.stato, m.visibilita) == \
         (c.id, None, c.edizione_id, "in_revisione", "pubblico")
     # pubblicato dal comitato: l'archivio conta il materiale nella UD, la pagina della UD lo mostra
     m.stato = "pubblicato"

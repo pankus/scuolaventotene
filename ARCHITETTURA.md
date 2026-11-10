@@ -68,7 +68,9 @@ docente nel 2025. Permessi: `Utente.comitato_di(ed)`, `edizioni_comitato()`, `le
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
 /admin/utenti                                    amministratore, attivazione, ruoli per edizione, eliminazione (account di prova)
 /admin/email                                     email a relatori, docenti, comitato (anteprima, copia nascosta)
-/admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione o UD (admin)
+/admin/edizioni-persone/<id>/account             account collegato alla persona (admin)
+/admin/interventi/<id>                           titolo e ordine della lezione o UD (admin, POST)
+/admin/interventi/<id>/autori, /elimina          aggiunge o toglie un autore; elimina (admin, POST)
 /admin/interventi/<id>/materiali, /descrizione   materiale e abstract dentro lezione/UD (admin, POST)
 /admin/candidature/<id>/materiali                materiale dentro la UD di una candidatura ammessa (admin, POST)
 /area/lezioni/<id>/letture[?tipo=webpage]         bibliografia della lezione (relatore; admin per ogni lezione/UD)
@@ -85,8 +87,9 @@ utenti ─┬─< candidature >── edizioni ──< programma_voci
         │        └──< valutazioni >── utenti (comitato)
         │        └──< proposte_lettura ··· zotero_items (zotero_key)
         └─< materiali >── edizioni
-edizioni ──< edizioni_persone >── persone ··· utenti (persone.utente_id: account del relatore)
-                 └──< materiali (lezione_id: materiali della lezione)
+edizioni ──< edizioni_persone >── persone ··· utenti (persone.utente_id: account della persona)
+edizioni ──< interventi >──< intervento_autori >── edizioni_persone   (autori: stessa edizione)
+                 └──< materiali, proposte_lettura (intervento_id)
 candidature ──< materiali (candidatura_id: materiali del modulo, dopo la scuola)
 edizioni.zotero_collection_key ··· zotero_collezioni
 zotero_items >──< zotero_collezioni   (zotero_item_collezioni)
@@ -96,10 +99,11 @@ sync_stato (versione libreria Zotero, data ultima sync)
 - **Edizione**: numero, anno, slug, titolo, sottotitolo, date, scadenza, data degli esiti, posti borsisti, uditori sì/no, limiti di caratteri (6000–8000), stato (`bozza → aperta → chiusa → conclusa`), bando e collezione Zotero collegata.
 - **Candidatura**: tipo (borsista o uditore), stato (`bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`), titolo dell'UD, discipline, file e numero di caratteri (calcolato automaticamente per i .docx). Ogni docente ha al massimo una candidatura per edizione.
 - **Valutazione**: una per membro del comitato, con originalità, potenzialità didattiche e valorizzazione delle fonti (0–25 ciascuna, massimo 75). La graduatoria usa la media dei punteggi.
-- **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato da un docente nella candidatura **oppure** dal relatore per la sua lezione (vincolo: esattamente una delle due); campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione` = mentre la candidatura era modificabile, `post_scuola` = dopo la scadenza o l'esito), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
-- **EdizionePersona**: persona di un'edizione con ruolo `comitato | relatore | docente` (`RUOLI_EDIZIONE`); per un relatore è la lezione, per un docente la UD senza candidatura (edizioni passate, create dal programma con `flask ud-dal-programma`; le lezioni dei relatori si creano salvando una voce «lezione» del programma, o con il pulsante «Crea le lezioni dal programma» / `flask lezioni-dal-programma`, una per relatore anche quando la lezione è a due voci; il titolo della voce rinominata passa alla lezione): `titolo_lezione`, `ordine`, `descrizione` (abstract in markdown). **Persona.utente_id** lega la persona all'account (uno per persona); per i docenti il collegamento per ora non dà permessi.
+- **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato da un docente nella candidatura **oppure** dagli autori di un intervento (vincolo: esattamente una delle due); campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione` = mentre la candidatura era modificabile, `post_scuola` = dopo la scadenza o l'esito), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
+- **EdizionePersona**: ruolo di una persona in un'edizione, `comitato | relatore | docente` (`RUOLI_EDIZIONE`), una riga per (edizione, persona, ruolo). **Persona.utente_id** lega la persona all'account (uno per persona, vale per tutti i ruoli in tutte le edizioni).
+- **Intervento**: lezione (`relazione`) o UD senza candidatura (`ud`) di un'edizione: titolo, `ordine`, `descrizione` (abstract in markdown), uno o più **autori** (`intervento_autori` → EdizionePersona della stessa edizione con il ruolo relatore o docente, controllato da `Intervento.aggiungi_autore`). Una persona può firmare più interventi nella stessa edizione. Le lezioni si creano salvando una voce «lezione» del programma, o con il pulsante «Crea le lezioni dal programma» / `flask lezioni-dal-programma`: una per voce, con tutti i relatori della voce come autori; il titolo della voce rinominata passa alla lezione. Le UD delle edizioni passate con `flask ud-dal-programma`.
 - **ZoteroItem.copertina_path**: copia locale della copertina; `""` = cercata per ISBN e non trovata (`flask zotero-copertine`).
-- **Materiale**: edizione, origine (lezione di un relatore, candidatura di un docente, nessuna per lo staff), tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
+- **Materiale**: edizione, origine (intervento, candidatura di un docente, nessuna per lo staff), tipo (slide, relazione, UD, bando…), file o link, visibilità (`pubblico | registrati | privato`) e stato (`in_revisione | pubblicato | rifiutato`).
 
 ## 5. Flussi principali
 

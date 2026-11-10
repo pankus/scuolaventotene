@@ -6,14 +6,14 @@ from flask import (Blueprint, Response, abort, current_app, flash, redirect, ren
                    request, url_for)
 from flask_login import current_user, login_required
 
-from ..edizioni_precedenti import lezioni_dal_programma
+from ..edizioni_precedenti import ep_di, lezioni_dal_programma
 from ..extensions import db
 from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il nome
-from ..forms import (CopertinaForm, DescrizioneForm, EmailPartecipantiForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
+from ..forms import (AccountPersonaForm, CopertinaForm, InterventoForm, DescrizioneForm, EmailPartecipantiForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, MaterialeAdminForm,
                      MaterialeUDForm, PersonaEdizioneForm, ProgrammaVoceForm, StatoCandidaturaForm,
                      ValutazioneForm)
-from ..models import (ESITI_CANDIDATURA, GRUPPI_PARTECIPANTI, RUOLI_EDIZIONE, STATI_MATERIALE, VISIBILITA, Candidatura,
-                      Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce,
+from ..models import (ESITI_CANDIDATURA, GRUPPI_PARTECIPANTI, RUOLI_EDIZIONE, RUOLO_AUTORE, STATI_MATERIALE, VISIBILITA, Candidatura,
+                      Edizione, EdizionePersona, Intervento, Materiale, Persona, ProgrammaVoce,
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroCollezione, ZoteroItem,
                       adesso)
 from ..posta import email_esito, email_partecipanti, indirizzi_risposta
@@ -105,18 +105,15 @@ def _form_edizione(ed):
                            voce_form=ProgrammaVoceForm(prefix="voce", ordine=None),
                            voce_forms={v.id: ProgrammaVoceForm(prefix=f"v{v.id}", obj=v) for v in ed.programma},
                            persona_form=PersonaEdizioneForm(prefix="pers"),
-                           lezione_forms={ep.id: _lezione_form(ep) for ep in ed.persone
-                                          if ep.ruolo in ("relatore", "docente")})
+                           account_forms={ep.id: _account_form(ep) for ep in ed.persone},
+                           intervento_forms={iv.id: InterventoForm(prefix=f"iv{iv.id}", obj=iv)
+                                             for iv in ed.interventi})
 
 
-def _lezione_form(ep):
-    f = LezioneForm(prefix=f"lez{ep.id}", data={"titolo_lezione": ep.titolo_lezione, "ordine": ep.ordine,
-                                                "utente_id": ep.persona.utente_id or 0})
-    relatori = Utente.query.order_by(Utente.cognome, Utente.nome)  # qualsiasi account: il ruolo è l'EP
-    if ep.ruolo == "docente":
-        f.titolo_lezione.label.text, f.utente_id.label.text = "Titolo della UD", "Account del docente"
-    f.utente_id.choices = [(0, "— nessun account —")] + [(u.id, f"{u.cognome} {u.nome} ({u.email})")
-                                                       for u in relatori]
+def _account_form(ep):
+    f = AccountPersonaForm(prefix=f"acc{ep.id}", data={"utente_id": ep.persona.utente_id or 0})
+    f.utente_id.choices = [(0, "— nessun account —")] + [
+        (u.id, f"{u.cognome} {u.nome} ({u.email})") for u in Utente.query.order_by(Utente.cognome, Utente.nome)]
     return f
 
 
@@ -149,9 +146,9 @@ def aggiorna_voce(vid):
         f.populate_obj(v)
         v.ordine = v.ordine or 0
         if v.titolo != vecchio:  # la lezione segue il titolo, così il link del programma regge
-            for ep in v.edizione.persone:
-                if ep.ruolo == "relatore" and ep.titolo_lezione == vecchio:
-                    ep.titolo_lezione = v.titolo
+            for iv in v.edizione.interventi:
+                if iv.tipo == "relazione" and iv.titolo == vecchio:
+                    iv.titolo = v.titolo
         db.session.commit()
         flash("Voce aggiornata.", "ok")
         if v.tipo == "lezione":
@@ -180,7 +177,7 @@ def lezioni_programma(eid):
     ed = db.get_or_404(Edizione, eid)
     if not _crea_lezioni(ed):
         flash("Nessuna lezione da creare: tutte le voci «lezione» hanno già la loro.", "ok")
-    return redirect(url_for("admin.modifica_edizione", eid=eid) + "#persone")
+    return redirect(url_for("admin.modifica_edizione", eid=eid) + "#interventi")
 
 
 def _crea_lezioni(ed):
@@ -214,34 +211,75 @@ def aggiungi_persona(eid):
             p.affiliazione = f.affiliazione.data
         db.session.add(p)
         db.session.flush()
-        if not EdizionePersona.query.filter_by(edizione_id=ed.id, persona_id=p.id, ruolo=f.ruolo.data).first():
-            db.session.add(EdizionePersona(edizione=ed, persona=p, ruolo=f.ruolo.data,
-                                           titolo_lezione=(f.titolo_lezione.data or None)
-                                           if f.ruolo.data != "comitato" else None))
+        ep = ep_di(ed, p, f.ruolo.data)
+        tipo = next((t for t, r in RUOLO_AUTORE.items() if r == f.ruolo.data), None)
+        if tipo and f.titolo_lezione.data:  # con il titolo: un nuovo intervento (anche il secondo)
+            iv = Intervento(edizione=ed, tipo=tipo, titolo=f.titolo_lezione.data,
+                            ordine=max((i.ordine or 0 for i in ed.interventi), default=0) + 1)
+            db.session.add(iv)
+            iv.aggiungi_autore(ep)
         db.session.commit()
     return redirect(url_for("admin.modifica_edizione", eid=eid) + "#persone")
 
 
-@bp.post("/edizioni-persone/<int:epid>/lezione")
+@bp.post("/edizioni-persone/<int:epid>/account")
 @admin_required
-def aggiorna_lezione(epid):
-    """Titolo e ordine della lezione (o della UD di un docente) e account collegato alla persona."""
+def account_persona(epid):
+    """Account collegato alla persona: vale per tutti i suoi ruoli, in ogni edizione."""
     ep = db.get_or_404(EdizionePersona, epid)
-    if ep.ruolo not in ("relatore", "docente"):
-        abort(404)
-    f = _lezione_form(ep)
+    f = _account_form(ep)
     if f.validate_on_submit():
-        ep.titolo_lezione, ep.ordine = f.titolo_lezione.data or None, f.ordine.data or 0
         uid = f.utente_id.data or None
         if uid and Persona.query.filter(Persona.utente_id == uid, Persona.id != ep.persona_id).first():
             flash("Quell'account è già collegato a un'altra persona.", "errore")
         else:
             ep.persona.utente_id = uid
-            flash("Lezione aggiornata.", "ok")
-        db.session.commit()
-    else:
-        flash("Dati della lezione non validi.", "errore")
+            db.session.commit()
+            flash(f"Account di {ep.persona.nome_completo} aggiornato.", "ok")
     return redirect(url_for("admin.modifica_edizione", eid=ep.edizione_id) + "#persone")
+
+
+@bp.post("/interventi/<int:iid>")
+@admin_required
+def aggiorna_intervento(iid):
+    iv = db.get_or_404(Intervento, iid)
+    f = InterventoForm(prefix=f"iv{iv.id}")
+    if f.validate_on_submit():
+        iv.titolo, iv.ordine = f.titolo.data or None, f.ordine.data or 0
+        db.session.commit()
+        flash("Intervento aggiornato.", "ok")
+    else:
+        flash("Dati dell'intervento non validi.", "errore")
+    return redirect(url_for("admin.modifica_edizione", eid=iv.edizione_id) + "#interventi")
+
+
+@bp.post("/interventi/<int:iid>/autori")
+@admin_required
+def autori_intervento(iid):
+    """Aggiunge (`aggiungi`=id EP) o toglie (`togli`=id EP) un autore; il vincolo edizione/ruolo
+    lo controlla Intervento.aggiungi_autore."""
+    iv = db.get_or_404(Intervento, iid)
+    if ep := db.session.get(EdizionePersona, request.form.get("aggiungi", 0, type=int)):
+        try:
+            iv.aggiungi_autore(ep)
+        except ValueError as e:
+            flash(str(e), "errore")
+    elif ep := next((a for a in iv.autori if a.id == request.form.get("togli", type=int)), None):
+        iv.autori.remove(ep)
+    db.session.commit()
+    return redirect(url_for("admin.modifica_edizione", eid=iv.edizione_id) + "#interventi")
+
+
+@bp.post("/interventi/<int:iid>/elimina")
+@admin_required
+def elimina_intervento(iid):
+    """Elimina lezione o UD con le sue letture; i materiali restano nell'edizione, senza origine."""
+    iv = db.get_or_404(Intervento, iid)
+    eid = iv.edizione_id
+    db.session.delete(iv)
+    db.session.commit()
+    flash("Intervento eliminato; i suoi materiali restano tra gli altri materiali dell'edizione.", "ok")
+    return redirect(url_for("admin.modifica_edizione", eid=eid) + "#interventi")
 
 
 @bp.post("/edizioni-persone/<int:epid>/elimina")
@@ -366,15 +404,13 @@ def _materiale_in(origine, pagina, **chiavi):
     return redirect(pagina + "#materiali")
 
 
-@bp.post("/interventi/<int:epid>/materiali")
+@bp.post("/interventi/<int:iid>/materiali")
 @admin_required
-def materiale_intervento(epid):
+def materiale_intervento(iid):
     """Materiale caricato dall'admin dentro una lezione o UD (anche delle edizioni passate)."""
-    ep = db.get_or_404(EdizionePersona, epid)
-    if ep.ruolo not in ("relatore", "docente"):
-        abort(404)
-    return _materiale_in(ep, url_for("public.intervento", slug=ep.edizione.slug, epid=ep.id),
-                         lezione_id=ep.id)
+    iv = db.get_or_404(Intervento, iid)
+    return _materiale_in(iv, url_for("public.intervento", slug=iv.edizione.slug, iid=iv.id),
+                         intervento_id=iv.id)
 
 
 @bp.post("/candidature/<int:cid>/materiali")
@@ -387,18 +423,16 @@ def materiale_candidatura(cid):
                          candidatura_id=c.id)
 
 
-@bp.post("/interventi/<int:epid>/descrizione")
+@bp.post("/interventi/<int:iid>/descrizione")
 @admin_required
-def descrizione_intervento(epid):
-    ep = db.get_or_404(EdizionePersona, epid)
-    if ep.ruolo not in ("relatore", "docente"):
-        abort(404)
+def descrizione_intervento(iid):
+    iv = db.get_or_404(Intervento, iid)
     form = DescrizioneForm()
     if form.validate_on_submit():
-        ep.descrizione = form.descrizione.data or None
+        iv.descrizione = form.descrizione.data or None
         db.session.commit()
         flash("Abstract salvato.", "ok")
-    return redirect(url_for("public.intervento", slug=ep.edizione.slug, epid=ep.id))
+    return redirect(url_for("public.intervento", slug=iv.edizione.slug, iid=iv.id))
 
 
 @bp.post("/materiali/<int:mid>")
@@ -631,9 +665,10 @@ def aggiorna_utente(uid):
 @bp.post("/utenti/<int:uid>/edizione")
 @admin_required
 def edizione_utente(uid):
-    """Con `epid`: sposta quella UD/lezione dell'account in un'altra edizione (titolo, materiali e
-    letture vanno con lei). Senza: aggiunge l'account all'edizione con il `ruolo` scelto
-    (RUOLI_EDIZIONE): lezione del relatore, UD del docente o comitato."""
+    """Con `epid`: sposta quel ruolo dell'account in un'altra edizione, con le lezioni o UD di
+    cui è l'unico autore (titolo, materiali e letture vanno con loro); se un intervento ha altri
+    autori non si sposta niente. Senza: aggiunge l'account all'edizione con il `ruolo` scelto
+    (RUOLI_EDIZIONE); per relatore e docente crea anche la lezione o la UD, da completare."""
     u = db.get_or_404(Utente, uid)
     ed = db.get_or_404(Edizione, request.form.get("edizione", 0, type=int))
     epid = request.form.get("epid", type=int)
@@ -646,12 +681,19 @@ def edizione_utente(uid):
         if EdizionePersona.query.filter_by(edizione_id=ed.id, persona_id=ep.persona_id, ruolo=ep.ruolo).first():
             flash(f"{u.nome_completo} ha già quel ruolo nell'edizione {ed.anno}.", "errore")
             return _torna_a_utenti()
+        condivisi = [iv for iv in ep.interventi if len(iv.autori) > 1]
+        if condivisi:
+            flash(f"«{condivisi[0].titolo or 'senza titolo'}» ha altri autori: togli prima "
+                  f"{u.nome_completo} dagli autori nella scheda dell'edizione.", "errore")
+            return _torna_a_utenti()
         da = ep.edizione.anno
         ep.edizione = ed
-        for m in ep.materiali:
-            m.edizione_id = ed.id
+        for iv in ep.interventi:
+            iv.edizione = ed
+            for m in iv.materiali:
+                m.edizione_id = ed.id
         msg = f"{RUOLI_EDIZIONE[ep.ruolo]} di {u.nome_completo} spostato dal {da} al {ed.anno}."
-        if any(l.zotero_key for l in ep.letture):
+        if any(l.zotero_key for iv in ep.interventi for l in iv.letture):
             msg += " Le letture già in Zotero restano nella collezione della vecchia edizione."
         flash(msg, "ok")
     else:
@@ -668,7 +710,12 @@ def edizione_utente(uid):
         if EdizionePersona.query.filter_by(edizione_id=ed.id, persona_id=p.id, ruolo=ruolo).first():
             flash(f"{u.nome_completo} è già nell'edizione {ed.anno}.", "errore")
             return _torna_a_utenti()
-        db.session.add(EdizionePersona(edizione=ed, persona=p, ruolo=ruolo))
+        ep = ep_di(ed, p, ruolo)
+        tipo = next((t for t, r in RUOLO_AUTORE.items() if r == ruolo), None)
+        if tipo:
+            iv = Intervento(edizione=ed, tipo=tipo)
+            db.session.add(iv)
+            iv.aggiungi_autore(ep)
         flash(f"{u.nome_completo} aggiunto all'edizione {ed.anno} ({RUOLI_EDIZIONE[ruolo]}): "
               f"titolo e dettagli nella scheda dell'edizione.", "ok")
     db.session.commit()

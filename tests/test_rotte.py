@@ -203,7 +203,7 @@ def test_utenti_edizioni_e_filtri(app):
     ed24, ed23 = crea_edizione(stato="conclusa"), crea_edizione(stato="conclusa")
     docente, relatore, solo, candidato = crea_utente(), crea_utente(ruolo="relatore"), crea_utente(), crea_utente()
     for ed, u, ruolo in ((ed24, docente, "docente"), (ed23, relatore, "relatore")):
-        db.session.add(EdizionePersona(edizione=ed, ruolo=ruolo, titolo_lezione="T",
+        db.session.add(EdizionePersona(edizione=ed, ruolo=ruolo,
                                        persona=Persona(nome=u.nome, cognome=u.cognome, utente_id=u.id)))
     db.session.add(Candidatura(utente=candidato, edizione=ed24, stato="inviata"))
     db.session.commit()
@@ -238,10 +238,13 @@ def test_utenti_sposta_e_aggiungi_edizione(app):
     admin, comitato = crea_utente(ruolo="admin"), crea_utente(ruolo="comitato")
     ed1, ed2 = crea_edizione(stato="conclusa"), crea_edizione(stato="conclusa")
     docente, nuovo, altro = crea_utente(), crea_utente(ruolo="relatore"), crea_utente()
-    ep = EdizionePersona(edizione=ed1, ruolo="docente", titolo_lezione="UD",
+    from app.models import Intervento
+    ep = EdizionePersona(edizione=ed1, ruolo="docente",
                          persona=Persona(nome=docente.nome, cognome=docente.cognome, utente_id=docente.id))
-    db.session.add(ep)
-    db.session.add(Materiale(edizione=ed1, titolo="Slide", lezione=ep))
+    iv = Intervento(edizione=ed1, tipo="ud", titolo="UD")
+    db.session.add_all([ep, iv])
+    iv.aggiungi_autore(ep)
+    db.session.add(Materiale(edizione=ed1, titolo="Slide", intervento=iv))
     omonimo = Persona(nome=nuovo.nome, cognome=nuovo.cognome)  # dal programma, senza account
     db.session.add(omonimo)
     db.session.commit()
@@ -252,7 +255,7 @@ def test_utenti_sposta_e_aggiungi_edizione(app):
     assert c.post(f"/admin/utenti/{altro.id}/edizione", data={"epid": ep.id, "edizione": ed2.id}).status_code == 404
     c.post(url, data={"epid": ep.id, "edizione": ed2.id})
     db.session.expire_all()
-    assert ep.edizione_id == ed2.id and ep.titolo_lezione == "UD" and ep.materiali[0].edizione_id == ed2.id
+    assert ep.edizione_id == iv.edizione_id == ed2.id and iv.titolo == "UD" and iv.materiali[0].edizione_id == ed2.id
 
     c.post(f"/admin/utenti/{nuovo.id}/edizione", data={"edizione": ed1.id})  # senza ruolo: rifiutato
     assert not EdizionePersona.query.filter_by(persona_id=omonimo.id).all()

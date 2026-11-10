@@ -21,13 +21,13 @@
 {% if lezioni %}
 <table class="tabella">
   <tr><th>Edizione</th><th>Lezione</th><th>Materiali</th><th></th></tr>
-  {% for ep in lezioni %}
-  <tr><td>{{ ep.edizione.anno }}</td><td><a href="{{ url_for('public.intervento', slug=ep.edizione.slug, epid=ep.id) }}">{{ ep.titolo_lezione or 'senza titolo' }}</a></td>
-    <td>{% for m in ep.materiali %}{{ m.titolo }} {{ stato(m.stato, STATI_MATERIALE) }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>
-    <td>{% if current_user.puo_modificare(ep.edizione) %}<a class="btn btn-piccolo" href="{{ url_for('area.nuovo_materiale', lezione=ep.id) }}">Carica un materiale</a>
-      {% else %}<small class="nota">contenuti chiusi il {{ ep.edizione.chiusura_contenuti|data_it }}</small>{% endif %}<br>
-      <a href="{{ url_for('area.letture_lezione', epid=ep.id) }}">Bibliografia ({{ ep.letture|length }})</a> ·
-      <a href="{{ url_for('area.ud_lezione', epid=ep.id) }}">UD dei docenti</a></td></tr>
+  {% for iv in lezioni %}
+  <tr><td>{{ iv.edizione.anno }}</td><td><a href="{{ url_for('public.intervento', slug=iv.edizione.slug, iid=iv.id) }}">{{ iv.titolo or 'senza titolo' }}</a></td>
+    <td>{% for m in iv.materiali %}{{ m.titolo }} {{ stato(m.stato, STATI_MATERIALE) }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>
+    <td>{% if current_user.puo_modificare(iv.edizione) %}<a class="btn btn-piccolo" href="{{ url_for('area.nuovo_materiale', lezione=iv.id) }}">Carica un materiale</a>
+      {% else %}<small class="nota">contenuti chiusi il {{ iv.edizione.chiusura_contenuti|data_it }}</small>{% endif %}<br>
+      <a href="{{ url_for('area.letture_lezione', iid=iv.id) }}">Bibliografia ({{ iv.letture|length }})</a> ·
+      <a href="{{ url_for('area.ud_lezione', iid=iv.id) }}">UD dei docenti</a></td></tr>
   {% endfor %}
 </table>
 {% else %}<p class="nota">Il tuo account non è ancora collegato a una lezione: lo fa l'amministrazione della scuola.</p>{% endif %}

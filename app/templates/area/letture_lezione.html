@@ -3,21 +3,21 @@
 {% block title %}Bibliografia della lezione{% endblock %}
 {% block content %}
 <div class="stretto">
-  <p class="occhiello"><a href="{{ url_for('public.intervento', slug=ep.edizione.slug, epid=ep.id) }}">← Pagina {{ 'della UD' if ep.ruolo == 'docente' else 'della lezione' }}</a>
+  <p class="occhiello"><a href="{{ url_for('public.intervento', slug=iv.edizione.slug, iid=iv.id) }}">← Pagina {{ 'della UD' if iv.ud else 'della lezione' }}</a>
     · <a href="{{ url_for('area.dashboard') }}">Area personale</a></p>
-  <h1>Bibliografia {{ 'della UD' if ep.ruolo == 'docente' else 'della lezione' }}</h1>
-  <p><strong>{{ ep.titolo_lezione or 'senza titolo' }}</strong> · {{ ep.persona.nome_completo }} · {{ ep.edizione.anno }}</p>
+  <h1>Bibliografia {{ 'della UD' if iv.ud else 'della lezione' }}</h1>
+  <p><strong>{{ iv.titolo or 'senza titolo' }}</strong> · {{ iv.nomi_autori }} · {{ iv.edizione.anno }}</p>
   <p class="nota">Ogni lettura entra subito nella bibliografia della scuola (Zotero, collezione
-    «{{ 'Docenti' if ep.ruolo == 'docente' else 'Relatori' }}» dell'edizione) e compare nella pagina
-    {{ 'della UD' if ep.ruolo == 'docente' else 'della lezione' }}.</p>
+    «{{ 'Docenti' if iv.ud else 'Relatori' }}» dell'edizione) e compare nella pagina
+    {{ 'della UD' if iv.ud else 'della lezione' }}.</p>
 
-  {% if ep.letture %}
+  {% if iv.letture %}
   <table class="tabella">
     <tr><th>Lettura</th><th></th></tr>
-    {% for l in ep.letture %}
+    {% for l in iv.letture %}
     <tr><td><strong>{{ l.titolo }}</strong> <small>{{ TIPI_LETTURA.get(l.tipo, l.tipo) }}</small><br>
         <small>{{ (l.campi.autori or '')|replace('\n', '; ') }} {{ l.campi.date or '' }}</small></td>
-      <td>{% if aperta %}<form method="post" action="{{ url_for('area.elimina_lettura_lezione', epid=ep.id, pid=l.id) }}" class="in-linea"
+      <td>{% if aperta %}<form method="post" action="{{ url_for('area.elimina_lettura_lezione', iid=iv.id, pid=l.id) }}" class="in-linea"
             onsubmit="return confirm('Togliere la lettura dalla lezione? Il record resta in Zotero.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="link-pericolo">togli</button></form>{% endif %}</td></tr>
@@ -25,11 +25,11 @@
   </table>
   {% endif %}
 
-  {% if not aperta %}<p class="avviso avviso-info">Contenuti dell'edizione chiusi il {{ ep.edizione.chiusura_contenuti|data_it }}:
+  {% if not aperta %}<p class="avviso avviso-info">Contenuti dell'edizione chiusi il {{ iv.edizione.chiusura_contenuti|data_it }}:
     per correzioni scrivi all'amministrazione della scuola.</p>
-  {% elif ep.letture|length < max_letture %}
+  {% elif iv.letture|length < max_letture %}
   <h2>{{ 'Aggiungi un sito web' if tipo == 'webpage' else 'Aggiungi un libro' }}</h2>
-  <p><a href="{{ url_for('area.letture_lezione', epid=ep.id, tipo='webpage' if tipo == 'book' else 'book') }}">oppure {{ 'aggiungi un sito web' if tipo == 'book' else 'aggiungi un libro' }}</a></p>
+  <p><a href="{{ url_for('area.letture_lezione', iid=iv.id, tipo='webpage' if tipo == 'book' else 'book') }}">oppure {{ 'aggiungi un sito web' if tipo == 'book' else 'aggiungi un libro' }}</a></p>
   <form method="post" class="modulo">
     {{ form.hidden_tag() }}
     {% for nome in campi %}

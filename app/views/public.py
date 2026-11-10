@@ -6,7 +6,7 @@ from ..guida import GUIDE, leggi
 
 from ..extensions import db
 from ..forms import DescrizioneForm, MaterialeUDForm
-from ..models import Candidatura, Edizione, EdizionePersona, PropostaLettura, ZoteroCollezione, ZoteroItem
+from ..models import Candidatura, Edizione, Intervento, PropostaLettura, ZoteroCollezione, ZoteroItem
 
 bp = Blueprint("public", __name__)
 
@@ -38,8 +38,7 @@ def edizione(slug):
 
 def pagine_interventi(ed):
     """Titolo → URL della pagina di lezioni e UD dell'edizione (per i link del programma)."""
-    out = {ep.titolo_lezione: url_for("public.intervento", slug=ed.slug, epid=ep.id)
-           for ep in ed.persone if ep.ruolo in ("relatore", "docente") and ep.titolo_lezione}
+    out = {iv.titolo: url_for("public.intervento", slug=ed.slug, iid=iv.id) for iv in ed.interventi if iv.titolo}
     out.update({c.titolo_ud: url_for("public.unita_didattica", slug=ed.slug, cid=c.id)
                 for c in ed.candidature if c.stato == "ammessa" and c.titolo_ud})
     return out
@@ -70,19 +69,20 @@ def _pagina_intervento(ed, titolo, **dati):
                            form=MaterialeUDForm() if admin else None, **dati)
 
 
-@bp.route("/edizioni/<slug>/interventi/<int:epid>")
-def intervento(slug, epid):
-    """Pagina di una lezione (relatore) o di una UD senza candidatura (docente, edizioni passate)."""
+@bp.route("/edizioni/<slug>/interventi/<int:iid>")
+def intervento(slug, iid):
+    """Pagina di una lezione o di una UD senza candidatura (edizioni passate), con tutti gli autori."""
     ed = _edizione_pubblica(slug)
-    ep = db.get_or_404(EdizionePersona, epid)
-    if ep.edizione_id != ed.id or ep.ruolo not in ("relatore", "docente"):
+    iv = db.get_or_404(Intervento, iid)
+    if iv.edizione_id != ed.id:
         abort(404)
     admin = current_user.is_authenticated and current_user.is_admin
+    affiliazioni = "; ".join(a.persona.affiliazione for a in iv.autori if a.persona.affiliazione)
     return _pagina_intervento(
-        ed, ep.titolo_lezione or "Senza titolo", ep=ep, ud=ep.ruolo == "docente",
-        autore=ep.persona.nome_completo, affiliazione=ep.persona.affiliazione,
-        abstract=ep.descrizione, materiali=ep.materiali, letture=ep.letture,
-        form_descrizione=DescrizioneForm(obj=ep) if admin else None)
+        ed, iv.titolo or "Senza titolo", iv=iv, ud=iv.ud,
+        autore=iv.nomi_autori, affiliazione=affiliazioni,
+        abstract=iv.descrizione, materiali=iv.materiali, letture=iv.letture,
+        form_descrizione=DescrizioneForm(obj=iv) if admin else None)
 
 
 @bp.route("/edizioni/<slug>/unita-didattiche/<int:cid>")
@@ -142,13 +142,13 @@ def _letture_edizione(ed):
 def _per_lezione(ed, titolo, items):
     """«Relatori» divisa per lezione (il legame lettura↔lezione lo conosce solo il sito);
     i record messi a mano in Zotero restano sotto «Relatori»."""
-    lezione_di = {p.zotero_key: p.lezione for p in PropostaLettura.query.join(EdizionePersona)
-                  .filter(EdizionePersona.edizione_id == ed.id, PropostaLettura.zotero_key.isnot(None))}
+    lezione_di = {p.zotero_key: p.intervento for p in PropostaLettura.query.join(Intervento)
+                  .filter(Intervento.edizione_id == ed.id, PropostaLettura.zotero_key.isnot(None))}
     gruppi = {}
     for i in items:
         gruppi.setdefault(lezione_di.get(i.key), []).append(i)
-    ordinate = sorted((ep for ep in gruppi if ep), key=lambda ep: ep.posizione)
-    out = [(f"{titolo} · {ep.nome_lezione}", gruppi[ep]) for ep in ordinate]
+    ordinate = sorted((iv for iv in gruppi if iv), key=lambda iv: iv.posizione)
+    out = [(f"{titolo} · {iv.nome_lezione}", gruppi[iv]) for iv in ordinate]
     return ([(titolo, gruppi[None])] if None in gruppi else []) + out
 
 

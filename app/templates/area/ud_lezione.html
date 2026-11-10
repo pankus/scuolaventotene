@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Unità didattiche {{ ep.edizione.anno }}{% endblock %}
+{% block title %}Unità didattiche {{ iv.edizione.anno }}{% endblock %}
 {% block content %}
 <p class="occhiello"><a href="{{ url_for('area.dashboard') }}">← Area personale</a></p>
-<h1>Unità didattiche dei docenti ammessi · {{ ep.edizione.anno }}</h1>
+<h1>Unità didattiche dei docenti ammessi · {{ iv.edizione.anno }}</h1>
 <p class="nota">Materiale riservato ai relatori dell'edizione: non va diffuso.</p>
 {% for c in candidature %}
 <div class="scheda">

@@ -3,7 +3,7 @@ valgono nell'edizione in cui la persona compare (EdizionePersona)."""
 from app.extensions import db
 from app.models import Candidatura, EdizionePersona, Materiale, Persona
 
-from conftest import crea_edizione, crea_utente
+from conftest import crea_edizione, crea_intervento, crea_utente
 from test_rotte import client_di
 
 
@@ -18,7 +18,7 @@ def _ep(u, ed, ruolo, **kw):
 def test_relatore_un_anno_docente_un_altro(app):
     ed24, ed26 = crea_edizione(stato="conclusa"), crea_edizione()
     u = crea_utente()
-    lez = _ep(u, ed24, "relatore", titolo_lezione="Il confino")
+    lez = crea_intervento(ed24, titolo="Il confino", utente=u)
     assert u.is_relatore and not u.is_comitato and u.ruoli() == [f"Relatore {ed24.anno}"]
     c = client_di(app, u)
     assert "Il confino" in c.get("/area/").get_data(as_text=True)
@@ -30,7 +30,7 @@ def test_relatore_un_anno_docente_un_altro(app):
 def test_relatore_e_comitato_nella_stessa_edizione(app):
     ed = crea_edizione()
     u = crea_utente()
-    _ep(u, ed, "relatore", titolo_lezione="Il confino")
+    crea_intervento(ed, titolo="Il confino", utente=u)
     _ep(u, ed, "comitato")
     assert u.is_relatore and u.comitato_di(ed)
     assert client_di(app, u).get(f"/admin/edizioni/{ed.id}/candidature").status_code == 200

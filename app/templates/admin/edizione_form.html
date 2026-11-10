@@ -41,26 +41,23 @@
   <span class="nota">Una lezione per ogni relatore delle voci «lezione» che non ce l'ha ancora.</span>
 </form>
 
-<h2 id="persone">Comitato scientifico, relatori e UD dei docenti</h2>
-<p class="nota">I ruoli valgono per edizione. Il relatore si registra dal sito e qui colleghi il suo account
-  alla lezione: potrà caricarne i materiali. Il comitato si aggiunge da <a href="{{ url_for('admin.utenti') }}">Utenti</a>
-  («aggiungi» con ruolo «Comitato scientifico»): vedrà e valuterà solo le candidature di questa edizione.
-  Le UD «Docente» sono quelle delle edizioni passate (create dal programma): materiali, abstract e
-  letture si aggiungono dalla loro pagina; l'account del docente si può già collegare, ma per ora
-  non gli dà accesso alla UD.</p>
+<h2 id="persone">Persone dell'edizione</h2>
+<p class="nota">I ruoli valgono per edizione: la stessa persona può essere comitato e relatore qui e
+  docente in un'altra edizione. L'account si collega alla persona (vale per tutti i suoi ruoli): il
+  relatore così carica materiali e bibliografia delle sue lezioni, il comitato vede e valuta solo le
+  candidature di questa edizione. Con un titolo, «Aggiungi» crea anche una lezione (relatore) o una UD
+  (docente), anche se la persona ne ha già una.</p>
 <ul class="persone">
-  {% for ep in ed.persone %}
+  {% for ep in ed.persone|sort(attribute='ruolo') %}{% set af = account_forms[ep.id] %}
   <li>{{ ep.persona.nome_completo }} · {{ ep.persona.affiliazione or '' }} <em>({{ RUOLI_EDIZIONE.get(ep.ruolo, ep.ruolo) }})</em>
-    {% if ep.ruolo != 'comitato' %}<small><a href="{{ url_for('public.intervento', slug=ed.slug, epid=ep.id) }}">{{ ep.titolo_lezione or 'senza titolo' }}</a> ·
-      {{ 'account: ' ~ ep.persona.utente.email if ep.persona.utente else 'nessun account collegato' }}</small>{% endif %}
+    <small>{{ 'account: ' ~ ep.persona.utente.email if ep.persona.utente else 'nessun account collegato' }}</small>
     <form method="post" action="{{ url_for('admin.elimina_persona', epid=ep.id) }}" style="display:inline">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo">rimuovi</button></form>
-    {% if ep.ruolo != 'comitato' %}{% set lf = lezione_forms[ep.id] %}
-    <form method="post" action="{{ url_for('admin.aggiorna_lezione', epid=ep.id) }}" class="modulo modulo-riga">
-      {{ lf.hidden_tag() }}
-      {{ campo(lf.titolo_lezione) }}{{ campo(lf.ordine) }}{{ campo(lf.utente_id) }}
+    <details><summary>account</summary>
+    <form method="post" action="{{ url_for('admin.account_persona', epid=ep.id) }}" class="modulo modulo-riga">
+      {{ af.hidden_tag() }}{{ campo(af.utente_id) }}
       <button class="btn btn-piccolo">Salva</button>
-    </form>{% endif %}</li>
+    </form></details></li>
   {% endfor %}
 </ul>
 <form method="post" action="{{ url_for('admin.aggiungi_persona', eid=ed.id) }}" class="modulo modulo-riga">
@@ -68,6 +65,36 @@
   {% for f in persona_form if f.type != 'CSRFTokenField' %}{{ campo(f) }}{% endfor %}
   <button class="btn btn-piccolo">Aggiungi</button>
 </form>
+
+<h2 id="interventi">Lezioni e unità didattiche</h2>
+<p class="nota">Ogni lezione o UD ha uno o più autori, scelti tra le persone dell'edizione con il ruolo
+  giusto (relatori per le lezioni, docenti per le UD). Materiali, abstract e letture si aggiungono dalla
+  loro pagina. Le UD delle candidature ammesse sono a parte, nella graduatoria.</p>
+<ul class="persone">
+  {% for iv in ed.interventi %}{% set ivf = intervento_forms[iv.id] %}
+  {% set ruolo = 'docente' if iv.ud else 'relatore' %}
+  <li><em>{{ TIPI_INTERVENTO[iv.tipo] }}</em> ·
+    <a href="{{ url_for('public.intervento', slug=ed.slug, iid=iv.id) }}">{{ iv.titolo or 'senza titolo' }}</a>
+    <form method="post" action="{{ url_for('admin.elimina_intervento', iid=iv.id) }}" style="display:inline"
+          onsubmit="return confirm('Eliminare l\'intervento con le sue letture? I materiali restano nell\'edizione.')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo">elimina</button></form>
+    <br><small>Autori:
+    {% for a in iv.autori %}{{ a.persona.nome_completo }}
+      <form method="post" action="{{ url_for('admin.autori_intervento', iid=iv.id) }}" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo" name="togli" value="{{ a.id }}">togli</button></form>{% if not loop.last %} · {% endif %}
+    {% else %}nessuno{% endfor %}</small>
+    {% set candidati = ed.persone|selectattr('ruolo', 'equalto', ruolo)|reject('in', iv.autori)|list %}
+    {% if candidati %}<form method="post" action="{{ url_for('admin.autori_intervento', iid=iv.id) }}" class="in-linea">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <select name="aggiungi" aria-label="Autore da aggiungere">{% for a in candidati %}<option value="{{ a.id }}">{{ a.persona.nome_completo }}</option>{% endfor %}</select>
+      <button class="btn btn-piccolo">Aggiungi autore</button></form>{% endif %}
+    <form method="post" action="{{ url_for('admin.aggiorna_intervento', iid=iv.id) }}" class="modulo modulo-riga">
+      {{ ivf.hidden_tag() }}{{ campo(ivf.titolo) }}{{ campo(ivf.ordine) }}
+      <button class="btn btn-piccolo">Salva</button>
+    </form></li>
+  {% else %}<li class="nota">Nessuna lezione o UD: aggiungi un relatore o un docente con il titolo, o crea le lezioni dal programma.</li>
+  {% endfor %}
+</ul>
 {% endif %}
 {% endblock %}
 {% block script %}<script src="{{ url_for('static', filename='js/ordina.js') }}" defer></script>{% endblock %}

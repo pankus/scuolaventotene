@@ -8,17 +8,12 @@ from app.extensions import db
 from app.models import Candidatura, EdizionePersona, Materiale, Persona, PropostaLettura
 from app.zotero_sync import sincronizza
 
-from conftest import crea_edizione, crea_utente
+from conftest import crea_edizione, crea_intervento, crea_utente
 from test_rotte import client_di
 
 
 def crea_lezione(ed=None, utente=None, titolo="Esilio e migrazione", ordine=1):
-    ed = ed or crea_edizione(stato="chiusa")
-    p = Persona(nome="Stefano", cognome="Gallo", utente=utente)
-    ep = EdizionePersona(edizione=ed, persona=p, ruolo="relatore", titolo_lezione=titolo, ordine=ordine)
-    db.session.add(ep)
-    db.session.commit()
-    return ep
+    return crea_intervento(ed or crea_edizione(stato="chiusa"), titolo=titolo, ordine=ordine, utente=utente)
 
 
 def pdf(nome="slide.pdf"):
@@ -27,37 +22,39 @@ def pdf(nome="slide.pdf"):
 
 # ------------------------------------------------------------------ admin
 def test_admin_collega_account(app):
-    ep = crea_lezione()
+    iv = crea_lezione()
+    (ep,) = iv.autori
     rel = crea_utente(ruolo="relatore")
     c = client_di(app, crea_utente(ruolo="admin"))
-    html = c.get(f"/admin/edizioni/{ep.edizione_id}").get_data(as_text=True)
+    html = c.get(f"/admin/edizioni/{iv.edizione_id}").get_data(as_text=True)
     assert rel.email in html  # tra gli account proponibili
-    r = c.post(f"/admin/edizioni-persone/{ep.id}/lezione",
-               data={f"lez{ep.id}-titolo_lezione": "Titolo nuovo", f"lez{ep.id}-ordine": "3",
-                     f"lez{ep.id}-utente_id": str(rel.id)})
-    assert r.status_code == 302
-    db.session.refresh(ep)
-    assert (ep.titolo_lezione, ep.ordine, ep.persona.utente_id) == ("Titolo nuovo", 3, rel.id)
-    assert rel.lezioni() == [ep]
+    assert c.post(f"/admin/edizioni-persone/{ep.id}/account",
+                  data={f"acc{ep.id}-utente_id": str(rel.id)}).status_code == 302
+    assert c.post(f"/admin/interventi/{iv.id}",
+                  data={f"iv{iv.id}-titolo": "Titolo nuovo", f"iv{iv.id}-ordine": "3"}).status_code == 302
+    db.session.expire_all()
+    assert (iv.titolo, iv.ordine, ep.persona.utente_id) == ("Titolo nuovo", 3, rel.id)
+    assert rel.lezioni() == [iv]
 
 
 def test_account_su_una_sola_persona(app):
     rel = crea_utente(ruolo="relatore")
     crea_lezione(utente=rel)
-    altra = crea_lezione()
+    (altra,) = crea_lezione().autori
     c = client_di(app, crea_utente(ruolo="admin"))
-    c.post(f"/admin/edizioni-persone/{altra.id}/lezione",
-           data={f"lez{altra.id}-titolo_lezione": "X", f"lez{altra.id}-ordine": "0",
-                 f"lez{altra.id}-utente_id": str(rel.id)})
+    c.post(f"/admin/edizioni-persone/{altra.id}/account", data={f"acc{altra.id}-utente_id": str(rel.id)})
     db.session.refresh(altra)
     assert altra.persona.utente_id is None
 
 
 @pytest.mark.parametrize("ruolo", ["comitato", "relatore", "docente"])
 def test_solo_admin_collega(app, ruolo):
-    ep = crea_lezione()
+    iv = crea_lezione()
     c = client_di(app, crea_utente(ruolo=ruolo))
-    assert c.post(f"/admin/edizioni-persone/{ep.id}/lezione", data={}).status_code == 403
+    assert c.post(f"/admin/edizioni-persone/{iv.autori[0].id}/account", data={}).status_code == 403
+    assert c.post(f"/admin/interventi/{iv.id}", data={}).status_code == 403
+    assert c.post(f"/admin/interventi/{iv.id}/autori", data={}).status_code == 403
+    assert c.post(f"/admin/interventi/{iv.id}/elimina").status_code == 403
 
 
 def test_relatore_non_entra_nel_back_office(app):
@@ -76,7 +73,7 @@ def test_dashboard_e_materiale_della_lezione(app):
                      "file": pdf()}, content_type="multipart/form-data")
     assert r.status_code == 302
     m = Materiale.query.one()
-    assert (m.lezione_id, m.edizione_id, m.stato) == (ep.id, ep.edizione_id, "in_revisione")
+    assert (m.intervento_id, m.edizione_id, m.stato) == (ep.id, ep.edizione_id, "in_revisione")
 
 
 def test_lezione_altrui(app):
@@ -105,7 +102,7 @@ def test_archivio_separa_lezioni(app):
     ep2 = crea_lezione(ed, titolo="Seconda", ordine=2)
     ep1 = crea_lezione(ed, titolo="Prima", ordine=None)  # ordine mancante (righe vecchie)
     for titolo, lez in (("Materiale B", ep2), ("Materiale A", ep1), ("Bando", None)):
-        db.session.add(Materiale(edizione=ed, titolo=titolo, lezione=lez, url="https://x.it",
+        db.session.add(Materiale(edizione=ed, titolo=titolo, intervento=lez, url="https://x.it",
                                  stato="pubblicato", visibilita="pubblico"))
     db.session.commit()
     html = client_di(app).get(f"/archivio/{ed.slug}").get_data(as_text=True)
@@ -268,7 +265,7 @@ def _voce(c, ed, **campi):
 
 def _lezioni(ed):
     db.session.expire_all()
-    return sorted((ep.persona.cognome, ep.titolo_lezione) for ep in ed.persone if ep.ruolo == "relatore")
+    return sorted((a.persona.cognome, iv.titolo) for iv in ed.interventi if not iv.ud for a in iv.autori)
 
 
 def test_voce_lezione_crea_le_lezioni(app):
@@ -336,7 +333,7 @@ def test_contenuti_chiusi_dopo_la_data(app):
     r = client_di(app, admin).post(f"/area/materiali/nuovo?lezione={ep.id}",
                                    data={"edizione_id": ed.id, "titolo": "Slide", "tipo": "slide",
                                          "file": pdf()}, content_type="multipart/form-data")
-    assert r.status_code == 302 and Materiale.query.one().lezione_id == ep.id
+    assert r.status_code == 302 and Materiale.query.one().intervento_id == ep.id
 
 
 def test_docente_contenuti_chiusi(app):

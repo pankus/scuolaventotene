@@ -8,7 +8,7 @@
   <tr><th>Edizione</th><th>Titolo</th><th>Caricato da</th><th>File</th><th>Stato / visibilità</th><th></th></tr>
   {% for m in materiali %}
   <tr><td>{{ m.edizione.anno }}</td><td><strong>{{ m.titolo }}</strong><br><small>{{ m.autori or '' }} · {{ TIPI_MATERIALE.get(m.tipo) }}</small></td>
-    <td>{{ m.caricato_da.nome_completo if m.caricato_da else '' }}{% if m.lezione %}<br><small>Relatore · {{ m.lezione.titolo_lezione or 'lezione' }}</small>{% endif %}{% if m.candidatura %}<br><small>Docente · UD {{ m.candidatura.titolo_ud or 'senza titolo' }}</small>{% endif %}</td>
+    <td>{{ m.caricato_da.nome_completo if m.caricato_da else '' }}{% if m.intervento %}<br><small>{{ TIPI_INTERVENTO[m.intervento.tipo] }} · {{ m.intervento.titolo or 'senza titolo' }}</small>{% endif %}{% if m.candidatura %}<br><small>Docente · UD {{ m.candidatura.titolo_ud or 'senza titolo' }}</small>{% endif %}</td>
     <td>{% if m.file_path %}<a href="{{ url_for('archivio.scarica', mid=m.id) }}">{{ m.file_nome }}</a> ({{ m.dimensione|dimensione }}){% elif m.url %}<a href="{{ m.url }}">link</a>{% endif %}</td>
     <td>{% if current_user.is_admin %}
       <form method="post" action="{{ url_for('admin.aggiorna_materiale', mid=m.id) }}" class="in-linea">

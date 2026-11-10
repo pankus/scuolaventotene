@@ -11,17 +11,13 @@ from app.models import (Candidatura, EdizionePersona, Materiale, Persona, Progra
                         PropostaLettura, ZoteroItem)
 from app.ricerca_libri import scarica_copertine
 
-from conftest import crea_edizione, crea_utente
+from conftest import crea_edizione, crea_intervento, crea_utente
 from test_rotte import client_di
 
 
-def crea_ud(ed=None, ruolo="docente", titolo="Albi illustrati dei fuoriusciti"):
-    ed = ed or crea_edizione(stato="conclusa")
-    ep = EdizionePersona(edizione=ed, persona=Persona(nome="Caterina", cognome="Inesi"),
-                         ruolo=ruolo, titolo_lezione=titolo)
-    db.session.add(ep)
-    db.session.commit()
-    return ep
+def crea_ud(ed=None, tipo="ud", titolo="Albi illustrati dei fuoriusciti"):
+    return crea_intervento(ed or crea_edizione(stato="conclusa"), tipo=tipo, titolo=titolo,
+                           nome="Caterina", cognome="Inesi")
 
 
 def materiale(**kw):
@@ -45,7 +41,7 @@ def test_ud_dal_programma_idempotente(app):
     assert ud_dal_programma(ed) == 2
     assert ud_dal_programma(ed) == 0
     db.session.commit()
-    ud = sorted((ep.titolo_lezione, ep.persona.cognome) for ep in ed.persone if ep.ruolo == "docente")
+    ud = sorted((iv.titolo, a.persona.cognome) for iv in ed.interventi if iv.ud for a in iv.autori)
     assert ud == [("UD due", "Ceccacci"), ("UD uno", "Alvaro")]
 
 
@@ -59,11 +55,11 @@ def test_lezioni_dal_programma(app):
         db.session.add(ProgrammaVoce(edizione=ed, giorno=date(2026, 10, 30), tipo=tipo,
                                      titolo=titolo, relatori=chi, ordine=i))
     db.session.commit()
-    assert lezioni_dal_programma(ed) == 3
+    assert lezioni_dal_programma(ed) == 2  # una lezione per voce, anche a due voci
     assert lezioni_dal_programma(ed) == 0
     db.session.commit()
-    lezioni = sorted((ep.persona.cognome, ep.titolo_lezione) for ep in ed.persone if ep.ruolo == "relatore")
-    assert lezioni == [("Di Sanzo", "Profughi"), ("Ferrarese", "Profughi"), ("Gallo", "Asilo")]
+    lezioni = {iv.titolo: [a.persona.cognome for a in iv.autori] for iv in ed.interventi}
+    assert lezioni == {"Asilo": ["Gallo"], "Profughi": ["Di Sanzo", "Ferrarese"]}
     assert Persona.query.filter_by(cognome="Di Sanzo").count() == 1
 
 
@@ -71,9 +67,9 @@ def test_lezioni_dal_programma(app):
 def test_pagina_ud_e_lezione(app):
     ud = crea_ud()
     ud.descrizione = "Un **abstract**"
-    materiale(edizione=ud.edizione, lezione=ud)
-    materiale(edizione=ud.edizione, lezione=ud, titolo="Bozza nascosta").stato = "in_revisione"
-    materiale(edizione=ud.edizione, lezione=ud, titolo="Solo comitato").visibilita = "privato"
+    materiale(edizione=ud.edizione, intervento=ud)
+    materiale(edizione=ud.edizione, intervento=ud, titolo="Bozza nascosta").stato = "in_revisione"
+    materiale(edizione=ud.edizione, intervento=ud, titolo="Solo comitato").visibilita = "privato"
     db.session.commit()
     html = client_di(app).get(f"/edizioni/{ud.edizione.slug}/interventi/{ud.id}").get_data(as_text=True)
     assert "Albi illustrati dei fuoriusciti" in html and "Caterina Inesi" in html
@@ -81,25 +77,24 @@ def test_pagina_ud_e_lezione(app):
     assert "Slide della UD" in html
     assert "Bozza nascosta" not in html and "Solo comitato" not in html
     assert "Carica un materiale" not in html  # niente riquadro admin per gli anonimi
-    lez = crea_ud(ed=ud.edizione, ruolo="relatore", titolo="Esilio e migrazione")
+    lez = crea_ud(ed=ud.edizione, tipo="relazione", titolo="Esilio e migrazione")
     assert "Lezione" in client_di(app).get(f"/edizioni/{ud.edizione.slug}/interventi/{lez.id}").get_data(as_text=True)
 
 
 def test_pagina_404(app):
     ud = crea_ud()
     altra = crea_edizione(stato="conclusa")
-    comitato = crea_ud(ed=ud.edizione, ruolo="comitato")
     bozza = crea_ud(ed=crea_edizione(stato="bozza"))
     c = client_di(app)
     assert c.get(f"/edizioni/{altra.slug}/interventi/{ud.id}").status_code == 404
-    assert c.get(f"/edizioni/{ud.edizione.slug}/interventi/{comitato.id}").status_code == 404
+    assert c.get(f"/edizioni/{ud.edizione.slug}/interventi/9999").status_code == 404
     assert c.get(f"/edizioni/{bozza.edizione.slug}/interventi/{bozza.id}").status_code == 404
 
 
 def test_programma_collega_la_pagina(app):
     ud = crea_ud()
     db.session.add(ProgrammaVoce(edizione=ud.edizione, giorno=date(2023, 10, 30),
-                                 tipo="unita_didattiche", titolo=ud.titolo_lezione, relatori="Caterina Inesi"))
+                                 tipo="unita_didattiche", titolo=ud.titolo, relatori="Caterina Inesi"))
     db.session.commit()
     html = client_di(app).get(f"/edizioni/{ud.edizione.slug}").get_data(as_text=True)
     assert f'href="/edizioni/{ud.edizione.slug}/interventi/{ud.id}"' in html
@@ -137,7 +132,7 @@ def test_admin_carica_nella_ud(app, ruolo, atteso):
     assert r.status_code == atteso
     m = Materiale.query.filter_by(titolo="Slide 2023").first()
     if atteso == 302:
-        assert (m.lezione_id, m.edizione_id, m.stato) == (ud.id, ud.edizione_id, "pubblicato")
+        assert (m.intervento_id, m.edizione_id, m.stato) == (ud.id, ud.edizione_id, "pubblicato")
         r = c.post(f"/admin/interventi/{ud.id}/descrizione", data={"descrizione": "Abstract nuovo"})
         db.session.refresh(ud)
         assert ud.descrizione == "Abstract nuovo"

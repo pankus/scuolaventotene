@@ -6,7 +6,7 @@ from flask import g
 
 from app import create_app
 from app.extensions import db
-from app.models import Edizione, EdizionePersona, Persona, Utente
+from app.models import RUOLO_AUTORE, Edizione, EdizionePersona, Intervento, Persona, Utente
 from config import TestConfig
 
 PASSWORD = "password-di-test"
@@ -75,6 +75,20 @@ def crea_edizione(stato="aperta", scadenza=date.today() + timedelta(days=10)):
         _nel_comitato(u, ed)
     db.session.commit()
     return ed
+
+
+def crea_intervento(ed, tipo="relazione", titolo="Esilio e migrazione", ordine=1, utente=None,
+                    nome="Stefano", cognome="Gallo"):
+    """Lezione (o UD) con un autore: la persona (legata a `utente`, se c'è) con il ruolo giusto."""
+    p = (utente.persona if utente else None) or Persona(nome=nome, cognome=cognome, utente=utente)
+    ep = EdizionePersona.query.filter_by(edizione_id=ed.id, persona_id=p.id, ruolo=RUOLO_AUTORE[tipo]).first() \
+        if p.id else None
+    ep = ep or EdizionePersona(edizione=ed, persona=p, ruolo=RUOLO_AUTORE[tipo])
+    iv = Intervento(edizione=ed, tipo=tipo, titolo=titolo, ordine=ordine)
+    db.session.add_all([ep, iv])
+    iv.aggiungi_autore(ep)
+    db.session.commit()
+    return iv
 
 
 def login(client, utente):
