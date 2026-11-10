@@ -41,7 +41,7 @@ def dashboard():
         Materiale.creato_il.desc()).all()
     return render_template("area/dashboard.html", aperte=[e for e in aperte if e.id not in gia],
                            candidature=current_user.candidature, materiali=materiali,
-                           lezioni=current_user.lezioni() if current_user.is_relatore else [])
+                           lezioni=current_user.lezioni())
 
 
 @bp.route("/profilo", methods=["GET", "POST"])
@@ -198,7 +198,7 @@ def ritira(cid):
 @bp.route("/candidatura/<int:cid>/file")
 def file_candidatura(cid):
     c = db.get_or_404(Candidatura, cid)
-    if c.utente_id != current_user.id and not current_user.is_comitato and not _relatore_di(c):
+    if c.utente_id != current_user.id and not current_user.comitato_di(c.edizione_id) and not _relatore_di(c):
         abort(404)
     if not c.file_path:
         abort(404)
@@ -257,7 +257,7 @@ def _mia_lezione(epid):
 
 def _relatore_di(c):
     """Il relatore vede le UD dei docenti ammessi nelle edizioni in cui tiene una lezione."""
-    return (current_user.is_relatore and c.stato == "ammessa"
+    return (c.stato == "ammessa"
             and any(ep.edizione_id == c.edizione_id for ep in current_user.lezioni()))
 
 

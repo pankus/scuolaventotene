@@ -122,8 +122,8 @@ comitato e si correggono o si eliminano finché il comitato non li ha riveduti.
 
 ## Relatori
 
-Il relatore si registra come tutti; poi l'amministrazione gli assegna il ruolo e collega
-l'account alla sua lezione. Da quel momento l'area personale mostra **Le mie lezioni**.
+Il relatore si registra come tutti; poi l'amministrazione collega l'account alla sua lezione
+(lo stesso account può essere docente in un'altra edizione). Da quel momento l'area personale mostra **Le mie lezioni**.
 
 ### Le mie lezioni
 

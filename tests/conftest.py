@@ -6,11 +6,12 @@ from flask import g
 
 from app import create_app
 from app.extensions import db
-from app.models import Edizione, Utente
+from app.models import Edizione, EdizionePersona, Persona, Utente
 from config import TestConfig
 
 PASSWORD = "password-di-test"
 _seq = count(1)
+_comitato_ovunque = []  # utenti «comitato» senza edizioni indicate: entrano in tutte quelle del test
 
 
 @pytest.fixture
@@ -24,6 +25,7 @@ def app(tmp_path):
     def _azzera_utente():
         g.pop("_login_user", None)
 
+    _comitato_ovunque.clear()
     with app.app_context():
         db.create_all()
         yield app
@@ -36,14 +38,30 @@ def client(app):
     return app.test_client()
 
 
-def crea_utente(ruolo="docente", completo=True, verificata=True):
+def _nel_comitato(u, ed):
+    if not u.persona:
+        db.session.add(Persona(nome=u.nome, cognome=u.cognome, utente=u))
+        db.session.flush()
+    db.session.add(EdizionePersona(edizione=ed, persona=u.persona, ruolo="comitato"))
+
+
+def crea_utente(ruolo="docente", completo=True, verificata=True, edizioni=None):
+    """ruolo "admin" = amministratore; "comitato" = nel comitato delle `edizioni` indicate, o di
+    tutte quelle del test (anche create dopo) se non se ne indicano. Relatore e docente non
+    cambiano nulla: valgono le lezioni e le candidature."""
     n = next(_seq)
-    u = Utente(email=f"utente{n}@esempio.it", nome="Nome", cognome=f"Cognome{n}", ruolo=ruolo,
+    u = Utente(email=f"utente{n}@esempio.it", nome="Nome", cognome=f"Cognome{n}", admin=ruolo == "admin",
                email_verificata=verificata)
     u.set_password(PASSWORD)
     if completo:
         u.data_nascita, u.telefono, u.residenza = date(1980, 1, 1), "000 0000000", "Città di prova"
     db.session.add(u)
+    if ruolo == "comitato":
+        if edizioni is None:
+            _comitato_ovunque.append(u)
+            edizioni = Edizione.query.all()
+        for ed in edizioni:
+            _nel_comitato(u, ed)
     db.session.commit()
     return u
 
@@ -53,6 +71,8 @@ def crea_edizione(stato="aperta", scadenza=date.today() + timedelta(days=10)):
     ed = Edizione(numero=n, anno=2000 + n, slug=f"edizione-{n}", titolo=f"Edizione {n}",
                   stato=stato, scadenza_candidature=scadenza)
     db.session.add(ed)
+    for u in _comitato_ovunque:
+        _nel_comitato(u, ed)
     db.session.commit()
     return ed
 

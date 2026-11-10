@@ -42,8 +42,9 @@
 </form>
 
 <h2 id="persone">Comitato scientifico, relatori e UD dei docenti</h2>
-<p class="nota">Il relatore si registra dal sito; poi in <a href="{{ url_for('admin.utenti') }}">Utenti</a> gli dai
-  il ruolo «Relatore» e qui colleghi il suo account alla lezione: potrà caricarne i materiali.
+<p class="nota">I ruoli valgono per edizione. Il relatore si registra dal sito e qui colleghi il suo account
+  alla lezione: potrà caricarne i materiali. Il comitato si aggiunge da <a href="{{ url_for('admin.utenti') }}">Utenti</a>
+  («aggiungi» con ruolo «Comitato scientifico»): vedrà e valuterà solo le candidature di questa edizione.
   Le UD «Docente» sono quelle delle edizioni passate (create dal programma): materiali, abstract e
   letture si aggiungono dalla loro pagina; l'account del docente si può già collegare, ma per ora
   non gli dà accesso alla UD.</p>

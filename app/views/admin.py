@@ -5,7 +5,6 @@ import io
 from flask import (Blueprint, Response, abort, current_app, flash, redirect, render_template,
                    request, url_for)
 from flask_login import current_user, login_required
-from sqlalchemy import or_
 
 from ..edizioni_precedenti import lezioni_dal_programma
 from ..extensions import db
@@ -13,7 +12,7 @@ from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il
 from ..forms import (CopertinaForm, DescrizioneForm, EmailPartecipantiForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, LezioneForm, MaterialeAdminForm,
                      MaterialeUDForm, PersonaEdizioneForm, ProgrammaVoceForm, StatoCandidaturaForm,
                      ValutazioneForm)
-from ..models import (ESITI_CANDIDATURA, GRUPPI_PARTECIPANTI, RUOLI, RUOLI_EDIZIONE, STATI_MATERIALE, VISIBILITA, Candidatura,
+from ..models import (ESITI_CANDIDATURA, GRUPPI_PARTECIPANTI, RUOLI_EDIZIONE, STATI_MATERIALE, VISIBILITA, Candidatura,
                       Edizione, EdizionePersona, Materiale, Persona, ProgrammaVoce,
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroCollezione, ZoteroItem,
                       adesso)
@@ -35,13 +34,31 @@ def _protezione():
     """Tutto il back-office è riservato a comitato e admin; alcune azioni solo admin."""
 
 
+def _edizioni_visibili():
+    """Edizioni del back-office: tutte per l'admin, quelle del proprio comitato per gli altri."""
+    q = Edizione.query.order_by(Edizione.anno.desc())
+    return q if current_user.is_admin else q.filter(Edizione.id.in_(current_user.edizioni_comitato()))
+
+
+def _filtra_edizioni(q, colonna):
+    """Restringe una query alle edizioni del comitato dell'utente (l'admin vede tutto)."""
+    return q if current_user.is_admin else q.filter(colonna.in_(current_user.edizioni_comitato()))
+
+
+def _edizione_comitato(eid):
+    ed = db.get_or_404(Edizione, eid)
+    return ed if current_user.comitato_di(ed) else abort(404)
+
+
 @bp.route("/")
 def dashboard():
     return render_template(
         "admin/dashboard.html",
-        edizioni=Edizione.query.order_by(Edizione.anno.desc()).all(),
-        da_valutare=Candidatura.query.filter(Candidatura.stato.in_(["inviata", "in_valutazione"])).count(),
-        materiali_revisione=Materiale.query.filter_by(stato="in_revisione").count(),
+        edizioni=_edizioni_visibili().all(),
+        da_valutare=_filtra_edizioni(Candidatura.query, Candidatura.edizione_id)
+        .filter(Candidatura.stato.in_(["inviata", "in_valutazione"])).count(),
+        materiali_revisione=_filtra_edizioni(Materiale.query, Materiale.edizione_id)
+        .filter_by(stato="in_revisione").count(),
         letture_da_rivedere=_letture().filter(PropostaLettura.stato == "proposta").count(),
         n_utenti=Utente.query.count(),
         n_biblio=ZoteroItem.query.filter_by(eliminato=False).count(),
@@ -95,8 +112,7 @@ def _form_edizione(ed):
 def _lezione_form(ep):
     f = LezioneForm(prefix=f"lez{ep.id}", data={"titolo_lezione": ep.titolo_lezione, "ordine": ep.ordine,
                                                 "utente_id": ep.persona.utente_id or 0})
-    relatori = Utente.query.filter(or_(Utente.ruolo == ep.ruolo, Utente.id == ep.persona.utente_id)) \
-        .order_by(Utente.cognome, Utente.nome)
+    relatori = Utente.query.order_by(Utente.cognome, Utente.nome)  # qualsiasi account: il ruolo è l'EP
     if ep.ruolo == "docente":
         f.titolo_lezione.label.text, f.utente_id.label.text = "Titolo della UD", "Account del docente"
     f.utente_id.choices = [(0, "— nessun account —")] + [(u.id, f"{u.cognome} {u.nome} ({u.email})")
@@ -247,13 +263,13 @@ def _graduatoria(ed):
 
 @bp.route("/edizioni/<int:eid>/candidature")
 def candidature(eid):
-    ed = db.get_or_404(Edizione, eid)
+    ed = _edizione_comitato(eid)
     return render_template("admin/candidature.html", ed=ed, candidature=_graduatoria(ed))
 
 
 @bp.route("/edizioni/<int:eid>/candidature.csv")
 def candidature_csv(eid):
-    ed = db.get_or_404(Edizione, eid)
+    ed = _edizione_comitato(eid)
     buf = io.StringIO()
     w = csv.writer(buf, delimiter=";")
     w.writerow(["Pos.", "Cognome", "Nome", "Email", "Tipo", "Titolo UD", "Originalità",
@@ -271,7 +287,7 @@ def candidature_csv(eid):
 @bp.route("/candidature/<int:cid>", methods=["GET", "POST"])
 def candidatura(cid):
     c = db.get_or_404(Candidatura, cid)
-    if c.stato == "bozza":
+    if c.stato == "bozza" or not current_user.comitato_di(c.edizione_id):
         abort(404)
     mia = Valutazione.query.filter_by(candidatura_id=c.id, valutatore_id=current_user.id).first()
     vform = ValutazioneForm(obj=mia, prefix="val")
@@ -316,7 +332,7 @@ def materiali():
             abort(403)
         if _pubblica_materiale(form, edizione_id=form.edizione_id.data):
             return redirect(url_for("admin.materiali"))
-    elenco = Materiale.query.order_by(
+    elenco = _filtra_edizioni(Materiale.query, Materiale.edizione_id).order_by(
         (Materiale.stato == "in_revisione").desc(), Materiale.creato_il.desc()).all()
     return render_template("admin/materiali.html", form=form, materiali=elenco)
 
@@ -468,14 +484,16 @@ def item_zotero(key):
 
 # ------------------------------------------------------------------ letture proposte
 def _letture():
-    """Proposte delle candidature inviate (quelle in bozza le vede solo il docente)."""
-    return PropostaLettura.query.join(Candidatura).filter(Candidatura.stato != "bozza")
+    """Proposte delle candidature inviate (quelle in bozza le vede solo il docente), delle
+    edizioni del proprio comitato."""
+    return _filtra_edizioni(PropostaLettura.query.join(Candidatura), Candidatura.edizione_id) \
+        .filter(Candidatura.stato != "bozza")
 
 
 @bp.route("/letture")
 def letture():
-    edizioni = Edizione.query.order_by(Edizione.anno.desc()).all()
-    ed = db.session.get(Edizione, request.args.get("edizione", type=int) or 0) or \
+    edizioni = _edizioni_visibili().all()
+    ed = next((e for e in edizioni if e.id == request.args.get("edizione", type=int)), None) or \
         (edizioni[0] if edizioni else None)
     elenco = []
     if ed:
@@ -595,7 +613,7 @@ def _torna_a_utenti():
 @admin_required
 def aggiorna_utente(uid):
     """Nome e cognome (anche i propri: gli account importati possono averli sbagliati),
-    ruolo e attivo (non i propri)."""
+    amministratore e attivo (non i propri)."""
     u = db.get_or_404(Utente, uid)
     nome, cognome = request.form.get("nome", "").strip(), request.form.get("cognome", "").strip()
     if not (nome and cognome) or len(nome) > 100 or len(cognome) > 100:
@@ -603,8 +621,7 @@ def aggiorna_utente(uid):
         return _torna_a_utenti()
     u.nome, u.cognome = nome, cognome
     if u.id != current_user.id:
-        if request.form.get("ruolo") in RUOLI:
-            u.ruolo = request.form["ruolo"]
+        u.admin = request.form.get("admin") == "1"
         u.attivo = request.form.get("attivo") == "1"
     db.session.commit()
     flash(f"Utente {u.email} aggiornato.", "ok")
@@ -615,8 +632,8 @@ def aggiorna_utente(uid):
 @admin_required
 def edizione_utente(uid):
     """Con `epid`: sposta quella UD/lezione dell'account in un'altra edizione (titolo, materiali e
-    letture vanno con lei). Senza: aggiunge l'account all'edizione, creando la UD o la lezione
-    (relatore → lezione, comitato/admin → comitato, altrimenti UD del docente)."""
+    letture vanno con lei). Senza: aggiunge l'account all'edizione con il `ruolo` scelto
+    (RUOLI_EDIZIONE): lezione del relatore, UD del docente o comitato."""
     u = db.get_or_404(Utente, uid)
     ed = db.get_or_404(Edizione, request.form.get("edizione", 0, type=int))
     epid = request.form.get("epid", type=int)
@@ -638,7 +655,10 @@ def edizione_utente(uid):
             msg += " Le letture già in Zotero restano nella collezione della vecchia edizione."
         flash(msg, "ok")
     else:
-        ruolo = {"relatore": "relatore", "comitato": "comitato", "admin": "comitato"}.get(u.ruolo, "docente")
+        ruolo = request.form.get("ruolo")
+        if ruolo not in RUOLI_EDIZIONE:
+            flash("Scegli il ruolo nell'edizione.", "errore")
+            return _torna_a_utenti()
         # la persona dell'account, o quella con lo stesso nome già nel programma e senza account
         p = u.persona or Persona.query.filter_by(nome=u.nome, cognome=u.cognome, utente_id=None).first() \
             or Persona(nome=u.nome, cognome=u.cognome)
@@ -683,7 +703,7 @@ GRUPPI_EMAIL = {"relatori": "relatore", "docenti": "docente", "comitato": "comit
 def _partecipanti(eid, gruppi, solo_attivi=True):
     """(utenti, nomi senza account) dei gruppi scelti, per un'edizione o tutte (eid 0).
     relatori/docenti/comitato: persone dell'edizione con un account; docenti anche le candidature
-    ammesse; comitato anche gli utenti con ruolo comitato o admin; candidati: candidature inviate."""
+    ammesse; comitato anche gli amministratori; candidati: candidature inviate."""
     eps = EdizionePersona.query.filter(
         EdizionePersona.ruolo.in_([GRUPPI_EMAIL[g] for g in gruppi if g in GRUPPI_EMAIL]))
     cands = Candidatura.query.filter(Candidatura.stato != "bozza")
@@ -697,7 +717,7 @@ def _partecipanti(eid, gruppi, solo_attivi=True):
     if "candidati" in gruppi:
         utenti |= {c.utente for c in cands}
     if "comitato" in gruppi:
-        utenti |= set(Utente.query.filter(Utente.ruolo.in_(("comitato", "admin"))))
+        utenti |= set(Utente.query.filter_by(admin=True))
     return sorted((u for u in utenti if u.attivo or not solo_attivi),
                   key=lambda u: (u.cognome, u.nome)), senza
 

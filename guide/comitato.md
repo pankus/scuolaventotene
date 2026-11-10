@@ -17,6 +17,10 @@ e l'**amministrazione**. Per le pagine dei docenti e dei relatori vedi la
 | Pubblicare, rifiutare o eliminare materiali | | sì |
 | Ruoli e attivazione degli utenti, sincronizzazione Zotero | | sì |
 
+Il comitato è **per edizione**: un membro vede candidature, graduatoria, letture e materiali solo
+delle edizioni in cui è nel comitato scientifico (scheda dell'edizione). L'amministratore vede tutto.
+La stessa persona può essere comitato in un'edizione, relatore o docente in un'altra.
+
 I relatori non entrano nel back-office: usano l'area personale.
 
 ### Il cruscotto
@@ -62,8 +66,8 @@ lezione. Per le voci scritte prima, o per ricreare una lezione rimossa, il pulsa
 lezioni dal programma** (sotto il programma) fa lo stesso per tutte le voci, senza doppioni.
 Eliminare una voce non elimina la lezione: si rimuove da qui.
 
-Per collegare l'account: il relatore si registra dal sito, l'admin gli dà il ruolo
-*Relatore* in **Utenti**, poi lo sceglie nella lezione e **Salva lezione**. Da quel momento il
+Per collegare l'account: il relatore si registra dal sito, l'admin lo sceglie nella lezione e
+**Salva lezione**. Da quel momento il
 relatore carica i materiali e la bibliografia della lezione e vede le UD dei docenti ammessi.
 
 Ruolo **Docente (UD)**: l'unità didattica di un docente senza candidatura sul sito (edizioni
@@ -176,15 +180,17 @@ pagina (vedi *Completare le edizioni passate*).
 
 ## Utenti e ruoli
 
-Solo admin. **Utenti**: per ogni account nome e cognome, ruolo (*docente*, *relatore*,
-*comitato*, *admin*) e attivo sì/no, poi **Salva**; un account disattivato non può più entrare.
-Non si può cambiare il proprio ruolo (il proprio nome sì).
+Solo admin. **Utenti**: per ogni account nome e cognome, *amministratore* sì/no e attivo sì/no, poi
+**Salva**; un account disattivato non può più entrare. Non si può togliere a sé stessi
+l'amministrazione (il proprio nome sì). Gli altri ruoli valgono per edizione e si danno dalla
+colonna **Edizioni**.
 
 La colonna **Edizioni** mostra a cosa è legato l'account: UD, lezioni o comitato di un'edizione
 (dalla scheda dell'edizione) e candidature con il loro stato. In alto si filtra per **edizione** e
 **partecipazione** (relatori, docenti, comitato, candidati, senza edizione): per esempio edizione 2024 +
-docenti. Un docente o relatore *nessuna edizione* si aggancia con **aggiungi** (scegli l'anno):
-il sito crea la sua UD o lezione in quell'edizione, da completare poi nella scheda dell'edizione;
+docenti. Per agganciare un account a un'edizione: **aggiungi**, scegli l'anno e il ruolo. Con
+*Comitato scientifico* l'account entra nel comitato di quell'edizione; con *Relatore* o *Docente (UD)*
+il sito crea la sua lezione o UD, da completare poi nella scheda dell'edizione;
 se nel programma c'è già una persona con lo stesso nome e cognome, usa quella. Con **cambia** →
 **sposta** una UD o una lezione passa a un'altra edizione con titolo, materiali e letture (le letture
 già in Zotero restano nella collezione della vecchia edizione).
@@ -201,8 +207,8 @@ risulta confermata.
 
 Solo admin, dal cruscotto o dal menu: **Scrivi ai partecipanti**. Si sceglie l'edizione (o tutte) e
 i gruppi: *relatori* (lezioni con un account collegato), *docenti* (UD delle edizioni passate con un
-account e candidature ammesse), *comitato scientifico* (persone del comitato con un account e utenti
-con ruolo comitato o admin); tutti e tre = tutti. **Anteprima dei destinatari** mostra a chi andrà
+account e candidature ammesse), *comitato scientifico* (persone del comitato con un account, più gli
+amministratori); tutti e tre = tutti. **Anteprima dei destinatari** mostra a chi andrà
 e chi resta fuori perché non ha un account; solo dopo compare **Invia**. Le email partono dal mittente
 del sito, con i destinatari in copia nascosta e in copia (Cc) gli indirizzi delle notifiche
 (`MAIL_NOTIFICHE` nel `.env`). Chi risponde scrive in automatico al mittente e a quegli indirizzi. Non scrivere nel testo dati personali

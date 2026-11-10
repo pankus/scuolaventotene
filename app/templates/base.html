@@ -34,7 +34,7 @@
           </summary>
           <div class="utente-pannello">
             <p class="utente-chi"><strong>{{ _u.nome_completo }}</strong><small>{{ _u.email }}</small>
-              <span class="badge">{{ RUOLI.get(_u.ruolo, _u.ruolo) }}</span></p>
+              {% for r in _u.ruoli()[:3] %}<span class="badge">{{ r }}</span> {% endfor %}</p>
             {% if not _u.email_verificata %}<p class="utente-avviso">Email da confermare: senza conferma non puoi inviare la candidatura.
               <a href="{{ url_for('area.dashboard') }}">Reinvia il link</a></p>{% endif %}
             <ul>

@@ -39,7 +39,7 @@ def importa_docenti(righe):
             esito = "già presente"
         elif persona or len(nomi) == 2:
             nome, cognome = nomi if len(nomi) == 2 else (persona.nome, persona.cognome)
-            u = Utente(email=email, nome=nome, cognome=cognome, ruolo="docente")
+            u = Utente(email=email, nome=nome, cognome=cognome)
             u.set_password(secrets.token_urlsafe(32))  # nessuno la conosce: si entra con «password dimenticata»
             db.session.add(u)
             db.session.flush()
@@ -71,7 +71,7 @@ def register_cli(app):
         """Crea (o promuove) un amministratore."""
         u = Utente.query.filter_by(email=email.lower()).first() or Utente(
             email=email.lower(), nome=nome, cognome=cognome)
-        u.ruolo = "admin"
+        u.admin = True
         u.email_verificata = True
         u.set_password(password)
         db.session.add(u)

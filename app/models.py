@@ -25,8 +25,9 @@ def adesso():
 
 
 # --------------------------------------------------------------------------- utenti
-RUOLI = {"docente": "Docente", "relatore": "Relatore", "comitato": "Comitato scientifico",
-         "admin": "Amministratore"}
+# L'unico ruolo globale è amministratore (Utente.admin). Comitato, relatore e docente valgono
+# per un'edizione: sono le righe EdizionePersona della persona collegata all'account (e, per i
+# docenti, le candidature).
 
 
 class Utente(UserMixin, db.Model):
@@ -35,7 +36,7 @@ class Utente(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    ruolo = db.Column(db.String(20), nullable=False, default="docente")
+    admin = db.Column(db.Boolean, nullable=False, default=False)
     attivo = db.Column(db.Boolean, nullable=False, default=True)
     email_verificata = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -70,15 +71,33 @@ class Utente(UserMixin, db.Model):
 
     @property
     def is_admin(self):
-        return self.ruolo == "admin"
+        return self.admin
+
+    def edizioni_comitato(self):
+        """Id delle edizioni in cui la persona dell'account è nel comitato scientifico."""
+        eps = self.persona.edizioni if self.persona else []
+        return {ep.edizione_id for ep in eps if ep.ruolo == "comitato"}
+
+    def comitato_di(self, ed):
+        """Vede e valuta le candidature di quell'edizione (oggetto o id): admin o suo comitato."""
+        return self.admin or getattr(ed, "id", ed) in self.edizioni_comitato()
 
     @property
     def is_comitato(self):
-        return self.ruolo in ("comitato", "admin")
+        """Entra nel back-office: admin o comitato di almeno un'edizione."""
+        return self.admin or bool(self.edizioni_comitato())
 
     @property
     def is_relatore(self):
-        return self.ruolo == "relatore"
+        return bool(self.lezioni())
+
+    def ruoli(self):
+        """Etichette dei ruoli per il menu dell'account, la più recente per prima."""
+        if self.admin:
+            return [RUOLO_ADMIN]
+        voci = {(ep.edizione.anno, RUOLI_EDIZIONE[ep.ruolo]) for ep in (self.persona.edizioni if self.persona else [])}
+        voci |= {(c.edizione.anno, "Docente") for c in self.candidature if c.stato != "ritirata"}
+        return [f"{r} {anno}" for anno, r in sorted(voci, key=lambda v: (-v[0], v[1]))]
 
     def lezioni(self):
         """Le lezioni (EdizionePersona con ruolo relatore) della persona legata all'account."""
@@ -202,6 +221,7 @@ class Persona(db.Model):
         return f"{self.nome} {self.cognome}"
 
 
+RUOLO_ADMIN = "Amministratore"
 # ruoli di una persona in un'edizione; "docente" = UD senza candidatura (edizioni passate,
 # dal programma), collegabile a un account più avanti come le lezioni dei relatori
 RUOLI_EDIZIONE = {"comitato": "Comitato scientifico", "relatore": "Relatore", "docente": "Docente (UD)"}
@@ -439,7 +459,7 @@ class Materiale(db.Model):
     candidatura = db.relationship("Candidatura", back_populates="materiali")
 
     def visibile_a(self, user):
-        if user.is_authenticated and (user.is_comitato or user.id == self.caricato_da_id):
+        if user.is_authenticated and (user.comitato_di(self.edizione_id) or user.id == self.caricato_da_id):
             return True
         if self.stato != "pubblicato":
             return False

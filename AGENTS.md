@@ -106,8 +106,12 @@ stanno in `Candidatura.problemi_invio` (il conteggio caratteri vale solo per i .
 `n_caratteri` resta `None`), l'apertura delle candidature in `Edizione.candidature_aperte`:
 estendere lì, non nelle viste.
 
-**Ruoli e permessi.** `visitatore`, `docente`, `relatore`, `comitato`, `admin` (admin include
-comitato; il relatore non entra nel back-office). Docente = insegnante che si candida; relatore =
+**Ruoli e permessi.** L'unico ruolo globale è `Utente.admin`. Comitato, relatore e docente valgono
+per edizione: righe `EdizionePersona` (edizione, persona, ruolo) della `Persona` collegata
+all'account (più le candidature per i docenti); una persona può averne più d'uno, anche nella stessa
+edizione. Il comitato vede solo le proprie edizioni: `Utente.comitato_di(ed)` per ogni candidatura,
+lettura o materiale; `is_comitato` (admin o comitato di almeno un'edizione) apre solo il back-office;
+nelle liste `_edizioni_visibili()` / `_filtra_edizioni()` in `admin.py`. Il relatore non entra nel back-office. Docente = insegnante che si candida; relatore =
 storico che tiene una lezione: le sue lezioni sono `Utente.lezioni()` (via `Persona.utente_id`),
 e ogni accesso a una lezione passa da lì. Il relatore vede le UD solo dei docenti **ammessi**
 nelle edizioni in cui insegna (`area._relatore_di`), mai email, telefono, nascita, residenza.
@@ -206,7 +210,11 @@ immagini esterne (nei risultati solo testo). Nei test solo `FakeZot`
 
 Cartella `tests/`, pytest (`uv run pytest`). `conftest.py` crea l'app con
 `create_app(TestConfig)` (SQLite in memoria, CSRF disattivato) e `UPLOAD_FOLDER` su `tmp_path`,
-e offre gli helper `crea_utente`, `crea_edizione`, `login`.
+e offre gli helper `crea_utente`, `crea_edizione`, `login`. `crea_utente(ruolo="admin")` crea un
+amministratore; `crea_utente(ruolo="comitato")` mette l'utente nel comitato di tutte le edizioni del
+test (anche create dopo), `edizioni=[...]` solo di quelle.
+- `test_ruoli.py`: ruoli per edizione (relatore un anno e docente un altro, relatore e comitato
+  insieme), comitato limitato alle proprie edizioni, materiali riservati.
 - `test_regole.py`: `candidature_aperte`, `problemi_invio` (profilo, UD, limiti caratteri),
   `conta_caratteri`, `Materiale.visibile_a`, graduatoria (`admin._graduatoria`).
 - `test_rotte.py`: permessi admin/comitato/docente/anonimo, candidature di altri, invio,

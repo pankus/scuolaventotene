@@ -40,7 +40,7 @@ def test_importa_docenti(app, inviate):
     assert esiti["sconosciuta@x.it"].startswith("SALTATA") and esiti[gia.email] == "già presente"
     t = Utente.query.filter_by(email="tommaso.caiazza@gmail.com").one()
     d = Utente.query.filter_by(email="daniela.delorentiis@x.it").one()
-    assert (t.nome, t.cognome, t.ruolo, caiazza.utente_id) == ("Tommaso", "Caiazza", "docente", t.id)
+    assert (t.nome, t.cognome, t.admin, caiazza.utente_id) == ("Tommaso", "Caiazza", False, t.id)
     assert (d.nome, d.cognome, de_lorentiis.utente_id) == ("Daniela", "De Lorentiis", d.id)
     assert Utente.query.filter_by(email="nuova@x.it").one().persona is None
     assert not inviate

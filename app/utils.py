@@ -184,5 +184,4 @@ def register_template_utils(app):
             "RUOLI_EDIZIONE": models.RUOLI_EDIZIONE,
             "GRUPPI_PARTECIPANTI": models.GRUPPI_PARTECIPANTI,
             "VISIBILITA": models.VISIBILITA,
-            "RUOLI": models.RUOLI,
         }

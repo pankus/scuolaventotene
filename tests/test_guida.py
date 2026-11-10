@@ -31,14 +31,15 @@ def test_guida_pubblica(client):
 def test_guida_del_comitato_riservata(app, client):
     assert client.get("/guida/comitato").status_code == 302  # al login
     assert client_di(app, crea_utente()).get("/guida/comitato").status_code == 403
-    assert "Doppioni" in client_di(app, crea_utente(ruolo="comitato")).get(
+    assert client_di(app, crea_utente(ruolo="comitato", edizioni=[])).get("/guida/comitato").status_code == 403
+    assert "Doppioni" in client_di(app, crea_utente(ruolo="comitato", edizioni=[crea_edizione()])).get(
         "/guida/comitato").get_data(as_text=True)
 
 
 def test_link_alla_sezione(app):
     docente = client_di(app, crea_utente())
     assert 'href="/guida#larea-personale">Guida: L&#39;area personale' in docente.get("/area/").get_data(as_text=True)
-    comitato = client_di(app, crea_utente(ruolo="comitato"))
+    comitato = client_di(app, crea_utente(ruolo="comitato", edizioni=[crea_edizione()]))
     assert 'href="/guida/comitato#il-cruscotto"' in comitato.get("/admin/").get_data(as_text=True)
 
 

@@ -22,7 +22,7 @@
         {% if not attuale %}<option value="">edizione…</option>{% endif %}
         {% for e in edizioni %}<option value="{{ e.id }}" {% if e.id == attuale %}selected{% endif %}>{{ e.anno }}</option>{% endfor %}</select>{% endmacro %}
 <div class="scorri-x tabella-larga"><table class="tabella">
-  <tr><th>Nome e cognome</th><th>Email</th><th>Edizioni</th><th>Registrato</th><th>Ruolo / stato</th></tr>
+  <tr><th>Nome e cognome</th><th>Email</th><th>Edizioni</th><th>Registrato</th><th>Amministratore / stato</th></tr>
   {% for u in utenti %}
   {% set f = 'u' ~ u.id %}
   {% set eps = u.persona.edizioni|sort(attribute='edizione.anno') if u.persona else [] %}
@@ -34,7 +34,7 @@
     <td class="edizioni-utente">
       {% for ep in eps %}<div>{% if ep.ruolo == 'comitato' %}{{ ep.edizione.anno }} · {{ RUOLI_EDIZIONE[ep.ruolo] }}{% else %}<a href="{{ url_for('public.intervento', slug=ep.edizione.slug, epid=ep.id) }}">{{ ep.edizione.anno }} · {{ RUOLI_EDIZIONE[ep.ruolo] }}</a>{% endif %}</div>{% endfor %}
       {% for c in u.candidature|sort(attribute='edizione.anno') %}<div><a href="{{ url_for('admin.candidatura', cid=c.id) }}">{{ c.edizione.anno }} · candidatura {{ STATI_CANDIDATURA.get(c.stato, c.stato)|lower }}</a></div>{% endfor %}
-      {% if not eps and not u.candidature %}{% if u.ruolo in ('docente', 'relatore') %}<span class="badge badge-rifiutato">nessuna edizione</span>{% else %}—{% endif %}{% endif %}
+      {% if not eps and not u.candidature %}{% if not u.admin %}<span class="badge badge-rifiutato">nessuna edizione</span>{% else %}—{% endif %}{% endif %}
       {% if eps %}<details class="cambia-edizione"><summary>cambia</summary>
         {% for ep in eps %}<form method="post" action="{{ url_for('admin.edizione_utente', uid=u.id) }}" class="in-linea">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="ritorno" value="{{ ritorno }}">
@@ -43,17 +43,17 @@
       {% endif %}
         <form method="post" action="{{ url_for('admin.edizione_utente', uid=u.id) }}" class="in-linea">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="ritorno" value="{{ ritorno }}">
-          {{ scelta_edizione() }}{{ btn_icona('aggiungi', 'Aggiungi a questa edizione') }}</form>
+          {{ scelta_edizione() }}<select name="ruolo" aria-label="Ruolo nell'edizione">{% for k, v in RUOLI_EDIZIONE.items() %}<option value="{{ k }}" {% if k == 'docente' %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{{ btn_icona('aggiungi', 'Aggiungi a questa edizione con questo ruolo') }}</form>
       {% if eps %}</details>{% endif %}</td>
     <td>{{ u.creato_il|data_it }}</td>
     <td><form method="post" action="{{ url_for('admin.aggiorna_utente', uid=u.id) }}" class="in-linea" id="{{ f }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="ritorno" value="{{ ritorno }}">
       {% if u.id != current_user.id %}
-      <select name="ruolo">{% for k, v in RUOLI.items() %}<option value="{{ k }}" {% if k == u.ruolo %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+      <label><input type="checkbox" name="admin" value="1" {% if u.admin %}checked{% endif %}> amministratore</label>
       <label><input type="checkbox" name="attivo" value="1" {% if u.attivo %}checked{% endif %}> attivo</label>
-      {% else %}{{ RUOLI.get(u.ruolo) }} (tu){% endif %}
-      {{ btn_icona('salva', 'Salva nome, ruolo e stato') }}</form>
+      {% else %}{% if u.admin %}amministratore {% endif %}(tu){% endif %}
+      {{ btn_icona('salva', 'Salva nome, amministratore e stato') }}</form>
     {% if u.id != current_user.id %}<form method="post" action="{{ url_for('admin.elimina_utente', uid=u.id) }}" class="in-linea">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="ritorno" value="{{ ritorno }}">
@@ -62,7 +62,7 @@
 </table></div>
 <p class="nota">Pulsanti: dischetto = salva, cestino = elimina, calendario con freccia = sposta in un'altra edizione,
   calendario con + = aggiungi a un'edizione (passa sopra con il mouse per la descrizione).
-  «Aggiungi» aggancia l'account a un'edizione: crea la UD (docente) o la lezione (relatore), che poi
+  «Aggiungi» aggancia l'account a un'edizione con il ruolo scelto: comitato, oppure crea la UD (docente) o la lezione (relatore), che poi
   completi nella scheda dell'edizione; se nel programma c'è già una persona con lo stesso nome e cognome, usa quella.
   «cambia» → «sposta» porta una UD o una lezione in un'altra edizione, con titolo, materiali e letture.</p>
 {% endblock %}

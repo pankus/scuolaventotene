@@ -189,12 +189,12 @@ def test_admin_modifica_nome_utente(app):
     assert client_di(app, comitato).post(f"/admin/utenti/{docente.id}",
                                          data={"nome": "X", "cognome": "Y"}).status_code == 403
     c.post(f"/admin/utenti/{docente.id}", data={"nome": " Maria Gloria ", "cognome": "Calì",
-                                               "ruolo": "relatore", "attivo": "1"})
-    c.post(f"/admin/utenti/{docente.id}", data={"nome": "", "cognome": "Vuoto", "ruolo": "docente"})  # rifiutato
-    c.post(f"/admin/utenti/{admin.id}", data={"nome": "Io", "cognome": "Admin", "ruolo": "docente"})
+                                               "admin": "1", "attivo": "1"})
+    c.post(f"/admin/utenti/{docente.id}", data={"nome": "", "cognome": "Vuoto"})  # rifiutato
+    c.post(f"/admin/utenti/{admin.id}", data={"nome": "Io", "cognome": "Admin"})  # senza admin=1
     db.session.expire_all()
-    assert (docente.nome, docente.cognome, docente.ruolo, docente.attivo) == ("Maria Gloria", "Calì", "relatore", True)
-    assert (admin.nome, admin.cognome, admin.ruolo) == ("Io", "Admin", "admin")  # il proprio ruolo non cambia
+    assert (docente.nome, docente.cognome, docente.admin, docente.attivo) == ("Maria Gloria", "Calì", True, True)
+    assert (admin.nome, admin.cognome, admin.admin) == ("Io", "Admin", True)  # il proprio ruolo non cambia
 
 
 def test_utenti_edizioni_e_filtri(app):
@@ -226,7 +226,7 @@ def test_utenti_edizioni_e_filtri(app):
     html = mostra("?gruppo=nessuno")
     assert solo.email in html and docente.email not in html and candidato.email not in html
 
-    dati = {"nome": "N", "cognome": "C", "ruolo": "docente", "attivo": "1"}
+    dati = {"nome": "N", "cognome": "C", "attivo": "1"}
     r = c.post(f"/admin/utenti/{solo.id}", data=dati | {"ritorno": "/admin/utenti?gruppo=nessuno"})
     assert r.headers["Location"].endswith("/admin/utenti?gruppo=nessuno")
     r = c.post(f"/admin/utenti/{solo.id}", data=dati | {"ritorno": "//evil.example/"})
@@ -254,8 +254,10 @@ def test_utenti_sposta_e_aggiungi_edizione(app):
     db.session.expire_all()
     assert ep.edizione_id == ed2.id and ep.titolo_lezione == "UD" and ep.materiali[0].edizione_id == ed2.id
 
-    c.post(f"/admin/utenti/{nuovo.id}/edizione", data={"edizione": ed1.id})
-    c.post(f"/admin/utenti/{nuovo.id}/edizione", data={"edizione": ed1.id})  # già presente: niente doppione
+    c.post(f"/admin/utenti/{nuovo.id}/edizione", data={"edizione": ed1.id})  # senza ruolo: rifiutato
+    assert not EdizionePersona.query.filter_by(persona_id=omonimo.id).all()
+    c.post(f"/admin/utenti/{nuovo.id}/edizione", data={"edizione": ed1.id, "ruolo": "relatore"})
+    c.post(f"/admin/utenti/{nuovo.id}/edizione", data={"edizione": ed1.id, "ruolo": "relatore"})  # niente doppione
     db.session.expire_all()
     eps = EdizionePersona.query.filter_by(persona_id=omonimo.id).all()
     assert [(e.edizione_id, e.ruolo) for e in eps] == [(ed1.id, "relatore")] and omonimo.utente_id == nuovo.id

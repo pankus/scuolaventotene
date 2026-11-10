@@ -16,12 +16,17 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 
 ## 2. Ruoli
 
+L'unico ruolo globale è **amministratore** (`Utente.admin`). Comitato, relatore e docente valgono
+**per edizione**: sono le righe `EdizionePersona` (edizione, persona, ruolo) della persona collegata
+all'account, più le candidature per i docenti. Una persona può essere relatore e comitato nel 2026 e
+docente nel 2025. Permessi: `Utente.comitato_di(ed)`, `edizioni_comitato()`, `lezioni()`.
+
 | Ruolo | Cosa può fare |
 |---|---|
 | Visitatore | Consulta l'edizione corrente, il programma, il bando, l'archivio pubblico e la bibliografia |
 | Docente (registrato) | Gestisce il profilo, si candida (come borsista o uditore), carica la proposta di UD, invia materiali e vede quelli riservati ai registrati |
-| Relatore | Storico che tiene una lezione: si registra, l'admin gli dà il ruolo e collega l'account alla sua lezione (scheda dell'edizione); dall'area personale carica i materiali della lezione (in revisione come gli altri). Indica la bibliografia della lezione (entra subito in Zotero, in «Relatori») e vede le UD dei docenti ammessi della sua edizione, senza i loro dati personali |
-| Comitato | Accede al back-office, legge le candidature, assegna i punteggi (ognuno i propri) e vede la graduatoria |
+| Relatore | Storico che tiene una lezione: si registra, l'admin collega l'account alla sua lezione (scheda dell'edizione); dall'area personale carica i materiali della lezione (in revisione come gli altri). Indica la bibliografia della lezione (entra subito in Zotero, in «Relatori») e vede le UD dei docenti ammessi della sua edizione, senza i loro dati personali |
+| Comitato | Accede al back-office solo per le edizioni del proprio comitato: ne legge le candidature, assegna i punteggi (ognuno i propri), vede graduatoria, letture proposte e materiali |
 | Admin | Fa tutto ciò che fa il comitato e in più gestisce edizioni, programma, comitato, esiti, materiali, utenti e la sincronizzazione Zotero |
 
 ## 3. Mappa del sito
@@ -61,7 +66,7 @@ SQLite va bene con poche decine di utenti: ci sono più letture che scritture, l
 /area/candidatura/<id>/letture[?tipo=webpage|?p=<id>]   passo 3: invito alla lettura del docente
 /area/candidatura/<id>/letture/<id>/elimina      (finché la candidatura è modificabile e la lettura non è riveduta; dopo la scuola solo le nuove)
 /area/letture/cerca?q=…[&isbn=…]                 ricerca dei libri (JSON, utenti registrati, 30/min)
-/admin/utenti                                    ruoli e attivazione, eliminazione (account di prova)
+/admin/utenti                                    amministratore, attivazione, ruoli per edizione, eliminazione (account di prova)
 /admin/email                                     email a relatori, docenti, comitato (anteprima, copia nascosta)
 /admin/edizioni-persone/<id>/lezione             titolo, ordine e account della lezione o UD (admin)
 /admin/interventi/<id>/materiali, /descrizione   materiale e abstract dentro lezione/UD (admin, POST)
