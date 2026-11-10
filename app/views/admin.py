@@ -6,7 +6,7 @@ from flask import (Blueprint, Response, abort, current_app, flash, redirect, ren
                    request, url_for)
 from flask_login import current_user, login_required
 
-from ..edizioni_precedenti import ep_di, lezioni_dal_programma
+from ..edizioni_precedenti import lezioni_dal_programma
 from ..extensions import db
 from .. import zotero_sync as modulo_sync  # la vista zotero_sync() ne oscura il nome
 from ..forms import (AccountPersonaForm, CopertinaForm, InterventoForm, DescrizioneForm, EmailPartecipantiForm, ItemZoteroForm, EdizioneForm, LetturaRevisioneForm, MaterialeAdminForm,
@@ -15,7 +15,7 @@ from ..forms import (AccountPersonaForm, CopertinaForm, InterventoForm, Descrizi
 from ..models import (ESITI_CANDIDATURA, GRUPPI_PARTECIPANTI, RUOLI_EDIZIONE, RUOLO_AUTORE, STATI_MATERIALE, VISIBILITA, Candidatura,
                       Edizione, EdizionePersona, Intervento, Materiale, Persona, ProgrammaVoce,
                       PropostaLettura, SyncStato, Utente, Valutazione, ZoteroCollezione, ZoteroItem,
-                      adesso)
+                      adesso, ep_di)
 from ..posta import email_esito, email_partecipanti, indirizzi_risposta
 from ..ricerca_libri import cerca_copertina
 from ..utils import (admin_required, carica_copertina, comitato_required, elimina_upload,
@@ -310,12 +310,13 @@ def candidature_csv(eid):
     ed = _edizione_comitato(eid)
     buf = io.StringIO()
     w = csv.writer(buf, delimiter=";")
-    w.writerow(["Pos.", "Cognome", "Nome", "Email", "Tipo", "Titolo UD", "Originalità",
+    w.writerow(["Pos.", "Cognome", "Nome", "Email", "Co-autore", "Tipo", "Titolo UD", "Originalità",
                 "Potenzialità", "Fonti", "Media totale", "N. valutazioni", "Stato"])
     for i, c in enumerate(_graduatoria(ed), 1):
         n = len(c.valutazioni) or 1
         media = lambda attr: round(sum(getattr(v, attr) for v in c.valutazioni) / n, 1)  # noqa: E731
-        w.writerow([i, c.utente.cognome, c.utente.nome, c.utente.email, c.tipo, c.titolo_ud or "",
+        co = c.coautore.nome_completo + ("" if c.coautore_confermato else " (invito in attesa)") if c.coautore else ""
+        w.writerow([i, c.utente.cognome, c.utente.nome, c.utente.email, co, c.tipo, c.titolo_ud or "",
                     media("originalita"), media("potenzialita"), media("fonti"),
                     c.punteggio_medio or "", len(c.valutazioni), c.stato])
     return Response("﻿" + buf.getvalue(), mimetype="text/csv",
@@ -351,6 +352,8 @@ def stato_candidatura(cid):
         cambiato = c.stato != f.stato.data
         c.stato, c.note_comitato = f.stato.data, f.note_comitato.data
         db.session.commit()
+        if cambiato and c.stato == "ammessa" and c.crea_ud():
+            db.session.commit()  # la UD entra tra gli interventi dell'edizione, con gli autori
         if cambiato and c.stato in ESITI_CANDIDATURA:
             email_esito(c)
             flash("Stato aggiornato ed esito comunicato al docente.", "ok")

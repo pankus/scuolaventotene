@@ -92,7 +92,8 @@ def email_reset(u):
 
 
 def email_conferma_invio(c):
-    invia_email(c.utente.email, f"Candidatura ricevuta – {c.edizione.titolo}", "conferma_invio", c=c)
+    invia_email(c.utente.email, f"Candidatura ricevuta – {c.edizione.titolo}", "conferma_invio", c=c,
+                cc=[u.email for u in c.autori()[1:]])
     invia_email(current_app.config["MAIL_NOTIFICHE"],
                 f"Nuova candidatura: {c.utente.nome_completo}", "notifica_invio", c=c)
 
@@ -121,5 +122,11 @@ def email_partecipanti(indirizzi, oggetto, testo, blocco=50):
 
 
 def email_esito(c):
-    return invia_email(c.utente.email, f"Esito della candidatura – {c.edizione.titolo}", "esito",
-                       c=c, esito=STATI_CANDIDATURA[c.stato])
+    """A ogni autore della candidatura (titolare e co-autore), un messaggio ciascuno."""
+    esiti = [invia_email(u.email, f"Esito della candidatura – {c.edizione.titolo}", "esito",
+                         c=c, u=u, esito=STATI_CANDIDATURA[c.stato]) for u in c.autori()]
+    return all(esiti)
+
+
+def email_invito_coautore(c):
+    return invia_email(c.coautore.email, f"Invito come co-autore – {c.edizione.titolo}", "invito_coautore", c=c)

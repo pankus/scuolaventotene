@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import passi, stato %}
+{% from "_macros.html" import campo, passi, stato %}
 {% block title %}La mia candidatura{% endblock %}
 {% block content %}
 <h1>Candidatura {{ c.edizione.anno }} {{ stato(c.stato, STATI_CANDIDATURA) }}</h1>
@@ -7,6 +7,16 @@
 <dl class="dati">
   <dt>Tipo</dt><dd>{{ TIPI_CANDIDATURA[c.tipo] }}</dd>
   <dt>Unità didattica</dt><dd>{{ c.titolo_ud or '—' }}</dd>
+  {% if c.coautore or form_coautore %}<dt>Co-autore</dt><dd>
+    {% if c.coautore %}{{ c.coautore.nome_completo }}{% if not c.coautore_confermato %} <em>(invito in attesa di risposta)</em>{% endif %}
+      {% if form_coautore and c.modificabile %}<form method="post" action="{{ url_for('area.coautore', cid=c.id) }}" class="in-linea">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo" name="togli" value="1">togli</button></form>{% endif %}
+    {% elif c.modificabile and c.tipo == 'borsista' %}
+      <form method="post" action="{{ url_for('area.coautore', cid=c.id) }}" class="modulo modulo-riga">
+        {{ form_coautore.hidden_tag() }}{{ campo(form_coautore.email) }}
+        <button class="btn btn-piccolo btn-secondario">Invita</button></form>
+      <small class="nota">Facoltativo: se scrivi la UD con un collega. Deve avere un account e accettare l'invito prima dell'invio.</small>
+    {% else %}—{% endif %}</dd>{% endif %}
   <dt>Discipline</dt><dd>{{ c.discipline or '—' }}</dd>
   <dt>Proposta</dt><dd>{% if c.file_path %}<a href="{{ url_for('area.file_candidatura', cid=c.id) }}">{{ c.file_nome }}</a>
       {% if c.n_caratteri %}· {{ c.n_caratteri }} caratteri{% endif %}{% else %}—{% endif %}</dd>
@@ -55,7 +65,7 @@
     </form>
   </div>
 {% endif %}
-{% if c.stato in ('bozza','inviata','in_valutazione','ammessa','riserva') %}
+{% if c.stato in ('bozza','inviata','in_valutazione','ammessa','riserva') and c.utente_id == current_user.id %}
 <form method="post" action="{{ url_for('area.ritira', cid=c.id) }}" onsubmit="return confirm('Ritirare la candidatura?')">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button class="link-pericolo">Ritira candidatura</button>

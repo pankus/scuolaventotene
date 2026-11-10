@@ -38,6 +38,7 @@ uv run flask seed-precedenti             # edizioni 2023–2025 (app/edizioni_pr
 uv run flask crea-admin email@ismed.cnr.it
 uv run flask prova-email tuo@indirizzo.it   # controlla la configurazione SMTP
 uv run flask ud-dal-programma            # UD dei docenti delle edizioni passate dal programma
+uv run flask ud-dalle-candidature        # UD (interventi) delle candidature già ammesse, una volta dopo l'upgrade
 uv run flask importa-docenti FILE [--applica]  # account dei docenti passati da un elenco di email (file fuori dal repo)
 uv run flask lezioni-dal-programma       # lezioni dei relatori dalle voci «lezione» del programma
 uv run flask zotero-sync [--completa]    # bibliografia (in produzione gira in cron)
@@ -93,7 +94,13 @@ non scrivere stringhe sparse nelle viste o nei template.
 - PropostaLettura: `proposta → approvata | rifiutata`; tipi `book | webpage`; momento `iscrizione | post_scuola`
 
 **Regole del bando** (non cambiarle senza che lo chieda l'utente): una candidatura per docente
-per edizione (vincolo unico); proposta di UD tra `caratteri_min` e `caratteri_max` dell'edizione
+per edizione (vincolo unico; vale anche per il co-autore: chi accetta un invito non può averne
+una propria, `area._gia_impegnato`); UD in due = `Candidatura.coautore` invitato dal titolare
+(account esistente), che deve accettare prima dell'invio e completare il profilo
+(`problemi_invio`); i co-autori che hanno accettato sono autori come il titolare
+(`Candidatura.di`, `autori()`), ma ritiro e invito restano al titolare; all'ammissione di un
+borsista `Candidatura.crea_ud()` crea l'Intervento UD con gli autori (ruolo docente
+nell'edizione), mentre contenuti, letture e materiali restano nella candidatura; proposta di UD tra `caratteri_min` e `caratteri_max` dell'edizione
 (6000–8000 nel 2026), contata spazi inclusi; data di nascita, telefono, residenza ed email confermata obbligatori
 per inviare; invio solo entro `scadenza_candidature`; dopo l'invio la proposta si modifica
 fino alla scadenza o all'esito (`Candidatura.modificabile`), e una modifica che non passa
@@ -226,6 +233,8 @@ e offre gli helper `crea_utente`, `crea_edizione`, `login`. `crea_utente(ruolo="
 amministratore; `crea_utente(ruolo="comitato")` mette l'utente nel comitato di tutte le edizioni del
 test (anche create dopo), `edizioni=[...]` solo di quelle. `crea_intervento(ed, tipo, titolo, utente=…)`
 crea una lezione o UD con il suo autore.
+- `test_coautore.py`: invito, accettazione e rifiuto del co-autore, regola della candidatura unica,
+  profilo del co-autore, permessi del titolare, ammissione che crea la UD con gli autori, comando.
 - `test_interventi.py`: autori multipli, vincolo edizione/ruolo, materiali condivisi, più
   interventi per persona, sposta rifiutato se condiviso, eliminazione.
 - `test_ruoli.py`: ruoli per edizione (relatore un anno e docente un altro, relatore e comitato

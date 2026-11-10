@@ -41,11 +41,11 @@ def edizione(slug):
         return voce(url_for("public.intervento", slug=ed.slug, iid=iv.id), iv.titolo, iv.nomi_autori,
                     ("iv", iv.id), iv.letture)
 
-    ivs = sorted(ed.interventi, key=lambda iv: iv.posizione)
+    ivs = sorted((iv for iv in ed.interventi if not iv.candidatura), key=lambda iv: iv.posizione)  # quelle: sotto
     lezioni = [voce_iv(iv) for iv in ivs if not iv.ud]
     ud = [voce_iv(iv) for iv in ivs if iv.ud]
     ud += [voce(url_for("public.unita_didattica", slug=ed.slug, cid=c.id), c.titolo_ud,
-                c.utente.nome_completo, ("c", c.id), c.letture)
+                c.nomi_autori, ("c", c.id), c.letture)
            for c in sorted(ed.candidature, key=lambda c: c.titolo_ud or "")
            if c.stato == "ammessa" and c.titolo_ud]
     return render_template("archivio/edizione.html", ed=ed, lezioni=lezioni, ud=ud,

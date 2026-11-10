@@ -2,7 +2,7 @@ Gentile {{ c.utente.nome }},
 
 abbiamo ricevuto la tua candidatura come {{ c.tipo }} alla {{ c.edizione.numero }}ª edizione
 della Scuola ({{ c.edizione.titolo }}).
-{% if c.titolo_ud %}Unità didattica: {{ c.titolo_ud }}
+{% if c.titolo_ud %}Unità didattica: {{ c.titolo_ud }}{% if c.autori()|length > 1 %} (con {{ c.autori()[1].nome_completo }}){% endif %}
 {% endif %}{% if c.letture %}
 Letture che hai consigliato (le rivedrà il comitato):
 {% for l in c.letture %}- {{ l.titolo }}{% if l.campi.autori %} ({{ l.campi.autori|replace('\n', '; ') }}){% endif %}

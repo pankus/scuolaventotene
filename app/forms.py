@@ -66,6 +66,12 @@ class CandidaturaForm(FlaskForm):
                      validators=[FileAllowed(PROPOSTE, "Formati ammessi: pdf, doc, docx, odt")])
 
 
+class CoautoreForm(FlaskForm):
+    """Collega con cui si scrive la UD: deve avere già un account sul sito."""
+    email = EmailField("Email del collega co-autore (deve essere registrato sul sito)",
+                       validators=[DataRequired(), Email(), Length(max=255)])
+
+
 class MaterialeForm(FlaskForm):
     edizione_id = SelectField("Edizione", coerce=int)
     titolo = StringField("Titolo", validators=[DataRequired(), Length(max=255)])

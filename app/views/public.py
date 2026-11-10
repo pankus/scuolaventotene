@@ -1,5 +1,5 @@
 """Sito pubblico: home, pagina edizione, la scuola, contatti, privacy, guide."""
-from flask import Blueprint, abort, current_app, render_template, send_from_directory, url_for
+from flask import Blueprint, abort, current_app, redirect, render_template, send_from_directory, url_for
 from flask_login import current_user
 
 from ..guida import GUIDE, leggi
@@ -38,7 +38,8 @@ def edizione(slug):
 
 def pagine_interventi(ed):
     """Titolo → URL della pagina di lezioni e UD dell'edizione (per i link del programma)."""
-    out = {iv.titolo: url_for("public.intervento", slug=ed.slug, iid=iv.id) for iv in ed.interventi if iv.titolo}
+    out = {iv.titolo: url_for("public.intervento", slug=ed.slug, iid=iv.id)
+           for iv in ed.interventi if iv.titolo and not iv.candidatura}
     out.update({c.titolo_ud: url_for("public.unita_didattica", slug=ed.slug, cid=c.id)
                 for c in ed.candidature if c.stato == "ammessa" and c.titolo_ud})
     return out
@@ -76,6 +77,8 @@ def intervento(slug, iid):
     iv = db.get_or_404(Intervento, iid)
     if iv.edizione_id != ed.id:
         abort(404)
+    if iv.candidatura:  # UD di una candidatura ammessa: la pagina è quella della candidatura
+        return redirect(url_for("public.unita_didattica", slug=ed.slug, cid=iv.candidatura.id))
     admin = current_user.is_authenticated and current_user.is_admin
     affiliazioni = "; ".join(a.persona.affiliazione for a in iv.autori if a.persona.affiliazione)
     return _pagina_intervento(
@@ -93,7 +96,7 @@ def unita_didattica(slug, cid):
     if c.edizione_id != ed.id or c.stato != "ammessa" or not c.titolo_ud:
         abort(404)
     return _pagina_intervento(
-        ed, c.titolo_ud, c=c, ud=True, autore=c.utente.nome_completo, discipline=c.discipline,
+        ed, c.titolo_ud, c=c, ud=True, autore=c.nomi_autori, discipline=c.discipline,
         abstract=c.abstract, materiali=c.materiali, letture=c.letture)
 
 

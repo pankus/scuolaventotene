@@ -11,7 +11,7 @@
   <tr><th>#</th><th>Docente</th><th>Tipo</th><th>Unità didattica</th><th>Media /75</th><th>Valutazioni</th><th>Stato</th><th></th></tr>
   {% for c in candidature %}
   <tr class="{% if c.tipo == 'borsista' and loop.index <= ed.posti_borsisti %}in-graduatoria{% endif %}">
-    <td>{{ loop.index }}</td><td>{{ c.utente.cognome }} {{ c.utente.nome }}<br><small>{{ c.utente.scuola or '' }}</small></td>
+    <td>{{ loop.index }}</td><td>{{ c.utente.cognome }} {{ c.utente.nome }}{% if c.coautore %}<br><small>con {{ c.coautore.nome_completo }}{% if not c.coautore_confermato %} (invito in attesa){% endif %}</small>{% endif %}<br><small>{{ c.utente.scuola or '' }}</small></td>
     <td>{{ c.tipo }}</td><td>{{ c.titolo_ud or '—' }}</td>
     <td>{{ c.punteggio_medio if c.punteggio_medio is not none else '—' }}</td>
     <td>{{ c.valutazioni|length }}</td><td>{{ stato(c.stato, STATI_CANDIDATURA) }}</td>

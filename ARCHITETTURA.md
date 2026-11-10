@@ -54,6 +54,7 @@ docente nel 2025. Permessi: `Utente.comitato_di(ed)`, `edizioni_comitato()`, `le
 /area/profilo
 /area/candidatura/edizione/<slug>  bozza → invio; dopo l'invio modifica fino alla scadenza (Candidatura.modificabile)
 /area/candidatura/<id>    riepilogo, controlli del bando, invio/ritiro
+/area/candidatura/<id>/coautore, /invito  il titolare invita (o toglie) il co-autore; l'invitato accetta o rifiuta (POST)
 /area/materiali/nuovo?lezione=<id>|?candidatura=<id>   materiale della propria lezione (relatore) o
                           del modulo dopo la scuola (docente ammesso); va in revisione
 
@@ -97,7 +98,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 ```
 
 - **Edizione**: numero, anno, slug, titolo, sottotitolo, date, scadenza, data degli esiti, posti borsisti, uditori sì/no, limiti di caratteri (6000–8000), stato (`bozza → aperta → chiusa → conclusa`), bando e collezione Zotero collegata.
-- **Candidatura**: tipo (borsista o uditore), stato (`bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`), titolo dell'UD, discipline, file e numero di caratteri (calcolato automaticamente per i .docx). Ogni docente ha al massimo una candidatura per edizione.
+- **Candidatura**: titolare (`utente`), co-autore facoltativo (`coautore`, vale dopo `coautore_confermato`), UD creata all'ammissione (`intervento`, Intervento di tipo `ud` con gli autori), tipo (borsista o uditore), stato (`bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`), titolo dell'UD, discipline, file e numero di caratteri (calcolato automaticamente per i .docx). Ogni docente ha al massimo una candidatura per edizione.
 - **Valutazione**: una per membro del comitato, con originalità, potenzialità didattiche e valorizzazione delle fonti (0–25 ciascuna, massimo 75). La graduatoria usa la media dei punteggi.
 - **PropostaLettura**: libro (`book`) o sito (`webpage`) consigliato da un docente nella candidatura **oppure** dagli autori di un intervento (vincolo: esattamente una delle due); campi bibliografici in JSON (nomi Zotero più autori e curatori), copertina dal lookup, motivazione, momento (`iscrizione` = mentre la candidatura era modificabile, `post_scuola` = dopo la scadenza o l'esito), stato (`proposta | approvata | rifiutata`), nota del comitato e `zotero_key` dell'item collegato. Il legame docente↔libro esiste solo qui.
 - **EdizionePersona**: ruolo di una persona in un'edizione, `comitato | relatore | docente` (`RUOLI_EDIZIONE`), una riga per (edizione, persona, ruolo). **Persona.utente_id** lega la persona all'account (uno per persona, vale per tutti i ruoli in tutte le edizioni).

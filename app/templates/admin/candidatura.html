@@ -13,6 +13,10 @@
       <dt>Nascita / residenza</dt><dd>{{ c.utente.data_nascita|data_it }} · {{ c.utente.residenza or '—' }}</dd>
       <dt>Scuola</dt><dd>{{ c.utente.scuola or '—' }} ({{ c.utente.grado or '?' }} grado, {{ c.utente.tipo_contratto or '—' }}, {{ c.utente.paese or '' }})</dd>
       <dt>Materie</dt><dd>{{ c.utente.materie or '—' }}</dd>
+      {% if c.coautore %}{% set co = c.coautore %}
+      <dt>Co-autore</dt><dd>{{ co.nome_completo }} · {{ co.email }}{% if not c.coautore_confermato %} <em>(invito in attesa)</em>{% endif %}<br>
+        <small>{{ co.scuola or '—' }} ({{ co.grado or '?' }} grado, {{ co.tipo_contratto or '—' }}) · {{ co.materie or '' }}</small></dd>
+      {% endif %}
       <dt>Tipo</dt><dd>{{ TIPI_CANDIDATURA[c.tipo] }}</dd>
       <dt>Unità didattica</dt><dd><strong>{{ c.titolo_ud or '—' }}</strong></dd>
       <dt>Discipline</dt><dd>{{ c.discipline or '—' }}</dd>

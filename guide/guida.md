@@ -85,6 +85,16 @@ Il comitato rivede le proposte; quelle approvate entrano nella bibliografia dell
 rivedute; ne vedete lo stato e l'eventuale nota del comitato. Si chiude solo se ritirate la
 candidatura.
 
+### Una UD scritta con un collega
+
+Se scrivete l'unità didattica in due, chi presenta la candidatura indica nella sua pagina
+l'**email del collega** e preme **Invita**. Il collega deve avere già un account sul sito: riceve
+un'email e, nella sua area personale, **Accetta** o **Rifiuta**. Finché non accetta la candidatura
+non si può inviare; accettando, il collega non può presentare un'altra candidatura per la stessa
+edizione e deve avere anche lui il profilo completo e l'email confermata. Dopo l'accettazione
+entrambi vedono e modificano proposta, letture e materiali; solo chi ha presentato la candidatura
+può toglierne il collega o ritirarla. L'esito arriva a tutti e due.
+
 ### Invio, ritiro ed esito
 
 Nel **riepilogo** il sito elenca ciò che manca (email da confermare, dati del profilo, titolo o

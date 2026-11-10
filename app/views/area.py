@@ -10,9 +10,9 @@ from flask_login import current_user, login_required
 
 from .. import zotero_sync as modulo_sync
 from ..extensions import db
-from ..forms import CandidaturaForm, LetturaDocenteForm, MaterialeForm, ProfiloForm
-from ..models import Candidatura, Edizione, Intervento, Materiale, PropostaLettura, ZoteroItem, adesso
-from ..posta import email_conferma_invio
+from ..forms import CandidaturaForm, CoautoreForm, LetturaDocenteForm, MaterialeForm, ProfiloForm
+from ..models import Candidatura, Edizione, Intervento, Materiale, PropostaLettura, Utente, ZoteroItem, adesso
+from ..posta import email_conferma_invio, email_invito_coautore
 from ..ricerca_libri import cerca
 from ..utils import copertina_ammessa, conta_caratteri, elimina_upload, salva_upload
 from ..zotero_scrittura import CAMPI_MODULO, ErroreScrittura, salva_lettura, scelte_duplicati
@@ -26,9 +26,11 @@ def _protezione():
     pass
 
 
-def _mia_candidatura(cid):
+def _mia_candidatura(cid, titolare=False):
+    """Candidatura di cui l'account è autore (titolare o co-autore che ha accettato); con
+    `titolare` solo il titolare (ritiro, invito del co-autore)."""
     c = db.get_or_404(Candidatura, cid)
-    if c.utente_id != current_user.id:
+    if not (c.utente_id == current_user.id if titolare else c.di(current_user)):
         abort(404)
     return c
 
@@ -36,11 +38,12 @@ def _mia_candidatura(cid):
 @bp.route("/")
 def dashboard():
     aperte = [e for e in Edizione.query.filter_by(stato="aperta").all() if e.candidature_aperte]
-    gia = {c.edizione_id for c in current_user.candidature}
+    candidature = current_user.mie_candidature()
+    gia = {c.edizione_id for c in candidature}
     materiali = Materiale.query.filter_by(caricato_da_id=current_user.id).order_by(
         Materiale.creato_il.desc()).all()
     return render_template("area/dashboard.html", aperte=[e for e in aperte if e.id not in gia],
-                           candidature=current_user.candidature, materiali=materiali,
+                           candidature=candidature, inviti=current_user.inviti(), materiali=materiali,
                            lezioni=current_user.lezioni())
 
 
@@ -62,7 +65,8 @@ def profilo():
 @bp.route("/candidatura/edizione/<slug>", methods=["GET", "POST"])
 def candidatura(slug):
     ed = Edizione.query.filter_by(slug=slug).first_or_404()
-    cand = Candidatura.query.filter_by(utente_id=current_user.id, edizione_id=ed.id).first()
+    # la propria, o quella di cui si è co-autore: una candidatura per docente per edizione
+    cand = next((c for c in current_user.mie_candidature() if c.edizione_id == ed.id), None)
     if cand and not cand.modificabile:
         if cand.stato == "bozza":
             flash("Le candidature per questa edizione non sono aperte.", "errore")
@@ -110,7 +114,65 @@ def candidatura(slug):
 @bp.route("/candidatura/<int:cid>")
 def dettaglio(cid):
     c = _mia_candidatura(cid)
-    return render_template("area/candidatura.html", c=c, problemi=c.problemi_invio())
+    return render_template("area/candidatura.html", c=c, problemi=c.problemi_invio(),
+                           form_coautore=CoautoreForm() if c.utente_id == current_user.id else None)
+
+
+def _gia_impegnato(u, ed, tranne=None):
+    """Il bando vuole una candidatura per docente per edizione: vale anche per il co-autore."""
+    return any(c.edizione_id == ed.id and c is not tranne for c in u.mie_candidature())
+
+
+@bp.post("/candidatura/<int:cid>/coautore")
+def coautore(cid):
+    """Il titolare invita un collega registrato come co-autore (o lo toglie, `togli`), finché la
+    candidatura è modificabile. Il collega riceve un'email e accetta dalla sua area."""
+    c = _mia_candidatura(cid, titolare=True)
+    if not c.modificabile:
+        abort(400)
+    if request.form.get("togli"):
+        c.coautore_id, c.coautore_confermato = None, False
+        db.session.commit()
+        flash("Co-autore tolto.", "info")
+        return redirect(url_for("area.dettaglio", cid=c.id))
+    form = CoautoreForm()
+    if form.validate_on_submit():
+        u = Utente.query.filter_by(email=form.email.data.strip().lower()).first()
+        if not u or not u.attivo:
+            flash("Nessun account con questa email: il collega deve prima registrarsi sul sito.", "errore")
+        elif u.id == current_user.id:
+            flash("Indica l'email di un collega, non la tua.", "errore")
+        elif _gia_impegnato(u, c.edizione):
+            flash(f"{u.nome_completo} ha già una candidatura per questa edizione.", "errore")
+        else:
+            c.coautore_id, c.coautore_confermato = u.id, False
+            db.session.commit()
+            email_invito_coautore(c)
+            flash(f"Invito inviato a {u.nome_completo}: la candidatura si potrà inviare dopo la sua accettazione.", "ok")
+    else:
+        for errori in form.errors.values():
+            flash(" ".join(errori), "errore")
+    return redirect(url_for("area.dettaglio", cid=c.id))
+
+
+@bp.post("/candidatura/<int:cid>/invito")
+def invito(cid):
+    """Il collega invitato accetta o rifiuta di essere co-autore."""
+    c = db.get_or_404(Candidatura, cid)
+    if c.coautore_id != current_user.id or c.coautore_confermato:
+        abort(404)
+    if request.form.get("azione") == "accetta":
+        if _gia_impegnato(current_user, c.edizione, tranne=c):
+            flash("Hai già una candidatura per questa edizione: non puoi essere anche co-autore.", "errore")
+            return redirect(url_for("area.dashboard"))
+        c.coautore_confermato = True
+        db.session.commit()
+        flash(f"Ora sei co-autore della UD di {c.utente.nome_completo}.", "ok")
+        return redirect(url_for("area.dettaglio", cid=c.id))
+    c.coautore_id = None
+    db.session.commit()
+    flash("Invito rifiutato.", "info")
+    return redirect(url_for("area.dashboard"))
 
 
 MAX_LETTURE = 10  # per candidatura o per lezione
@@ -187,7 +249,7 @@ def invia(cid):
 
 @bp.post("/candidatura/<int:cid>/ritira")
 def ritira(cid):
-    c = _mia_candidatura(cid)
+    c = _mia_candidatura(cid, titolare=True)
     if c.stato in ("bozza", "inviata", "in_valutazione", "ammessa", "riserva"):
         c.stato = "ritirata"
         db.session.commit()
@@ -198,7 +260,7 @@ def ritira(cid):
 @bp.route("/candidatura/<int:cid>/file")
 def file_candidatura(cid):
     c = db.get_or_404(Candidatura, cid)
-    if c.utente_id != current_user.id and not current_user.comitato_di(c.edizione_id) and not _relatore_di(c):
+    if not c.di(current_user) and not current_user.comitato_di(c.edizione_id) and not _relatore_di(c):
         abort(404)
     if not c.file_path:
         abort(404)

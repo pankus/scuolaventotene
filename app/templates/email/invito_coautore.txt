@@ -1,0 +1,11 @@
+Gentile {{ c.coautore.nome }},
+
+{{ c.utente.nome_completo }} ti ha indicato come co-autore della sua proposta di unità didattica
+per la {{ c.edizione.numero }}ª edizione della Scuola ({{ c.edizione.titolo }}).
+
+Per accettare o rifiutare, entra nella tua area personale:
+{{ url_for('area.dashboard', _external=True) }}
+
+La candidatura si può inviare solo dopo la tua accettazione. Accettando, non potrai presentare
+un'altra candidatura per questa edizione.
+{% include "email/_firma.txt" %}

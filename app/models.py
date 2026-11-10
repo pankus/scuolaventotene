@@ -16,6 +16,7 @@ Entità principali
 from datetime import date, datetime, timezone
 
 from flask_login import UserMixin
+from sqlalchemy import and_, or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .extensions import db, login_manager
@@ -57,7 +58,7 @@ class Utente(UserMixin, db.Model):
     consenso_privacy_il = db.Column(db.DateTime)
     creato_il = db.Column(db.DateTime, default=adesso)
 
-    candidature = db.relationship("Candidatura", back_populates="utente",
+    candidature = db.relationship("Candidatura", back_populates="utente", foreign_keys="Candidatura.utente_id",
                                   cascade="all, delete-orphan")
 
     def set_password(self, pwd):
@@ -101,8 +102,9 @@ class Utente(UserMixin, db.Model):
         """Etichette dei ruoli per il menu dell'account, la più recente per prima."""
         if self.admin:
             return [RUOLO_ADMIN]
-        voci = {(ep.edizione.anno, RUOLI_EDIZIONE[ep.ruolo]) for ep in (self.persona.edizioni if self.persona else [])}
-        voci |= {(c.edizione.anno, "Docente") for c in self.candidature if c.stato != "ritirata"}
+        etichetta = {**RUOLI_EDIZIONE, "docente": "Docente"}
+        voci = {(ep.edizione.anno, etichetta[ep.ruolo]) for ep in (self.persona.edizioni if self.persona else [])}
+        voci |= {(c.edizione.anno, "Docente") for c in self.mie_candidature() if c.stato != "ritirata"}
         return [f"{r} {anno}" for anno, r in sorted(voci, key=lambda v: (-v[0], v[1]))]
 
     def interventi(self, tipo=None):
@@ -114,6 +116,17 @@ class Utente(UserMixin, db.Model):
     def lezioni(self):
         """Le lezioni (interventi di tipo relazione) di cui l'account è autore."""
         return self.interventi("relazione")
+
+    def mie_candidature(self):
+        """Candidature proprie e quelle di cui è co-autore (invito accettato)."""
+        return Candidatura.query.filter(or_(
+            Candidatura.utente_id == self.id,
+            and_(Candidatura.coautore_id == self.id, Candidatura.coautore_confermato.is_(True)))
+        ).order_by(Candidatura.creato_il.desc()).all()
+
+    def inviti(self):
+        """Candidature in cui è invitato come co-autore e non ha ancora risposto."""
+        return Candidatura.query.filter_by(coautore_id=self.id, coautore_confermato=False).all()
 
     @property
     def nome_completo(self):
@@ -264,6 +277,15 @@ class EdizionePersona(db.Model):
     interventi = db.relationship("Intervento", secondary="intervento_autori", back_populates="autori")
 
 
+def ep_di(ed, persona, ruolo):
+    """La riga EdizionePersona (edizione, persona, ruolo), creata se manca (senza commit)."""
+    ep = next((ep for ep in ed.persone if ep.persona is persona and ep.ruolo == ruolo), None)
+    if ep is None:
+        ep = EdizionePersona(persona=persona, ruolo=ruolo)
+        ed.persone.append(ep)
+    return ep
+
+
 # --------------------------------------------------------------------------- interventi
 TIPI_INTERVENTO = {"relazione": "Lezione", "ud": "Unità didattica"}
 RUOLO_AUTORE = {"relazione": "relatore", "ud": "docente"}  # ruolo nell'edizione richiesto agli autori
@@ -357,18 +379,54 @@ class Candidatura(db.Model):
     file_nome = db.Column(db.String(255))
     n_caratteri = db.Column(db.Integer)  # calcolato per .docx
 
+    # UD in due: il titolare invita un collega con un account; vale solo dopo l'accettazione
+    coautore_id = db.Column(db.Integer, db.ForeignKey("utenti.id", ondelete="SET NULL"))
+    coautore_confermato = db.Column(db.Boolean, nullable=False, default=False)
+    # all'ammissione la UD diventa un Intervento con titolare e co-autore come autori (crea_ud)
+    intervento_id = db.Column(db.Integer, db.ForeignKey("interventi.id", ondelete="SET NULL"), unique=True)
+
     note_comitato = db.Column(db.Text)
     inviata_il = db.Column(db.DateTime)
     creato_il = db.Column(db.DateTime, default=adesso)
     aggiornato_il = db.Column(db.DateTime, default=adesso, onupdate=adesso)
 
-    utente = db.relationship("Utente", back_populates="candidature")
+    utente = db.relationship("Utente", back_populates="candidature", foreign_keys=[utente_id])
+    coautore = db.relationship("Utente", foreign_keys=[coautore_id])
+    intervento = db.relationship("Intervento", backref=db.backref("candidatura", uselist=False))
     edizione = db.relationship("Edizione", back_populates="candidature")
     valutazioni = db.relationship("Valutazione", back_populates="candidatura",
                                   cascade="all, delete-orphan")
     letture = db.relationship("PropostaLettura", back_populates="candidatura",
                               cascade="all, delete-orphan", order_by="PropostaLettura.id")
     materiali = db.relationship("Materiale", back_populates="candidatura")
+
+    def autori(self):
+        """Titolare e, se ha accettato, il co-autore."""
+        return [self.utente] + ([self.coautore] if self.coautore and self.coautore_confermato else [])
+
+    def di(self, utente):
+        """L'account è autore della candidatura (titolare o co-autore che ha accettato)."""
+        return any(u.id == utente.id for u in self.autori())
+
+    @property
+    def nomi_autori(self):
+        return " e ".join(u.nome_completo for u in self.autori())
+
+    def crea_ud(self):
+        """All'ammissione di un borsista: la UD diventa un Intervento dell'edizione con gli autori
+        (ruolo docente nell'edizione). Contenuti, letture e materiali restano nella candidatura."""
+        if self.intervento or self.tipo != "borsista":
+            return None
+        ed = self.edizione
+        iv = Intervento(edizione=ed, tipo="ud", titolo=self.titolo_ud,
+                        ordine=max((i.ordine or 0 for i in ed.interventi), default=0) + 1)
+        db.session.add(iv)
+        self.intervento = iv
+        for u in self.autori():
+            p = u.persona or Persona(nome=u.nome, cognome=u.cognome, utente=u)
+            db.session.add(p)
+            iv.aggiungi_autore(ep_di(ed, p, "docente"))
+        return iv
 
     @property
     def dopo_la_scuola(self):
@@ -396,15 +454,14 @@ class Candidatura(db.Model):
         return round(sum(v.totale for v in self.valutazioni) / len(self.valutazioni), 1)
 
     def problemi_invio(self):
-        """Controlli richiesti dal bando prima dell'invio."""
-        p = []
-        u = self.utente
-        if not u.email_verificata:
-            p.append("Conferma il tuo indirizzo email con il link che ti abbiamo inviato.")
-        for campo, label in (("data_nascita", "data di nascita"),
-                             ("telefono", "telefono"), ("residenza", "residenza")):
-            if not getattr(u, campo):
-                p.append(f"Completa il profilo: manca {label}.")
+        """Controlli richiesti dal bando prima dell'invio (profilo anche del co-autore)."""
+        p = _problemi_profilo(self.utente)
+        if self.coautore:
+            nome = self.coautore.nome_completo
+            if not self.coautore_confermato:
+                p.append(f"{nome} non ha ancora accettato l'invito come co-autore.")
+            else:
+                p += [f"Co-autore ({nome}): {x}" for x in _problemi_profilo(self.coautore, proprio=False)]
         if self.tipo == "borsista":
             if not self.titolo_ud:
                 p.append("Indica il titolo dell'unità didattica.")
@@ -416,6 +473,19 @@ class Candidatura(db.Model):
                     p.append(f"La proposta conta {self.n_caratteri} caratteri: il bando ne "
                              f"richiede tra {ed.caratteri_min} e {ed.caratteri_max} (spazi inclusi).")
         return p
+
+
+def _problemi_profilo(u, proprio=True):
+    """Dati del profilo richiesti dal bando; `proprio=False` per il co-autore."""
+    p = []
+    if not u.email_verificata:
+        p.append("Conferma il tuo indirizzo email con il link che ti abbiamo inviato." if proprio
+                 else "deve confermare il suo indirizzo email.")
+    for campo, label in (("data_nascita", "data di nascita"),
+                         ("telefono", "telefono"), ("residenza", "residenza")):
+        if not getattr(u, campo):
+            p.append(f"Completa il profilo: manca {label}." if proprio else f"nel profilo manca {label}.")
+    return p
 
 
 class Valutazione(db.Model):

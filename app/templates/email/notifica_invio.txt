@@ -1,6 +1,6 @@
 Nuova candidatura per la {{ c.edizione.numero }}ª edizione ({{ c.edizione.anno }}).
 
-Candidato: {{ c.utente.nome_completo }}
+Candidato: {{ c.nomi_autori }}
 Tipo: {{ c.tipo }}
 {% if c.titolo_ud %}Unità didattica: {{ c.titolo_ud }}
 {% endif %}

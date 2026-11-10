@@ -7,7 +7,7 @@
 {% for c in candidature %}
 <div class="scheda">
   <h3>{{ c.titolo_ud or 'Unità didattica senza titolo' }}</h3>
-  <p><small>{{ c.utente.nome_completo }}{% if c.discipline %} · {{ c.discipline }}{% endif %} · {{ TIPI_CANDIDATURA.get(c.tipo, c.tipo) }}</small></p>
+  <p><small>{{ c.nomi_autori }}{% if c.discipline %} · {{ c.discipline }}{% endif %} · {{ TIPI_CANDIDATURA.get(c.tipo, c.tipo) }}</small></p>
   {% if c.abstract %}<p>{{ c.abstract }}</p>{% endif %}
   {% if c.file_path %}<p><a href="{{ url_for('area.file_candidatura', cid=c.id) }}">Scarica la proposta ({{ c.file_nome.rsplit('.',1)[-1]|upper }})</a></p>{% endif %}
   {% set approvate = c.letture|selectattr('stato', 'equalto', 'approvata')|list %}

@@ -1,4 +1,4 @@
-Gentile {{ c.utente.nome }},
+Gentile {{ u.nome }},
 
 la valutazione delle candidature per la {{ c.edizione.numero }}ª edizione della Scuola
 ({{ c.edizione.titolo }}) è conclusa. Esito della tua candidatura: {{ esito }}.

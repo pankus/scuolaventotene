@@ -6,7 +6,7 @@ from datetime import date
 import click
 
 from .extensions import db
-from .models import Edizione, EdizionePersona, Persona, ProgrammaVoce, Utente
+from .models import Candidatura, Edizione, EdizionePersona, Persona, ProgrammaVoce, Utente
 
 
 def _norm(s):
@@ -139,6 +139,15 @@ def register_cli(app):
             if n:
                 click.echo(f"{ed.anno}: {n} lezioni create.")
         db.session.commit()
+
+    @app.cli.command("ud-dalle-candidature")
+    def ud_candidature():
+        """UD (interventi) delle candidature di borsisti già ammesse, con gli autori (idempotente)."""
+        n = 0
+        for c in Candidatura.query.filter_by(stato="ammessa", tipo="borsista", intervento_id=None).all():
+            n += bool(c.crea_ud())
+        db.session.commit()
+        click.echo(f"{n} UD create dalle candidature ammesse.")
 
     @app.cli.command("importa-docenti")
     @click.argument("file", type=click.File(encoding="utf-8"))

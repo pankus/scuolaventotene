@@ -107,8 +107,10 @@ sincronizzate. Senza collezione le letture non si possono approvare. Le sottocol
 ### Elenco e graduatoria
 
 Dal cruscotto, il numero di candidature **inviate** di un'edizione apre l'elenco: in ordine prima i borsisti, poi per **media** dei punteggi
-(decrescente), a parità per data di invio. Le bozze non compaiono. **Esporta graduatoria CSV** scarica la
-graduatoria con le medie per criterio (separatore `;`, apribile in Excel).
+(decrescente), a parità per data di invio. Le bozze non compaiono. Una UD scritta in due è una sola
+candidatura, con il co-autore sotto il nome del titolare (e *invito in attesa* se non ha ancora
+accettato). **Esporta graduatoria CSV** scarica la graduatoria con le medie per criterio e il
+co-autore (separatore `;`, apribile in Excel).
 
 ### Valutare una candidatura
 
@@ -129,8 +131,10 @@ porta la candidatura da *inviata* a *in valutazione*.
 ### Esito
 
 Solo l'admin: riquadro **Esito**, stato e note interne. Quando lo stato diventa *ammessa*,
-*riserva* o *non ammessa* il docente riceve l'email con l'esito. Le note interne non vengono
-mai mostrate al docente.
+*riserva* o *non ammessa* il docente (e l'eventuale co-autore) riceve l'email con l'esito. Le note
+interne non vengono mai mostrate al docente. Quando un borsista è *ammesso*, la sua UD entra tra le
+lezioni e UD dell'edizione con i docenti come autori (ruolo *Docente (UD)*); la pagina pubblica
+resta quella della candidatura.
 
 ## Invito alla lettura
 

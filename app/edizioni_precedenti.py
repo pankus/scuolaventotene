@@ -13,8 +13,8 @@ from datetime import date as D
 from werkzeug.datastructures import FileStorage
 
 from .extensions import db
-from .models import (RUOLO_AUTORE, EdizionePersona, Edizione, Intervento, Materiale, Persona, ProgrammaVoce,
-                     ZoteroCollezione)
+from .models import (RUOLO_AUTORE, Edizione, EdizionePersona, Intervento, Materiale, Persona, ProgrammaVoce, ZoteroCollezione,
+                     ep_di)
 from .utils import salva_upload
 
 SEDE = ("Centro di ricerca e documentazione sul confino politico e la detenzione "
@@ -213,15 +213,6 @@ def lezioni_dal_programma(ed, comitato=()):
     """Una lezione per ogni voce «lezione» del programma, se manca, con tutti i relatori della
     voce come autori. Restituisce quante ne ha create (senza commit)."""
     return _dal_programma(ed, "lezione", "relazione", comitato)
-
-
-def ep_di(ed, persona, ruolo):
-    """La riga EdizionePersona (edizione, persona, ruolo), creata se manca."""
-    ep = next((ep for ep in ed.persone if ep.persona is persona and ep.ruolo == ruolo), None)
-    if ep is None:
-        ep = EdizionePersona(persona=persona, ruolo=ruolo)
-        ed.persone.append(ep)
-    return ep
 
 
 def _dal_programma(ed, tipo_voce, tipo, comitato):

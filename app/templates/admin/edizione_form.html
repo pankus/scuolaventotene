@@ -75,6 +75,7 @@
   {% set ruolo = 'docente' if iv.ud else 'relatore' %}
   <li><em>{{ TIPI_INTERVENTO[iv.tipo] }}</em> ·
     <a href="{{ url_for('public.intervento', slug=ed.slug, iid=iv.id) }}">{{ iv.titolo or 'senza titolo' }}</a>
+    {% if iv.candidatura %}<small>(dalla <a href="{{ url_for('admin.candidatura', cid=iv.candidatura.id) }}">candidatura ammessa</a>)</small>{% endif %}
     <form method="post" action="{{ url_for('admin.elimina_intervento', iid=iv.id) }}" style="display:inline"
           onsubmit="return confirm('Eliminare l\'intervento con le sue letture? I materiali restano nell\'edizione.')">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-pericolo">elimina</button></form>
