@@ -296,7 +296,23 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .tessera-pannello > div { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + .4rem); padding: .8rem .9rem; background: var(--carta); border: 1px solid var(--linea); border-radius: var(--r); box-shadow: 0 10px 24px rgba(5, 28, 44, .12); font-size: .9rem; line-height: 1.4; max-height: 18rem; overflow-y: auto; }
 .tessera-pannello .csl-bib-body, .tessera-pannello .csl-entry { display: inline; }
 .tessera-pannello .isbn { display: block; margin: .5rem 0 0; font-family: var(--mono); font-size: .7rem; color: var(--inchiostro-md); }
-@media (prefers-reduced-motion: reduce) { .tessera .copertina, .tessera-btn { transition: none; } .tessera:hover .copertina { transform: none; } }
+.tessera-interventi { gap: .25rem; font-family: var(--mono); font-size: .7rem; }
+.offcanvas { position: fixed; inset: 0 0 0 auto; width: min(26rem, 100vw); height: 100dvh; max-height: none; margin: 0; padding: 2.2rem 1.6rem 1.6rem;
+  background: var(--carta); color: var(--inchiostro); border: 0; border-left: 3px solid var(--accento); box-shadow: -12px 0 32px rgba(5, 28, 44, .14); overflow-y: auto;
+  transform: translateX(100%); transition: transform .25s ease, overlay .25s allow-discrete, display .25s allow-discrete; }
+.offcanvas:popover-open { transform: none; }
+@starting-style { .offcanvas:popover-open { transform: translateX(100%); } }
+.offcanvas::backdrop { background: rgba(5, 28, 44, .25); }
+.offcanvas h2 { font-size: 1.35rem; font-style: italic; font-weight: 400; margin: .2rem 0 1.4rem; }
+.offcanvas-occhiello, .offcanvas-tipo { font-family: var(--mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accento); margin: 0; }
+.offcanvas-chiudi { position: absolute; top: .8rem; right: .8rem; display: inline-flex; padding: .4rem; border: 0; background: none; color: var(--inchiostro-md); cursor: pointer; }
+.offcanvas-chiudi:hover, .offcanvas-chiudi:focus-visible { color: var(--accento); }
+.offcanvas-elenco { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .8rem; }
+.offcanvas-elenco a { display: flex; flex-direction: column; gap: .2rem; padding: .9rem 1rem; border: 1px solid var(--linea); border-top: 3px solid var(--inchiostro); border-radius: var(--r); color: var(--inchiostro); text-decoration: none; transition: border-color .15s, background .15s; }
+.offcanvas-elenco a:hover { border-color: var(--accento); background: var(--accento-bg); }
+.offcanvas-elenco strong { font-weight: 400; font-size: 1.1rem; line-height: 1.25; }
+.offcanvas-elenco small { font-family: var(--sans); font-size: .8rem; color: var(--inchiostro-md); }
+@media (prefers-reduced-motion: reduce) { .tessera .copertina, .tessera-btn, .offcanvas, .offcanvas-elenco a { transition: none; } .tessera:hover .copertina { transform: none; } }
 /* ------------------------------------------------------------------ pagina di lezione / UD */
 .firma-intervento { font-size: 1.5rem; font-style: italic; margin: 0; }
 .firma-intervento small { display: block; font-family: var(--sans); font-style: normal; font-size: .8rem; color: var(--inchiostro-md); margin-top: .3rem; }

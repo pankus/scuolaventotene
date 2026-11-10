@@ -126,3 +126,27 @@ def test_pagina_a_sezioni_ultima_edizione_chiusa(app, client):
     # ricerca dentro l'edizione scelta
     html = client.get(f"/bibliografia?mostra=e{chiusa.id}&q=libro").get_data(as_text=True)
     assert "Libro del docente" in html and "Fuori edizione" not in html
+
+
+def test_pannello_interventi(app, client):
+    """Tessera con le lezioni e le UD che consigliano l'item; niente nome del docente."""
+    from conftest import crea_intervento
+    libreria(app)
+    ed = crea_edizione(stato="chiusa")
+    iv = crea_intervento(ed, "relazione", "Esilio e migrazione", utente=crea_utente(ruolo="relatore"))
+    docente, altro = crea_utente(), crea_utente()
+    ammessa = Candidatura(utente=docente, edizione=ed, stato="ammessa", titolo_ud="Confini in classe")
+    respinta = Candidatura(utente=altro, edizione=ed, stato="non_ammessa", titolo_ud="Respinta")
+    db.session.add_all([ammessa, respinta])
+    db.session.add_all([
+        PropostaLettura(intervento_id=iv.id, campi={}, zotero_key="R1", stato="approvata"),
+        PropostaLettura(candidatura=ammessa, campi={}, zotero_key="D1", stato="approvata"),
+        PropostaLettura(candidatura=respinta, campi={}, zotero_key="W1", stato="approvata"),
+        PropostaLettura(candidatura=ammessa, campi={}, zotero_key="A1", stato="proposta")])
+    db.session.commit()
+    html = client.get("/bibliografia?tutto=1").get_data(as_text=True)
+    assert 'popovertarget="iv-R1"' in html and f"/edizioni/{ed.slug}/interventi/{iv.id}" in html
+    assert "Esilio e migrazione" in html
+    assert 'popovertarget="iv-D1"' in html and f"/edizioni/{ed.slug}/unita-didattiche/{ammessa.id}" in html
+    assert docente.cognome not in html
+    assert 'popovertarget="iv-W1"' not in html and 'popovertarget="iv-A1"' not in html

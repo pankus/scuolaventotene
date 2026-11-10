@@ -29,13 +29,13 @@
   <section class="sezione-biblio">
     <h2>{% if titolo != 'Riferimenti di base' %}<small>Edizione {{ ed.anno }}</small>{% endif %}{{ titolo or 'Letture' }}
       <span class="nota">{{ items|length }}</span></h2>
-    <div class="tessere">{% for i in items %}{{ tessera(i) }}{% endfor %}</div>
+    <div class="tessere">{% for i in items %}{{ tessera(i, interventi.get(i.key)) }}{% endfor %}</div>
   </section>
   {% else %}<p>Nessun titolo{% if not ultima_sync %}: la bibliografia non è ancora stata sincronizzata{% endif %}.</p>
   {% endfor %}
 {% else %}
   <p class="nota">{{ pagina.total }} titoli</p>
-  <div class="tessere">{% for i in pagina.items %}{{ tessera(i) }}{% else %}<p>Nessun titolo.</p>{% endfor %}</div>
+  <div class="tessere">{% for i in pagina.items %}{{ tessera(i, interventi.get(i.key)) }}{% else %}<p>Nessun titolo.</p>{% endfor %}</div>
   {% if pagina.pages > 1 %}
   <nav class="paginazione">
     {% if pagina.has_prev %}<a href="{{ url_for('bibliografia.index', page=pagina.prev_num, q=q, collezione=col, tag=tag, tutto=1 if tutto else None) }}">← precedenti</a>{% endif %}

@@ -38,13 +38,16 @@
 {%- if nome == 'link' %}<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/>
 {%- elif nome == 'cita' %}<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/>
 {%- elif nome == 'abstract' %}<path d="M21 6H3M17 10H3M21 14H3M17 18H3"/>
+{%- elif nome == 'interventi' %}<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/>
+{%- elif nome == 'chiudi' %}<path d="M18 6 6 18M6 6l12 12"/>
 {%- elif nome == 'modifica' %}<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>
 {%- endif %}</svg>
 {%- endmacro %}
 
 {# Tessera della bibliografia: copertina, tipo, titolo, autori; link, DOI, citazione e abstract
-   dietro le icone (i pannelli sono <details>, niente JS) #}
-{% macro tessera(i) %}
+   dietro le icone (i pannelli sono <details>, niente JS). ``interventi``: lezioni e UD che la
+   consigliano (bibliografia._interventi_di), in un pannello laterale con l'API popover nativa. #}
+{% macro tessera(i, interventi=None) %}
 <article class="tessera tessera-{{ i.tipo }}">
   {{ copertina(i) }}
   <div class="tessera-testo">
@@ -59,6 +62,20 @@
     <details class="tessera-pannello"><summary class="tessera-btn" title="Citazione" aria-label="Citazione">{{ icona('cita') }}</summary>
       <div>{% if i.citazione_html %}{{ i.citazione_html|safe }}{% else %}{{ i.autori }}{% if i.autori %}, {% endif %}<em>{{ i.titolo }}</em>{% if i.anno %}, {{ i.anno }}{% endif %}{% endif %}
         {% if i.isbn %}<small class="isbn">ISBN {{ i.isbn }}</small>{% endif %}</div></details>
+    {% if interventi %}<button type="button" class="tessera-btn tessera-interventi" popovertarget="iv-{{ i.key }}"
+        title="Consigliato in {{ interventi|length }} {{ 'intervento' if interventi|length == 1 else 'interventi' }}"
+        aria-label="Lezioni e unità didattiche che lo consigliano">{{ icona('interventi') }}<span>{{ interventi|length }}</span></button>
+    <aside id="iv-{{ i.key }}" popover class="offcanvas" aria-label="Interventi">
+      <button type="button" class="offcanvas-chiudi" popovertarget="iv-{{ i.key }}" popovertargetaction="hide" aria-label="Chiudi">{{ icona('chiudi') }}</button>
+      <p class="offcanvas-occhiello">Consigliato in</p>
+      <h2>{{ (i.titolo or 'senza titolo')|striptags|truncate(140, True, '…') }}</h2>
+      <ul class="offcanvas-elenco">
+        {% for d in interventi %}<li><a href="{{ d.url }}">
+          <span class="offcanvas-tipo">{{ d.anno }} · {{ d.tipo }}</span>
+          <strong>{{ d.titolo }}</strong>
+          {% if d.autori %}<small>{{ d.autori }}</small>{% endif %}</a></li>{% endfor %}
+      </ul>
+    </aside>{% endif %}
     {% if i.abstract %}<details class="tessera-pannello"><summary class="tessera-btn" title="Abstract" aria-label="Abstract">{{ icona('abstract') }}</summary>
       <div>{{ i.abstract|truncate(900, True, '…') }}</div></details>{% endif %}
     {% if current_user.is_authenticated and current_user.is_admin %}<a class="tessera-btn" href="{{ url_for('admin.item_zotero', key=i.key, torna=request.full_path) }}" title="Modifica (admin)" aria-label="Modifica (admin)">{{ icona('modifica') }}</a>{% endif %}

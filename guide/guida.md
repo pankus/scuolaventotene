@@ -180,7 +180,8 @@ diffuso. I dati personali dei docenti (email, telefono, nascita, residenza) non 
   **Mostra** si sceglie un'altra edizione, una sezione di Zotero o tutta la bibliografia; la
   ricerca vale per autore, titolo o abstract. Ogni lettura è una scheda con copertina (o un
   segnaposto), tipo, titolo, autori e anno; le icone in basso aprono il link, il DOI, la citazione
-  completa con l'ISBN e l'abstract. La pagina di ogni edizione mostra la propria bibliografia
+  completa con l'ISBN e l'abstract; l'icona del libro con un numero apre un pannello laterale con
+  le lezioni e le unità didattiche che consigliano quella lettura. La pagina di ogni edizione mostra la propria bibliografia
   divisa per lezione.
 
 ## Dati personali e contatti

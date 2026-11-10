@@ -1,11 +1,11 @@
 """Invito alla lettura: bibliografia dalla cache del gruppo Zotero, con le copertine locali."""
 import json
 
-from flask import Blueprint, abort, current_app, render_template, request, send_from_directory
+from flask import Blueprint, abort, current_app, render_template, request, send_from_directory, url_for
 from sqlalchemy import or_
 
 from ..extensions import db
-from ..models import Edizione, SyncStato, ZoteroCollezione, ZoteroItem
+from ..models import Candidatura, Edizione, Intervento, PropostaLettura, SyncStato, ZoteroCollezione, ZoteroItem
 from .public import _letture_edizione
 
 bp = Blueprint("bibliografia", __name__)
@@ -33,6 +33,33 @@ def _sotto_albero(key, collezioni):
         keys |= nuovi
         nuovi = {c.key for c in collezioni if c.parent_key in nuovi} - keys
     return keys
+
+
+def _interventi_di(keys):
+    """{zotero_key: [{anno, tipo, titolo, autori, url}]}: lezioni e UD pubbliche che consigliano
+    l'item (letture approvate). Per le UD dei docenti niente nome: solo titolo e link."""
+    out = {}
+    if not keys:
+        return out
+    approvate = PropostaLettura.query.filter(PropostaLettura.zotero_key.in_(keys),
+                                             PropostaLettura.stato == "approvata")
+    for p, iv in approvate.join(Intervento).add_entity(Intervento):
+        ed = iv.edizione
+        if ed.stato == "bozza" or iv.candidatura:
+            continue
+        out.setdefault(p.zotero_key, []).append(dict(
+            anno=ed.anno, tipo="UD" if iv.ud else "Lezione", titolo=iv.titolo or "senza titolo",
+            autori=iv.nomi_autori, url=url_for("public.intervento", slug=ed.slug, iid=iv.id)))
+    for p, c in approvate.join(Candidatura).add_entity(Candidatura):
+        ed = c.edizione
+        if ed.stato == "bozza" or c.stato != "ammessa" or not c.titolo_ud:
+            continue
+        out.setdefault(p.zotero_key, []).append(dict(
+            anno=ed.anno, tipo="UD", titolo=c.titolo_ud, autori="",
+            url=url_for("public.unita_didattica", slug=ed.slug, cid=c.id)))
+    for lista in out.values():
+        lista.sort(key=lambda d: (-d["anno"], d["tipo"], d["titolo"]))
+    return out
 
 
 @bp.route("/bibliografia")
@@ -68,7 +95,9 @@ def index():
         if eid and (not ed or ed not in edizioni):
             abort(404)
         sezioni = _letture_edizione(ed, base_prima=True) if ed else []
-        return render_template("bibliografia/index.html", ed=ed, sezioni=sezioni, pagina=None, **comuni)
+        interventi = _interventi_di([i.key for _, items in sezioni for i in items])
+        return render_template("bibliografia/index.html", ed=ed, sezioni=sezioni, pagina=None,
+                               interventi=interventi, **comuni)
 
     query = ZoteroItem.query.filter_by(eliminato=False)
     if col:
@@ -82,7 +111,8 @@ def index():
         query = query.filter(ZoteroItem.tags.like(f"%{json.dumps(tag, ensure_ascii=False)}%"))
     query = query.order_by(ZoteroItem.primo_autore, ZoteroItem.anno)
     pagina = query.paginate(per_page=48, error_out=False)
-    return render_template("bibliografia/index.html", ed=None, sezioni=None, pagina=pagina, **comuni)
+    return render_template("bibliografia/index.html", ed=None, sezioni=None, pagina=pagina,
+                           interventi=_interventi_di([i.key for i in pagina.items]), **comuni)
 
 
 @bp.route("/bibliografia/copertine/<key>")
