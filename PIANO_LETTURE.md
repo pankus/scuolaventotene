@@ -17,6 +17,11 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F8 Sfogliare i materiali | da decidere |
 
 ## Riprendere da qui (stato al 2026-11-06)
+- **Nota 2026-11-10, ristrutturazione fuori dal piano**: le sezioni R2/R3 qui sotto descrivono il
+  modello di allora. Oggi la lezione non è più l'`EdizionePersona` ma un `Intervento` (tipo
+  `relazione | ud`, uno o più autori); `Materiale.lezione_id` e `PropostaLettura.lezione_id` sono
+  diventati `intervento_id`; il ruolo globale è solo `Utente.admin`. Modello attuale in
+  ARCHITETTURA.md §2 e §4.
 - **Nessuna fase in corso.** F1–F7 e R1–R3 fatte, F8 rimandata. Fuori dal piano, dopo F7:
   edizioni 2023–2025 (`flask seed-precedenti`), sezione «Le edizioni» in `la_scuola.html`;
   attestati di frequenza rimandati (domande aperte in AGENTS.md, «Lavori aperti» 3).

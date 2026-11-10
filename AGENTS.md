@@ -288,6 +288,11 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
    aperte (tecnica: docx + LibreOffice o fpdf2; chi riceve; firmatario e ore). Carta intestata
    CNR-ISMed in `modelli/Carta_intestata_accessibile_ita.docx`.
 4. Opzionale: registrazione presenze, export iscritti e uditori.
+5. Ristrutturazione di ruoli, interventi e co-autori (fatta e pushata il 2026-11-10, commit
+   d0fc6ed…a5fe452): restano il deploy in produzione e i punti aperti elencati in
+   ARCHITETTURA.md §7, punto 6 (permessi dei docenti autori di UD passate, più co-autori,
+   posti borsisti per UD in due, titolo della UD ammessa, lezioni dal programma per titolo,
+   spostamento di interventi condivisi).
 
 **In corso: [PIANO_LETTURE.md](PIANO_LETTURE.md)**: invito alla lettura, Zotero in lettura e
 scrittura, ricerca dei libri, relatori, materiali dopo la scuola. Fatte F1–F7 e R1–R3; prossima

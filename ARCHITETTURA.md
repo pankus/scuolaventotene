@@ -142,3 +142,12 @@ sync_stato (versione libreria Zotero, data ultima sync)
 3. Attestati di frequenza in PDF (borsisti e uditori): rimandati. Da decidere: tecnica (carta intestata `modelli/*.docx` compilata e convertita con LibreOffice, oppure fpdf2), chi li riceve (frequenza segnata dall'admin o tutti gli ammessi), firmatario e monte ore.
 4. Opzionale: campi per la registrazione delle presenze, export degli iscritti e degli uditori.
 5. [PIANO_LETTURE.md](PIANO_LETTURE.md): fatte F1–F7 e R1–R3; F8 (sfogliare i materiali) rimandata. Stato e punto di ripresa in cima al file.
+6. Ristrutturazione di ruoli e interventi (novembre 2026), cose da finire:
+   - **Produzione**: backup, `flask db upgrade` (prima su una copia), `flask ud-dalle-candidature`; riagganciare al comitato di ogni edizione gli account segnalati dalla migrazione; fissare la chiusura dei contenuti della 2026.
+   - **Docenti autori di UD senza candidatura** (edizioni passate): l'account collegato non dà ancora permessi sulla UD. Per aprirli basta che `area._mia_lezione` usi `Utente.interventi()` invece di `lezioni()` (e che le pagine dicano «UD» invece di «lezione»).
+   - **Più di un co-autore per UD**: `Intervento` ne regge N, la candidatura uno solo (`coautore_id`); servirebbe una tabella di co-autori della candidatura.
+   - **UD in due e posti borsisti**: quanti posti conta una UD in due lo decide il comitato a mano; da fissare con l'utente se va nel bando o nel sito.
+   - **Titolo della UD ammessa**: l'Intervento creato all'ammissione copia `titolo_ud`; se il docente o l'admin lo cambiano dopo, i due titoli divergono (la pagina pubblica usa quello della candidatura).
+   - **Lezioni dal programma**: si riconoscono dal titolo della voce; se l'admin cambia solo il titolo della lezione, ricreandole dal programma ne nasce un'altra (`ponytail:` in `_dal_programma`).
+   - **Sposta in un'altra edizione** (`/admin/utenti`): rifiutato se la lezione ha altri autori; eventualmente spostare l'intervento intero con tutti gli autori.
+   - **Informativa**: aggiornata (co-autore, comitato per edizione); va riletta con il DPO insieme agli altri `[DA VERIFICARE]`.

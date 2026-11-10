@@ -162,6 +162,16 @@ sudo -u www-data venv/bin/flask --app app:create_app db upgrade   # migrazioni n
 touch wsgi.py                                                    # ricarica il processo mod_wsgi
 ```
 
+Aggiornamento ai ruoli per edizione e agli interventi (novembre 2026, migrazioni `96a97a8d076f`
+→ `4e38cae6582f`): i dati restano, convertiti (ruolo → `admin`, lezioni → interventi con lo
+stesso id, lezioni a due voci unite, materiali e letture spostati). Prima provare l'upgrade su
+una copia (`DATABASE_URL=sqlite:////var/www/scuolaventotene/instance/prova.db … db upgrade`),
+fermare il cron di Zotero durante l'upgrade, poi una volta
+`sudo -u www-data venv/bin/flask --app app:create_app ud-dalle-candidature`. La migrazione elenca
+gli account con il vecchio ruolo «comitato» non legati a nessun comitato: vanno aggiunti da
+Utenti. Ripristino: copiare il backup su `instance/ventotene.db`, togliere `-wal` e `-shm`,
+`git checkout edeab6d`.
+
 Log: `/var/log/apache2/error.log` (`wsgi.py` manda logging e stdout su stderr).
 
 Ricerca dei libri: il server chiama `www.googleapis.com` e `openlibrary.org` (e scarica le
