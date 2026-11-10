@@ -15,8 +15,34 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
 | F6 Dopo la scuola: altri libri e materiali | **fatta** (2026-11-06): `Candidatura.dopo_la_scuola` (ammessa, edizione chiusa/conclusa), `Materiale.candidatura_id` + migrazione, upload dalla candidatura (`?candidatura=`), upload libero chiuso, archivio con «Unità didattiche dei docenti», letture `post_scuola` (`PropostaLettura.modificabile`), informativa aggiornata |
 | F7 Invito alla lettura pubblico | **fatta** (2026-11-06): filtro per sezione con le sottosezioni (edizione → «Relatori», «Docenti»), macro `voce_biblio` (copertina, ISBN, link) in `/bibliografia` e nella pagina edizione, `/bibliografia/copertine/<key>`, letture nella scheda candidatura del comitato; nessuna migrazione |
 | F8 Sfogliare i materiali | da decidere |
+| Dopo F7 (2026-11-10) | **fatte**, fuori dalle fasi: ricerca delle letture prima in Zotero (online solo per i libri e con la casella), tipi `bookSection` e `journalArticle`, `/bibliografia` a tessere per edizione con pannello degli interventi, scollega lettura dalla relazione (anche da «Relatori» in Zotero), tessere nelle pagine di relazione/UD, invito alla lettura in homepage, «relazione» al posto di «lezione» nei testi visibili. Commit `6319717`…`925f4e5` |
 
-## Riprendere da qui (stato al 2026-11-06)
+## Riprendere da qui (stato al 2026-11-10)
+- **Lavoro del 2026-11-10** (dopo la ristrutturazione, fuori dalle fasi; dettagli in
+  ARCHITETTURA.md §5):
+  - *Ricerca delle letture*: `ricerca_libri.cerca(q, isbn, online, tipo)` interroga sempre la cache
+    Zotero (ogni parola in titolo o autori, filtro per tipo); Google Books e Open Library solo per
+    `tipo=book` e con `online=1` (casella «cerca anche online» in `letture.js`), senza i libri con
+    ISBN già in Zotero. Il limite di 30/min vale solo per le ricerche online. Risultati in due
+    gruppi, «Nella bibliografia della scuola» e «Online».
+  - *Tipi*: `bookSection` (titolo del volume, curatori, pagine) e `journalArticle` (rivista,
+    volume, fascicolo, pagine, DOI) in `TIPI`/`CREATORI`/`CAMPI_MODULO`, `TIPI_LETTURA` e
+    `LetturaForm`; scelta del tipo in cima al modulo (`?tipo=`). Nessuna migrazione.
+  - *`/bibliografia`*: di default l'ultima edizione `chiusa | conclusa`, sezioni «Riferimenti di
+    base» → «Relatori» → «Docenti»; select «Mostra» (edizione, collezione, tutta); tessere (macro
+    `tessera`) con link, DOI, citazione e abstract dietro icone; pannello laterale (`popover`) con
+    le relazioni e UD che consigliano l'item (`bibliografia._interventi_di`, UD dei docenti senza
+    nome). Stesse tessere, piccole e con la motivazione, nelle pagine di relazione/UD e in homepage
+    (fino a 8 riferimenti di base).
+  - *Scollega*: dalla pagina pubblica della relazione (admin e autori a contenuti aperti) o da
+    «Bibliografia della relazione»; l'item esce anche dalla sottocollezione dell'edizione in
+    Zotero (`scollega_item`) se nessun'altra lettura dell'edizione lo usa.
+  - *Terminologia*: nei testi visibili «relazione»; nel codice restano `lezione`/`lezioni` (vedi
+    AGENTS.md, «Terminologia»).
+  - *Copertine*: restano al cron `flask zotero-copertine`; la sync dal cruscotto non le cerca
+    (scelta dell'utente). Alla creazione dal sito si scarica solo quella di un risultato online.
+  - Possibile in futuro: ricerca online di articoli (Crossref per DOI), rinomina interna
+    `lezione → relazione` con redirect degli URL.
 - **Nota 2026-11-10, ristrutturazione fuori dal piano**: le sezioni R2/R3 qui sotto descrivono il
   modello di allora. Oggi la lezione non è più l'`EdizionePersona` ma un `Intervento` (tipo
   `relazione | ud`, uno o più autori); `Materiale.lezione_id` e `PropostaLettura.lezione_id` sono
@@ -68,8 +94,8 @@ Piano a fasi (una per sessione). Stato delle fasi: segnare qui sotto a ogni fine
     `/area/candidatura/edizione/<slug>` (prima collideva con `/area/candidatura/<id>`).
 - Da verificare con il DPO: i punti `[DA VERIFICARE]` dell'informativa, compresi i nuovi su
   relatori, Zotero, Google Books e Open Library.
-- Non provato in un browser vero: la ricerca dei libri (`letture.js`) e i passi della
-  candidatura sono verificati solo dai test e dall'HTML generato.
+- Ricerca dei libri, bibliografia a tessere e pannello degli interventi provati dall'utente nel
+  browser (2026-11-10); i passi della candidatura restano verificati dai test e dall'HTML.
 
 ## Context
 L'utente vuole questo percorso del docente:
@@ -154,6 +180,9 @@ esterne" di AGENTS.md).
 - Migrazione + test (permessi, approvazione con FakeZot, nessun nome del docente nel payload Zotero).
 
 ## F4 — Lookup durante la digitazione
+> Superata il 2026-11-10: prima solo Zotero, online su richiesta e solo per i libri, parametro
+> `tipo` (vedi «Riprendere da qui»). Sotto la versione originale.
+
 - `GET /area/letture/cerca?q=…[&isbn=…]` (`@login_required`, limite: query ≥ 3 caratteri, max ~30
   richieste/minuto per utente) → JSON
   `{"zotero": [{key, titolo, autori, anno, isbn}], "online": [{fonte, titolo, autori, anno,
@@ -228,6 +257,9 @@ riorganizzata a mano in Zotero se la si vuole uniforme. Materiali dei relatori
 - Informativa privacy: aggiornare la parte "Materiali" se cambia cosa si pubblica.
 
 ## F7 — Invito alla lettura pubblico
+> Superata il 2026-11-10: `/bibliografia` a sezioni per edizione e tessere (vedi «Riprendere da
+> qui»); la pagina dell'edizione usa ancora `voce_biblio`. Sotto la versione originale.
+
 - Già fatto altrove: la pagina dell'edizione mostra l'invito alla lettura per sezioni (radice,
   «Relatori» per lezione, «Docenti», R1/R3); l'area docente mostra le letture della candidatura
   con stato e nota (F5).
