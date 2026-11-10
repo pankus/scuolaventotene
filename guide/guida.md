@@ -70,12 +70,15 @@ edizione.
 
 ### Invito alla lettura
 
-Facoltativo ma raccomandato: fino a **10** libri o siti web utili per il tema della scuola.
+Facoltativo ma raccomandato: fino a **10** letture utili per il tema della scuola. In alto si
+sceglie il **tipo**: libro, capitolo di libro, articolo di rivista o sito web.
 
-- **Libro**: mentre scrivete il titolo il sito cerca nella bibliografia della scuola e nei
-  cataloghi online (Google Books, Open Library). Scegliendo un risultato i campi si compilano da
-  soli; **«Già in Zotero»** indica un libro già presente nella bibliografia: sceglietelo, così
-  non si crea un doppione.
+- **Libro, capitolo, articolo**: mentre scrivete il titolo il sito cerca nella bibliografia della
+  scuola. I risultati segnati **«Già nella bibliografia»** sono già presenti: sceglietelo, così
+  non si crea un doppione. Per i libri, se non c'è, spuntate **cerca anche online** (Google
+  Books, Open Library): i risultati online compaiono sotto quelli della bibliografia. Scegliendo
+  un risultato i campi si compilano da soli; altrimenti si compilano a mano (per un capitolo il
+  titolo del volume, per un articolo la rivista, il fascicolo, le pagine e il DOI se c'è).
 - **Sito web**: indirizzo, titolo e nome del sito si scrivono a mano.
 - **Motivazione**: perché lo consigliate. Resta nel sito, non entra in Zotero.
 
@@ -150,7 +153,7 @@ revisione e vengono pubblicati nell'**Archivio**, nella sezione «Lezioni».
 
 ### Bibliografia della lezione
 
-Fino a 10 letture per lezione, con la stessa ricerca dei libri dei docenti. Le letture dei
+Fino a 10 letture per lezione, con gli stessi tipi e la stessa ricerca dei docenti. Le letture dei
 relatori **entrano subito** nella bibliografia della scuola (Zotero, sottocollezione
 «Relatori» dell'edizione), senza revisione. Se il sito trova un record simile (stesso ISBN o
 stesso titolo) chiede **È già nella bibliografia?**: se è lo stesso libro sceglietelo, se è

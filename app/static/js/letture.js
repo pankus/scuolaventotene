@@ -1,5 +1,6 @@
-// Ricerca dei libri mentre si scrive il titolo (PIANO_LETTURE.md, F4). Nessuna libreria.
-// Uso: <input name="title" data-ricerca-url="/area/letture/cerca"> dentro un <form>.
+// Ricerca delle letture mentre si scrive il titolo (PIANO_LETTURE.md, F4). Nessuna libreria.
+// Uso: <input name="title" data-ricerca-url="/area/letture/cerca" data-tipo="book"> dentro un <form>.
+// Prima la bibliografia della scuola (Zotero); per i libri, con la casella, anche i cataloghi online.
 // Scegliendo un risultato si compilano i campi del form con lo stesso nome
 // (title, autori, date, publisher, ISBN, copertina_url, zotero_key).
 (function () {
@@ -37,7 +38,7 @@
     var autori = Array.isArray(r.autori) ? r.autori.join(", ") : (r.autori || "");
     b.textContent = r.titolo + (autori ? " — " + autori : "") + (r.anno ? " (" + r.anno + ")" : "");
     var nota = document.createElement("small");
-    nota.textContent = r.key ? " Già in Zotero" : " " + r.fonte + (r.isbn ? " · ISBN " + r.isbn : "") +
+    nota.textContent = r.key ? "Già nella bibliografia: sceglilo per non creare un doppione" : r.fonte + (r.isbn ? " · ISBN " + r.isbn : "") +
                        (r.copertina_url ? " · copertina disponibile" : "");
     if (r.key) li.className = "in-zotero";
     b.appendChild(nota);
@@ -46,28 +47,63 @@
     return li;
   }
 
+  function gruppo(testo) {
+    var li = document.createElement("li");
+    li.className = "gruppo";
+    li.textContent = testo;
+    return li;
+  }
+
   function attiva(input) {
     var form = input.form, timer = null, ultima = "";
+    var tipo = input.dataset.tipo || "book", online = null;
     var lista = document.createElement("ul");
     lista.className = "risultati-ricerca";
     lista.hidden = true;
     lista.setAttribute("aria-live", "polite");
     input.setAttribute("autocomplete", "off");
     input.insertAdjacentElement("afterend", lista);
+    if (tipo === "book") {  // i cataloghi online hanno solo libri
+      var etichetta = document.createElement("label");
+      etichetta.className = "cerca-online";
+      online = document.createElement("input");
+      online.type = "checkbox";
+      etichetta.appendChild(online);
+      etichetta.appendChild(document.createTextNode(" cerca anche online (Google Books, Open Library)"));
+      input.insertAdjacentElement("afterend", etichetta);
+      online.addEventListener("change", function () { ultima = ""; cerca(0); });
+    }
 
     function mostra(dati) {
+      var zotero = dati.zotero || [], trovati = dati.online || [];
       lista.innerHTML = "";
-      (dati.zotero || []).forEach(function (r) { lista.appendChild(riga(r, form, lista)); });
-      (dati.online || []).forEach(function (r) { lista.appendChild(riga(r, form, lista)); });
-      if (dati.errore || !lista.children.length) {
-        var li = document.createElement("li");
-        li.textContent = dati.errore || "Nessun risultato: compila i campi a mano.";
-        lista.appendChild(li);
+      if (dati.errore) {
+        var err = document.createElement("li");
+        err.textContent = dati.errore;
+        lista.appendChild(err);
+      }
+      lista.appendChild(gruppo("Nella bibliografia della scuola"));
+      zotero.forEach(function (r) { lista.appendChild(riga(r, form, lista)); });
+      if (!zotero.length) {
+        var vuoto = document.createElement("li");
+        vuoto.textContent = online && !online.checked
+          ? "Non c'è nella bibliografia della scuola: spunta «cerca anche online» o compila i campi a mano."
+          : "Non c'è nella bibliografia della scuola: compila i campi a mano.";
+        lista.appendChild(vuoto);
+      }
+      if (online && online.checked) {
+        lista.appendChild(gruppo("Online"));
+        trovati.forEach(function (r) { lista.appendChild(riga(r, form, lista)); });
+        if (!trovati.length) {
+          var nessuno = document.createElement("li");
+          nessuno.textContent = (dati.errori || []).length ? "Cataloghi online non raggiungibili." : "Nessun risultato online.";
+          lista.appendChild(nessuno);
+        }
       }
       lista.hidden = false;
     }
 
-    input.addEventListener("input", function () {
+    function cerca(attesa) {
       clearTimeout(timer);
       var q = input.value.trim();
       if (q.length < 3) { lista.hidden = true; return; }
@@ -75,13 +111,17 @@
         if (q === ultima) return;
         ultima = q;
         var isbn = form.elements.ISBN ? form.elements.ISBN.value : "";
-        fetch(input.dataset.ricercaUrl + "?" + new URLSearchParams({ q: q, isbn: isbn }),
+        var parametri = { q: q, isbn: isbn, tipo: tipo };
+        if (online && online.checked) parametri.online = "1";
+        fetch(input.dataset.ricercaUrl + "?" + new URLSearchParams(parametri),
               { headers: { Accept: "application/json" }, credentials: "same-origin" })
           .then(function (r) { return r.json(); })
           .then(function (d) { if (input.value.trim() === q) mostra(d); })
           .catch(function () { mostra({ errore: "Ricerca non disponibile: compila i campi a mano." }); });
-      }, 300);
-    });
+      }, attesa);
+    }
+
+    input.addEventListener("input", function () { cerca(300); });
     input.addEventListener("keydown", function (e) { if (e.key === "Escape") lista.hidden = true; });
   }
 

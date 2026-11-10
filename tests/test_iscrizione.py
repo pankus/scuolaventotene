@@ -118,6 +118,19 @@ def test_letture_altrui(app, bozza):
     assert client.get(f"/area/candidatura/{mia.id}/letture?p={p.id}").status_code == 404
 
 
+def test_capitolo_e_articolo(app, bozza):
+    c, client = bozza
+    pagina = client.get(url(c, tipo="journalArticle")).get_data(as_text=True)
+    assert 'name="publicationTitle"' in pagina and 'name="ISBN"' not in pagina
+    assert 'data-tipo="journalArticle"' in pagina
+    client.post(url(c, tipo="journalArticle"), data={"title": "Il confino", "publicationTitle": "Italia contemporanea",
+                                                   "pages": "10-30", "DOI": "10.1/x"})
+    client.post(url(c, tipo="bookSection"), data={"title": "Capitolo", "bookTitle": "Volume", "curatori": "Rossi, Anna"})
+    client.post(url(c, tipo="thesis"), data={"title": "Tipo ignoto"})  # diventa un libro
+    assert [(p.tipo, p.campi.get("publicationTitle") or p.campi.get("bookTitle")) for p in c.letture] == [
+        ("journalArticle", "Italia contemporanea"), ("bookSection", "Volume"), ("book", None)]
+
+
 def test_limite_letture(app, bozza):
     c, client = bozza
     for i in range(MAX_LETTURE + 1):

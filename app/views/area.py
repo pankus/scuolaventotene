@@ -11,7 +11,8 @@ from flask_login import current_user, login_required
 from .. import zotero_sync as modulo_sync
 from ..extensions import db
 from ..forms import CandidaturaForm, CoautoreForm, LetturaDocenteForm, MaterialeForm, ProfiloForm
-from ..models import Candidatura, Edizione, Intervento, Materiale, PropostaLettura, Utente, ZoteroItem, adesso
+from ..models import (TIPI_LETTURA, Candidatura, Edizione, Intervento, Materiale, PropostaLettura, Utente,
+                      ZoteroItem, adesso)
 from ..posta import email_conferma_invio, email_invito_coautore
 from ..ricerca_libri import cerca
 from ..utils import copertina_ammessa, conta_caratteri, elimina_upload, salva_upload
@@ -187,6 +188,12 @@ def _compila(p, form):
     p.copertina_url = form.copertina_url.data if copertina_ammessa(form.copertina_url.data) else None
 
 
+def _tipo_lettura():
+    """Tipo della lettura da aggiungere (?tipo=), libro se manca o non previsto."""
+    t = request.args.get("tipo")
+    return t if t in TIPI_LETTURA else "book"
+
+
 @bp.route("/candidatura/<int:cid>/letture", methods=["GET", "POST"])
 def letture(cid):
     """Passo 3: invito alla lettura (facoltativo). Il docente aggiunge letture in qualsiasi
@@ -199,7 +206,7 @@ def letture(cid):
     if request.values.get("p"):
         p = next((x for x in c.letture if x.id == request.values.get("p", type=int)
                   and x.modificabile), None) or abort(404)
-    tipo = p.tipo if p else ("webpage" if request.args.get("tipo") == "webpage" else "book")
+    tipo = p.tipo if p else _tipo_lettura()
     form = LetturaDocenteForm(data={**p.campi, "motivazione": p.motivazione, "zotero_key": p.zotero_key,
                                     "copertina_url": p.copertina_url} if p else None)
     n_letture = len(c.letture)  # il limite vale per la candidatura, in tutto
@@ -331,7 +338,7 @@ def letture_lezione(iid):
     """Bibliografia della lezione: ogni lettura entra subito in Zotero, in «Relatori».
     Dopo la chiusura dei contenuti si consulta soltanto."""
     iv = _mia_lezione(iid, modifica=request.method == "POST")
-    tipo = "webpage" if request.args.get("tipo") == "webpage" else "book"
+    tipo = _tipo_lettura()
     form = LetturaDocenteForm()
     scelte = []
     if form.validate_on_submit():
@@ -415,6 +422,8 @@ def cerca_letture():
     q = request.args.get("q", "").strip()
     if len(q) < 3:
         return jsonify(errore="Scrivi almeno 3 caratteri."), 400
-    if _troppe_ricerche(current_user.id):
-        return jsonify(errore="Troppe ricerche: riprova tra un minuto."), 429
-    return jsonify(cerca(q[:200], request.args.get("isbn")))
+    tipo = request.args.get("tipo") if request.args.get("tipo") in TIPI_LETTURA else "book"
+    online = request.args.get("online") == "1" and tipo == "book"
+    if online and _troppe_ricerche(current_user.id):  # il limite protegge le fonti esterne
+        return jsonify(errore="Troppe ricerche online: riprova tra un minuto."), 429
+    return jsonify(cerca(q[:200], request.args.get("isbn"), online=online, tipo=tipo))

@@ -166,6 +166,10 @@ class FakeZot:
     TEMPLATE = {
         "book": ["title", "creators", "abstractNote", "series", "place", "publisher", "date",
                  "ISBN", "url", "tags", "collections", "relations"],
+        "bookSection": ["title", "creators", "abstractNote", "bookTitle", "series", "place", "publisher",
+                        "date", "pages", "ISBN", "url", "tags", "collections", "relations"],
+        "journalArticle": ["title", "creators", "abstractNote", "publicationTitle", "volume", "issue",
+                           "pages", "date", "DOI", "ISSN", "url", "tags", "collections", "relations"],
         "webpage": ["title", "creators", "abstractNote", "websiteTitle", "date", "url",
                     "accessDate", "tags", "collections", "relations"],
     }

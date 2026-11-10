@@ -1,7 +1,7 @@
-"""Ricerca dei libri mentre il docente scrive il titolo (PIANO_LETTURE.md, F4).
+"""Ricerca delle letture mentre si scrive il titolo (PIANO_LETTURE.md, F4).
 
-a) cache locale di Zotero (``ZoteroItem``): veloce, senza rete;
-b) Google Books e Open Library, interrogati dal server (l'IP del docente non arriva a loro),
+a) cache locale di Zotero (``ZoteroItem``): veloce, senza rete, sempre per prima;
+b) solo per i libri e su richiesta (casella «cerca anche online»): Google Books e Open Library, interrogati dal server (l'IP del docente non arriva a loro),
    in parallelo, con timeout; se una fonte non risponde restano i risultati dell'altra.
 I risultati online si fondono per ISBN. Le copertine restano URL: si scaricano in locale solo
 quando il comitato approva la lettura (``utils.salva_copertina``).
@@ -13,7 +13,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 from flask import current_app
-from sqlalchemy import or_
+from sqlalchemy import and_, false, or_
 
 from .models import ZoteroItem
 from .zotero_sync import _cifra10, normalizza_isbn, piega
@@ -101,23 +101,33 @@ def cerca_online(q, isbn=None, chiave_google=None):
     return fondi(liste), errori
 
 
-def cerca_zotero(q, isbn=None):
-    """Item già nella bibliografia (book/webpage, non nel cestino)."""
-    filtro = [ZoteroItem.titolo.ilike(f"%{q}%"), ZoteroItem.autori.ilike(f"%{q}%")]
+def cerca_zotero(q, isbn=None, tipo=None):
+    """Item già nella bibliografia, non nel cestino: ogni parola di ``q`` nel titolo o negli
+    autori (oppure lo stesso ISBN); con ``tipo`` solo quel tipo Zotero."""
+    parole = [or_(ZoteroItem.titolo.ilike(f"%{p}%"), ZoteroItem.autori.ilike(f"%{p}%"))
+              for p in (q or "").split()]
+    filtro = and_(*parole) if parole else false()
     if isbn:
-        filtro.append(ZoteroItem.isbn == isbn)
-    righe = (ZoteroItem.query.filter(ZoteroItem.eliminato.is_(False),
-                                     ZoteroItem.tipo.in_(("book", "webpage")), or_(*filtro))
-             .order_by(ZoteroItem.titolo).limit(8))
+        filtro = or_(filtro, ZoteroItem.isbn == isbn)
+    righe = ZoteroItem.query.filter(ZoteroItem.eliminato.is_(False), filtro)
+    if tipo:
+        righe = righe.filter(ZoteroItem.tipo == tipo)
     return [{"key": z.key, "tipo": z.tipo, "titolo": z.titolo, "autori": z.autori, "anno": z.anno,
-             "isbn": z.isbn} for z in righe]
+             "isbn": z.isbn} for z in righe.order_by(ZoteroItem.titolo).limit(10)]
 
 
-def cerca(q, isbn_testo=None):
+def cerca(q, isbn_testo=None, online=False, tipo="book"):
+    """Prima la bibliografia della scuola; i cataloghi online (solo libri) se ``online``.
+    Dagli online si tolgono i libri con un ISBN già trovato in Zotero."""
     q = (q or "").strip()
     isbn = normalizza_isbn(isbn_testo) or normalizza_isbn(q)
-    online, errori = cerca_online(q, isbn, current_app.config.get("GOOGLE_BOOKS_API_KEY"))
-    return {"zotero": cerca_zotero(q, isbn), "online": online, "errori": errori}
+    zotero = cerca_zotero(q, isbn, tipo)
+    trovati, errori = [], []
+    if online and tipo == "book":
+        trovati, errori = cerca_online(q, isbn, current_app.config.get("GOOGLE_BOOKS_API_KEY"))
+        gia = {z["isbn"] for z in zotero if z["isbn"]}
+        trovati = [r for r in trovati if not r.get("isbn") or r["isbn"] not in gia]
+    return {"zotero": zotero, "online": trovati, "errori": errori}
 
 
 # --------------------------------------------------------------------------- copertine della bibliografia

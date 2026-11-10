@@ -4,7 +4,7 @@ Porta ridotta di Itinera (app/biblio/write.py). Zotero resta la fonte di verità
 API, poi si salva in cache solo l'item riscaricato da Zotero. ``SyncStato.zotero_version`` non si
 tocca: alla sync successiva l'item torna come modificato ed è solo aggiornato.
 
-Solo i tipi ``book`` e ``webpage``. Nessun dato del docente va in Zotero: le funzioni accettano
+Solo i tipi in ``TIPI`` (libro, capitolo, articolo, sito). Nessun dato del docente va in Zotero: le funzioni accettano
 solo campi bibliografici; il legame docente↔libro resta nel DB del sito.
 """
 from flask import current_app
@@ -18,12 +18,15 @@ from .zotero_sync import applica_item, firma, normalizza_isbn
 # campi Zotero modificabili dal sito, per tipo
 TIPI = {
     "book": ["title", "date", "publisher", "place", "ISBN", "series", "url"],
+    "bookSection": ["title", "bookTitle", "date", "publisher", "place", "ISBN", "pages", "url"],
+    "journalArticle": ["title", "publicationTitle", "volume", "issue", "pages", "date", "DOI", "url"],
     "webpage": ["title", "websiteTitle", "url", "accessDate"],
 }
-CREATORI = {"book": ("author", "editor"), "webpage": ("author",)}
-# campi dei moduli del sito (forms.LetturaForm), in ordine: quelli Zotero più autori e curatori
-CAMPI_MODULO = {"book": TIPI["book"][:1] + ["autori", "curatori"] + TIPI["book"][1:],
-                "webpage": TIPI["webpage"][:1] + ["autori"] + TIPI["webpage"][1:]}
+CREATORI = {"book": ("author", "editor"), "bookSection": ("author", "editor"),
+            "journalArticle": ("author",), "webpage": ("author",)}
+# campi dei moduli del sito (forms.LetturaForm), in ordine: titolo, autori (e curatori), il resto
+CAMPI_MODULO = {t: c[:1] + ["autori"] + (["curatori"] if "editor" in CREATORI[t] else []) + c[1:]
+                for t, c in TIPI.items()}
 
 
 class ErroreScrittura(Exception):

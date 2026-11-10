@@ -81,7 +81,7 @@ L'utente vuole questo percorso del docente:
 5. la fase di iscrizione si chiude così (lettura → invio candidatura);
 6. dopo la scuola rientra e carica altri libri e soprattutto i **materiali del suo modulo**
    (PDF, PowerPoint), da rendere **sfogliabili** nel sito (soluzione da decidere più avanti);
-7. in Zotero finiscono solo i tipi **book** e **webpage**.
+7. in Zotero finiscono solo i tipi **book** e **webpage** (dal 2026-11-10 anche **bookSection** e **journalArticle**).
 
 Zotero diventa **lettura e scrittura**, portando da Itinera (`~/gitrepo/itinera/app/biblio/`) sync,
 scrittura e dedup. Oggi il sito ha solo una sync in sola lettura (`app/zotero_sync.py`).

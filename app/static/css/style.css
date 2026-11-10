@@ -370,7 +370,10 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .risultati-ricerca button:hover, .risultati-ricerca button:focus-visible { color: var(--accento); }
 .risultati-ricerca button:focus-visible { outline: 2px solid var(--accento); outline-offset: 2px; }
 .risultati-ricerca small { display: block; color: var(--inchiostro-lo); }
-.risultati-ricerca .in-zotero { background: var(--accento-bg); }
+.risultati-ricerca .in-zotero { background: var(--accento-bg); box-shadow: inset 3px 0 0 var(--accento); }
+.risultati-ricerca .gruppo { font-family: var(--mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--inchiostro-md); background: var(--carta-2); padding: .35rem .7rem; }
+.cerca-online { display: flex; gap: .4rem; align-items: center; font-family: var(--sans); font-size: .8rem; font-weight: 400; color: var(--inchiostro-md); }
+.tipi-lettura { font-family: var(--sans); font-size: .9rem; }
 .risultati-ricerca .in-zotero small { color: var(--accento); font-weight: 600; }
 
 /* ------------------------------------------------------------------ passi della candidatura */

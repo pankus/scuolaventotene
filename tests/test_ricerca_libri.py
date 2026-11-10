@@ -53,7 +53,7 @@ def test_open_library(rete):
 
 def test_isbn_cercato_come_isbn(app, rete):
     _, chiamate = rete
-    ricerca_libri.cerca("88-06-17471-X o altro", "0306406152")
+    ricerca_libri.cerca("88-06-17471-X o altro", "0306406152", online=True)
     assert any("isbn%3A9780306406157" in u for u in chiamate)       # Google: q=isbn:...
     assert any("isbn=9780306406157" in u for u in chiamate)          # Open Library
 
@@ -82,9 +82,12 @@ def test_cerca_in_zotero(app, fake_zot, rete):
     fake_zot.metti_item("D", "Il confino, articolo", tipo="journalArticle")
     fake_zot.cestina("C")
     sincronizza(zot=fake_zot)
-    assert [z["key"] for z in ricerca_libri.cerca_zotero("confino")] == ["A"]
+    assert [z["key"] for z in ricerca_libri.cerca_zotero("confino", tipo="book")] == ["A"]
+    assert [z["key"] for z in ricerca_libri.cerca_zotero("confino", tipo="journalArticle")] == ["D"]
+    assert [z["key"] for z in ricerca_libri.cerca_zotero("politico rossi")] == ["A"]  # parole in titolo e autori
+    assert ricerca_libri.cerca_zotero("confino bianchi") == []
     assert {z["key"] for z in ricerca_libri.cerca_zotero("nulla", "9780306406157")} == {"A", "B"}
-    assert [z["key"] for z in ricerca_libri.cerca_zotero("rossi")] == ["B", "A"]  # per autore
+    assert [z["key"] for z in ricerca_libri.cerca_zotero("rossi", tipo="book")] == ["B", "A"]  # per autore
 
 
 # ------------------------------------------------------------------ rotta
@@ -93,14 +96,29 @@ def test_rotta(app, rete):
     c = client_di(app, crea_utente())
     assert c.get("/area/letture/cerca?q=co").status_code == 400
     d = c.get("/area/letture/cerca?q=confino").get_json()
-    assert set(d) == {"zotero", "online", "errori"} and d["online"]
+    assert set(d) == {"zotero", "online", "errori"} and d["online"] == [] and not rete[1]  # solo Zotero
+    assert c.get("/area/letture/cerca?q=confino&online=1").get_json()["online"]
+    # i cataloghi online hanno solo libri: per un articolo niente rete
+    rete[1].clear()
+    assert c.get("/area/letture/cerca?q=confino&online=1&tipo=journalArticle").get_json()["online"] == []
+    assert not rete[1]
+
+
+def test_online_senza_doppioni_zotero(app, fake_zot, rete):
+    fake_zot.metti_item("A", "Il confino", ISBN="9780306406157")
+    sincronizza(zot=fake_zot)
+    d = ricerca_libri.cerca("confino", online=True)
+    assert [z["key"] for z in d["zotero"]] == ["A"]
+    assert all(r["isbn"] != "9780306406157" for r in d["online"]) and d["online"]  # resta «Ventotene»
 
 
 def test_limite_ricerche(app, rete):
     c = client_di(app, crea_utente())
-    codici = [c.get("/area/letture/cerca?q=confino").status_code for _ in range(area.LIMITE_RICERCHE + 1)]
+    codici = [c.get("/area/letture/cerca?q=confino&online=1").status_code
+              for _ in range(area.LIMITE_RICERCHE + 1)]
     assert codici[-2:] == [200, 429]
-    assert client_di(app, crea_utente()).get("/area/letture/cerca?q=confino").status_code == 200
+    assert c.get("/area/letture/cerca?q=confino").status_code == 200  # in Zotero si cerca sempre
+    assert client_di(app, crea_utente()).get("/area/letture/cerca?q=confino&online=1").status_code == 200
 
 
 def test_chiave_google(rete):

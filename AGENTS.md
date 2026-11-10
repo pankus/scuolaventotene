@@ -64,7 +64,7 @@ app/forms.py         form WTForms
 app/utils.py         decoratori di permesso, upload, conteggio caratteri, filtri Jinja, context processor
 app/guida.py         guide (guide/*.md, markdown + indice), mappa pagina → sezione AIUTO, link «Guida»
 app/zotero_sync.py   sync Zotero → sito, verifica chiave, normalizzazione ISBN/firma
-app/zotero_scrittura.py  crea/aggiorna item book|webpage, controllo duplicati (ISBN, firma+anno, ricerca remota)
+app/zotero_scrittura.py  crea/aggiorna item book|bookSection|journalArticle|webpage (`TIPI`), controllo duplicati (ISBN, firma+anno, ricerca remota)
 app/ricerca_libri.py     lookup: cache ZoteroItem + Google Books / Open Library (dal server, in parallelo, fusi per ISBN)
 app/posta.py         email SMTP (Infomaniak) e token firmati per verifica email / reset password
 app/edizioni_precedenti.py  dati delle edizioni 2023–2025 dalle pagine CNR-ISMed (flask seed-precedenti)
@@ -91,7 +91,7 @@ non scrivere stringhe sparse nelle viste o nei template.
 - Edizione: `bozza → aperta → chiusa → conclusa`
 - Candidatura: `bozza → inviata → in_valutazione → ammessa | riserva | non_ammessa`, oppure `ritirata`
 - Materiale: `in_revisione | pubblicato | rifiutato`; visibilità `pubblico | registrati | privato`
-- PropostaLettura: `proposta → approvata | rifiutata`; tipi `book | webpage`; momento `iscrizione | post_scuola`
+- PropostaLettura: `proposta → approvata | rifiutata`; tipi `book | bookSection | journalArticle | webpage` (`TIPI_LETTURA`); momento `iscrizione | post_scuola`
 
 **Regole del bando** (non cambiarle senza che lo chieda l'utente): una candidatura per docente
 per edizione (vincolo unico; vale anche per il co-autore: chi accetta un invito non può averne
@@ -210,8 +210,10 @@ Logica comune in `zotero_scrittura.py`: `sottocollezione_edizione`, `scelte_dupl
 PIANO_LETTURE.md (R1–R3): docente = insegnante candidato, relatore = storico delle lezioni. Copertine solo con `salva_copertina()` (`app/utils.py`: host ammessi anche
 nei redirect, solo immagini tra 1 KB e 2 MB; fonti per ISBN in `ricerca_libri._copertine_per_isbn`: Open Library, Amazon per ISBN-10, Google Books, ognuna isolata) o `carica_copertina()` (file dell'admin, firma del
 formato controllata), sostituite con `sostituisci_copertina()`; `copertina_path=""` = nessuna,
-da non cercare più. L'admin corregge una voce da `/admin/bibliografia/<key>` (`aggiorna_item`). Ricerca dei libri in `app/ricerca_libri.py`
-(`/area/letture/cerca`): le API esterne si chiamano solo dal server, il browser non carica
+da non cercare più. L'admin corregge una voce da `/admin/bibliografia/<key>` (`aggiorna_item`). Ricerca delle letture in `app/ricerca_libri.py`
+(`/area/letture/cerca`): prima la cache Zotero del tipo richiesto (parole in titolo o autori),
+le fonti online solo per i libri e solo con `online=1` (casella in `letture.js`; il limite di
+30 al minuto vale solo per queste); le API esterne si chiamano solo dal server, il browser non carica
 immagini esterne (nei risultati solo testo). Nei test solo `FakeZot`
 (`tests/conftest.py`), mai il gruppo vero: `TestConfig` usa un ID finto.
 

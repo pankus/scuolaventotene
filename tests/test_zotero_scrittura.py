@@ -36,6 +36,19 @@ def test_crea_book(app, fake_zot):
     assert [c.key for c in zi.collezioni] == ["COL1"]
 
 
+def test_crea_capitolo_e_articolo(app, fake_zot):
+    zi = crea_item(fake_zot, "bookSection", {"title": "Il confino", "bookTitle": "Storia d'Italia",
+                                             "pages": "10-30"}, autori="Rossi, Anna", curatori="Bianchi, Luca")
+    inviato = fake_zot.creati[0]
+    assert inviato["bookTitle"] == "Storia d'Italia" and zi.tipo == "bookSection"
+    assert [c["creatorType"] for c in inviato["creators"]] == ["author", "editor"]
+    zi = crea_item(fake_zot, "journalArticle", {"title": "Ventotene", "publicationTitle": "Italia contemporanea",
+                                                "DOI": "10.1/x", "ISBN": "0306406152"}, autori="Rossi, Anna")
+    inviato = fake_zot.creati[1]
+    assert inviato["publicationTitle"] == "Italia contemporanea" and inviato["DOI"] == "10.1/x"
+    assert "ISBN" not in inviato and zi.firma == "ventotene|journalArticle"
+
+
 def test_crea_webpage(app, fake_zot):
     zi = crea_item(fake_zot, "webpage", {"title": "Banca dati confinati", "url": "https://x.it",
                                          "ISBN": "0306406152"})
@@ -43,7 +56,7 @@ def test_crea_webpage(app, fake_zot):
     assert "ISBN" not in fake_zot.creati[0]
 
 
-@pytest.mark.parametrize("tipo, campi", [("journalArticle", {"title": "X"}), ("book", {"title": "  "})])
+@pytest.mark.parametrize("tipo, campi", [("thesis", {"title": "X"}), ("book", {"title": "  "})])
 def test_crea_rifiutata(app, fake_zot, tipo, campi):
     with pytest.raises(ErroreScrittura):
         crea_item(fake_zot, tipo, campi)
@@ -81,7 +94,7 @@ def test_duplicati_remoti(app, fake_zot):
     fake_zot.metti_item("A", "Ventotene in cache")
     sincronizza(zot=fake_zot)
     fake_zot.metti_item("C", "Ventotene dopo la sync")
-    fake_zot.metti_item("D", "Ventotene articolo", tipo="journalArticle")
+    fake_zot.metti_item("D", "Ventotene tesi", tipo="thesis")
 
     locali, remoti = candidati_duplicati(fake_zot, "book", {"title": "Ventotene"})
     assert [r["key"] for r in remoti] == ["C"]

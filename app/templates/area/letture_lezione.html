@@ -28,12 +28,12 @@
   {% if not aperta %}<p class="avviso avviso-info">Contenuti dell'edizione chiusi il {{ iv.edizione.chiusura_contenuti|data_it }}:
     per correzioni scrivi all'amministrazione della scuola.</p>
   {% elif iv.letture|length < max_letture %}
-  <h2>{{ 'Aggiungi un sito web' if tipo == 'webpage' else 'Aggiungi un libro' }}</h2>
-  <p><a href="{{ url_for('area.letture_lezione', iid=iv.id, tipo='webpage' if tipo == 'book' else 'book') }}">oppure {{ 'aggiungi un sito web' if tipo == 'book' else 'aggiungi un libro' }}</a></p>
+  <h2>Aggiungi una lettura</h2>
+  <p class="tipi-lettura">Tipo: {% for k, v in TIPI_LETTURA.items() %}{% if k == tipo %}<strong>{{ v|lower }}</strong>{% else %}<a href="{{ url_for('area.letture_lezione', iid=iv.id, tipo=k) }}">{{ v|lower }}</a>{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</p>
   <form method="post" class="modulo">
     {{ form.hidden_tag() }}
     {% for nome in campi %}
-      {% if nome == 'title' and tipo == 'book' %}{{ campo(form.title, data_ricerca_url=url_for('area.cerca_letture'), placeholder="Scrivi il titolo: cerchiamo nella bibliografia e online") }}
+      {% if nome == 'title' and tipo != 'webpage' %}{{ campo(form.title, data_ricerca_url=url_for('area.cerca_letture'), data_tipo=tipo, placeholder="Scrivi il titolo: cerchiamo nella bibliografia della scuola") }}
       {% else %}{{ campo(form[nome]) }}{% endif %}
     {% endfor %}
     {{ campo(form.motivazione) }}

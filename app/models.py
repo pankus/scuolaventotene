@@ -510,7 +510,8 @@ class Valutazione(db.Model):
 
 
 # --------------------------------------------------------------------------- letture
-TIPI_LETTURA = {"book": "Libro", "webpage": "Sito / pagina web"}  # tipi Zotero
+TIPI_LETTURA = {"book": "Libro", "bookSection": "Capitolo di libro", "journalArticle": "Articolo di rivista",
+                "webpage": "Sito / pagina web"}  # tipi Zotero
 STATI_PROPOSTA = {"proposta": "Da rivedere", "approvata": "Approvata", "rifiutata": "Rifiutata"}
 # "post_scuola" = aggiunta quando la candidatura non era più modificabile (dopo la scadenza o
 # l'esito, anche dopo la scuola); la chiave resta quella storica
