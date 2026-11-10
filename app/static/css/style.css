@@ -172,11 +172,6 @@ main.contenitore { padding-top: 2.5rem; padding-bottom: 5rem; min-height: 60vh; 
 .btn-secondario { background: transparent; color: var(--inchiostro); border-color: var(--inchiostro); }
 .btn-secondario:hover { background: var(--inchiostro); color: #fff; border-color: var(--inchiostro); }
 .btn-piccolo { padding: .38rem .75rem; font-size: .8rem; }
-.btn-icona { display: inline-flex; align-items: center; justify-content: center; width: 2.1rem; height: 2.1rem; padding: 0;
-  border: 1px solid var(--linea); border-radius: var(--r); background: var(--carta); color: var(--inchiostro-md); cursor: pointer; }
-.btn-icona:hover, .btn-icona:focus-visible { border-color: var(--accento); color: var(--accento); outline: 0; }
-.btn-icona-pericolo:hover, .btn-icona-pericolo:focus-visible { border-color: var(--err); color: var(--err); }
-.icona { flex: none; }
 .link-pericolo { background: none; border: 0; padding: 0; font-family: var(--sans); font-size: .8rem; color: var(--err); text-decoration: underline; cursor: pointer; }
 .azioni { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; margin: 1.6rem 0; }
 
@@ -322,8 +317,9 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 .sottomenu a { color: var(--inchiostro-md); text-decoration: none; }
 .sottomenu a:hover { color: var(--accento); }
 .sottomenu a[aria-current="page"] { color: var(--accento); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accento); padding-bottom: .25rem; }
-.edizioni-utente { white-space: nowrap; }
-.edizioni-utente form { margin-top: .3rem; }
+.tabella-utenti td > * + *, .tabella-utenti details > * + * { margin-top: .4rem; }
+.edizioni-utente { min-width: 22rem; }
+.stato-utente { display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; font-family: var(--sans); font-size: .85rem; white-space: nowrap; }
 .cambia-edizione summary { cursor: pointer; font-family: var(--sans); font-size: .8rem; color: var(--inchiostro-md); }
 
 /* ------------------------------------------------------------------ stati */

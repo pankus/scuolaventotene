@@ -198,19 +198,19 @@ pagina (vedi *Completare le edizioni passate*).
 Solo admin. **Utenti**: per ogni account nome e cognome, *amministratore* sì/no e attivo sì/no, poi
 **Salva**; un account disattivato non può più entrare. Non si può togliere a sé stessi
 l'amministrazione (il proprio nome sì). Gli altri ruoli valgono per edizione e si danno dalla
-colonna **Edizioni**.
+colonna **Edizioni e ruoli**.
 
-La colonna **Edizioni** mostra a cosa è legato l'account: UD, lezioni o comitato di un'edizione
+La colonna **Edizioni e ruoli** mostra a cosa è legato l'account: UD, lezioni o comitato di un'edizione
 (dalla scheda dell'edizione) e candidature con il loro stato. In alto si filtra per **edizione** e
 **partecipazione** (relatori, docenti, comitato, candidati, senza edizione): per esempio edizione 2024 +
-docenti. Per agganciare un account a un'edizione: **aggiungi**, scegli l'anno e il ruolo. Con
+docenti. Per agganciare un account a un'edizione: **Aggiungi a**, scegli l'anno e il ruolo. Con
 *Comitato scientifico* l'account entra nel comitato di quell'edizione; con *Relatore* o *Docente (UD)*
 il sito crea la sua lezione o UD, da completare poi nella scheda dell'edizione;
-se nel programma c'è già una persona con lo stesso nome e cognome, usa quella. Con **cambia** →
-**sposta** un ruolo passa a un'altra edizione con le lezioni o UD di cui la persona è l'unico autore
+se nel programma c'è già una persona con lo stesso nome e cognome, usa quella. Con **Modifica edizioni** →
+**Sposta** un ruolo passa a un'altra edizione con le lezioni o UD di cui la persona è l'unico autore
 (titolo, materiali e letture; le letture già in Zotero restano nella collezione della vecchia
 edizione). Se una lezione ha altri autori il sito non sposta nulla: prima si toglie l'autore.
-**Elimina** cancella l'account (per esempio uno creato per prova) con candidature, letture e
+**Elimina account** cancella l'account (per esempio uno creato per prova) con candidature, letture e
 file caricati; non vale per chi ha valutato candidature o caricato materiali: quelli si disattivano.
 Il primo admin si crea dal server con `flask crea-admin`.
 

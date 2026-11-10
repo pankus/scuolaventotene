@@ -213,7 +213,7 @@ def test_utenti_edizioni_e_filtri(app):
         return c.get(f"/admin/utenti{qs}").data.decode()
 
     html = mostra()
-    assert f"{ed24.anno} · Docente" in html and f"{ed23.anno} · Relatore" in html
+    assert f"{ed24.anno}</strong> · Docente" in html and f"{ed23.anno}</strong> · Relatore" in html
     assert f"{ed24.anno} · candidatura inviata" in html and "nessuna edizione" in html
     assert 'aria-current="page">Utenti</a>' in html and 'aria-current="page">Cruscotto</a>' not in html
 
@@ -265,4 +265,4 @@ def test_utenti_sposta_e_aggiungi_edizione(app):
     eps = EdizionePersona.query.filter_by(persona_id=omonimo.id).all()
     assert [(e.edizione_id, e.ruolo) for e in eps] == [(ed1.id, "relatore")] and omonimo.utente_id == nuovo.id
     html = c.get("/admin/utenti").data.decode()
-    assert "sposta" in html and "aggiungi" in html
+    assert ">Sposta</button>" in html and ">Aggiungi</button>" in html

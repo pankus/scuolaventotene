@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Utenti{% endblock %}
-{% from "_macros.html" import btn_icona %}
 {% block content %}
 <h1>Utenti</h1>
 {% include "admin/_nav.html" %}
@@ -21,50 +20,49 @@
 {% macro scelta_edizione(attuale=None) %}<select name="edizione" aria-label="Edizione">
         {% if not attuale %}<option value="">edizione…</option>{% endif %}
         {% for e in edizioni %}<option value="{{ e.id }}" {% if e.id == attuale %}selected{% endif %}>{{ e.anno }}</option>{% endfor %}</select>{% endmacro %}
-<div class="scorri-x tabella-larga"><table class="tabella">
-  <tr><th>Nome e cognome</th><th>Email</th><th>Edizioni</th><th>Registrato</th><th>Amministratore / stato</th></tr>
+{% macro form_aggiungi(u) %}<form method="post" action="{{ url_for('admin.edizione_utente', uid=u.id) }}" class="in-linea">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="ritorno" value="{{ ritorno }}">
+          Aggiungi a {{ scelta_edizione() }} come <select name="ruolo" aria-label="Ruolo nell'edizione">{% for k, v in RUOLI_EDIZIONE.items() %}<option value="{{ k }}" {% if k == 'docente' %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+          <button class="btn btn-piccolo btn-secondario">Aggiungi</button></form>{% endmacro %}
+<div class="scorri-x"><table class="tabella tabella-utenti">
+  <tr><th>Account</th><th>Edizioni e ruoli</th><th>Stato</th></tr>
   {% for u in utenti %}
   {% set f = 'u' ~ u.id %}
   {% set eps = u.persona.edizioni|sort(attribute='edizione.anno') if u.persona else [] %}
   <tr><td><div class="in-linea nome-utente">
       <input form="{{ f }}" name="nome" value="{{ u.nome }}" required maxlength="100" aria-label="Nome" placeholder="Nome">
       <input form="{{ f }}" name="cognome" value="{{ u.cognome }}" required maxlength="100" aria-label="Cognome" placeholder="Cognome"></div>
-      {% if u.scuola %}<small class="nota">{{ u.scuola }}</small>{% endif %}</td>
-    <td>{{ u.email }}</td>
+      <div>{{ u.email }}</div>
+      <div class="nota">{% if u.scuola %}{{ u.scuola }} · {% endif %}registrato il {{ u.creato_il|data_it }}</div></td>
     <td class="edizioni-utente">
-      {% for ep in eps %}<div>{{ ep.edizione.anno }} · {{ RUOLI_EDIZIONE[ep.ruolo] }}{% for iv in ep.interventi %}
-        · <a href="{{ url_for('public.intervento', slug=ep.edizione.slug, iid=iv.id) }}">{{ iv.titolo|truncate(40) if iv.titolo else 'senza titolo' }}</a>{% endfor %}</div>{% endfor %}
+      {% for ep in eps %}<div><strong>{{ ep.edizione.anno }}</strong> · {{ RUOLI_EDIZIONE[ep.ruolo] }}{% for iv in ep.interventi %}
+        <br><a href="{{ url_for('public.intervento', slug=ep.edizione.slug, iid=iv.id) }}">{{ iv.titolo|truncate(90) if iv.titolo else 'senza titolo' }}</a>{% endfor %}</div>{% endfor %}
       {% for c in u.candidature|sort(attribute='edizione.anno') %}<div><a href="{{ url_for('admin.candidatura', cid=c.id) }}">{{ c.edizione.anno }} · candidatura {{ STATI_CANDIDATURA.get(c.stato, c.stato)|lower }}</a></div>{% endfor %}
-      {% if not eps and not u.candidature %}{% if not u.admin %}<span class="badge badge-rifiutato">nessuna edizione</span>{% else %}—{% endif %}{% endif %}
-      {% if eps %}<details class="cambia-edizione"><summary>cambia</summary>
+      {% if not eps and not u.candidature %}<div>{% if not u.admin %}<span class="badge badge-rifiutato">nessuna edizione</span>{% else %}—{% endif %}</div>{% endif %}
+      {% if eps %}<details class="cambia-edizione"><summary>Modifica edizioni</summary>
         {% for ep in eps %}<form method="post" action="{{ url_for('admin.edizione_utente', uid=u.id) }}" class="in-linea">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="ritorno" value="{{ ritorno }}">
           <input type="hidden" name="epid" value="{{ ep.id }}">
-          {{ RUOLI_EDIZIONE[ep.ruolo] }} {{ scelta_edizione(ep.edizione_id) }}{{ btn_icona('sposta', 'Sposta in questa edizione') }}</form>{% endfor %}
-      {% endif %}
-        <form method="post" action="{{ url_for('admin.edizione_utente', uid=u.id) }}" class="in-linea">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="ritorno" value="{{ ritorno }}">
-          {{ scelta_edizione() }}<select name="ruolo" aria-label="Ruolo nell'edizione">{% for k, v in RUOLI_EDIZIONE.items() %}<option value="{{ k }}" {% if k == 'docente' %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>{{ btn_icona('aggiungi', 'Aggiungi a questa edizione con questo ruolo') }}</form>
-      {% if eps %}</details>{% endif %}</td>
-    <td>{{ u.creato_il|data_it }}</td>
-    <td><form method="post" action="{{ url_for('admin.aggiorna_utente', uid=u.id) }}" class="in-linea" id="{{ f }}">
+          Sposta {{ RUOLI_EDIZIONE[ep.ruolo] }} {{ ep.edizione.anno }} in {{ scelta_edizione(ep.edizione_id) }}
+          <button class="btn btn-piccolo btn-secondario">Sposta</button></form>{% endfor %}
+        {{ form_aggiungi(u) }}</details>
+      {% else %}{{ form_aggiungi(u) }}{% endif %}</td>
+    <td><form method="post" action="{{ url_for('admin.aggiorna_utente', uid=u.id) }}" class="stato-utente" id="{{ f }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="ritorno" value="{{ ritorno }}">
       {% if u.id != current_user.id %}
       <label><input type="checkbox" name="admin" value="1" {% if u.admin %}checked{% endif %}> amministratore</label>
       <label><input type="checkbox" name="attivo" value="1" {% if u.attivo %}checked{% endif %}> attivo</label>
-      {% else %}{% if u.admin %}amministratore {% endif %}(tu){% endif %}
-      {{ btn_icona('salva', 'Salva nome, amministratore e stato') }}</form>
-    {% if u.id != current_user.id %}<form method="post" action="{{ url_for('admin.elimina_utente', uid=u.id) }}" class="in-linea">
+      {% else %}<span>{% if u.admin %}amministratore {% endif %}(tu)</span>{% endif %}
+      <div><button class="btn btn-piccolo" title="Salva nome, cognome, amministratore e stato">Salva</button></div></form>
+    {% if u.id != current_user.id %}<form method="post" action="{{ url_for('admin.elimina_utente', uid=u.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="ritorno" value="{{ ritorno }}">
-      {{ btn_icona('elimina', 'Elimina l\'account', 'btn-icona-pericolo', 'Eliminare definitivamente ' ~ u.email ~ ' con le sue candidature?') }}</form>{% endif %}</td></tr>
+      <button class="btn btn-piccolo btn-secondario" onclick="return confirm({{ ('Eliminare definitivamente ' ~ u.email ~ ' con le sue candidature?')|tojson|forceescape }})">Elimina account</button></form>{% endif %}</td></tr>
   {% endfor %}
 </table></div>
-<p class="nota">Pulsanti: dischetto = salva, cestino = elimina, calendario con freccia = sposta in un'altra edizione,
-  calendario con + = aggiungi a un'edizione (passa sopra con il mouse per la descrizione).
-  «Aggiungi» aggancia l'account a un'edizione con il ruolo scelto: comitato, oppure crea la UD (docente) o la lezione (relatore), che poi
+<p class="nota">«Aggiungi» aggancia l'account a un'edizione con il ruolo scelto: comitato, oppure crea la UD (docente) o la lezione (relatore), che poi
   completi nella scheda dell'edizione; se nel programma c'è già una persona con lo stesso nome e cognome, usa quella.
-  «cambia» → «sposta» porta il ruolo in un'altra edizione con le sue lezioni o UD (titolo, materiali e
+  «Sposta» porta il ruolo in un'altra edizione con le sue lezioni o UD (titolo, materiali e
   letture), se ne è l'unico autore.</p>
 {% endblock %}
