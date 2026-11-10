@@ -145,7 +145,7 @@ sync_stato (versione libreria Zotero, data ultima sync)
 
 ## 7. Da fare (prossimi passi)
 
-1. Testi istituzionali (storia e obiettivi, enti promotori; «Le edizioni» è scritta), loghi CNR-ISMed, Centro Ventotene e ANPPIA, verifica dell'informativa privacy con il DPO.
+1. Testi istituzionali (storia e obiettivi, promotore CNR-ISMed e partner; «Le edizioni» è scritta), logo del Centro Ventotene (CNR-ISMed e ANPPIA sono nel piede), verifica dell'informativa privacy con il DPO.
 2. Edizioni 2023–2025 caricate (`flask seed-precedenti`, dati in `app/edizioni_precedenti.py`); UD dei docenti create dal programma (`flask ud-dal-programma`); mancano i materiali di lezioni e UD (l'admin li carica dalla pagina di ciascuna) e gli account di relatori e docenti.
 3. Attestati di frequenza in PDF (borsisti e uditori): rimandati. Da decidere: tecnica (carta intestata `modelli/*.docx` compilata e convertita con LibreOffice, oppure fpdf2), chi li riceve (frequenza segnata dall'admin o tutti gli ammessi), firmatario e monte ore.
 4. Opzionale: campi per la registrazione delle presenze, export degli iscritti e degli uditori.

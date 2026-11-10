@@ -1,7 +1,7 @@
 
 --
 Scuola di formazione di Ventotene
-CNR-ISMed · Centro di ricerca e documentazione sul confino politico e la detenzione · ANPPIA
+CNR-ISMed, con il Centro di ricerca e documentazione sul confino politico e la detenzione e l'ANPPIA
 {% if not personale %}Messaggio automatico: per informazioni scrivi a {{ config.EMAIL_CONTATTI|join(", ") }}.
 {% else %}Per rispondere basta rispondere a questo messaggio.
 {% endif %}

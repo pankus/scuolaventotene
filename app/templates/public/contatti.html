@@ -1,6 +1,41 @@
 {% extends "base.html" %}
 {% block title %}Contatti{% endblock %}
 {% block content %}
+<div class="stretto">
 <h1>Contatti</h1>
-<ul>{% for e in config.EMAIL_CONTATTI %}<li><a href="mailto:{{ e }}">{{ e }}</a></li>{% endfor %}</ul>
+<p class="tesi">Per informazioni sulla scuola, sul bando e sulle candidature scrivi a:</p>
+<ul class="contatti">{% for e in config.EMAIL_CONTATTI %}<li><a href="mailto:{{ e }}">{{ e }}</a></li>{% endfor %}</ul>
+
+<h2>Come iscriversi</h2>
+{% if ed and ed.candidature_aperte %}
+<p class="avviso avviso-info">Il bando {{ ed.anno }} è aperto{% if ed.scadenza_candidature %}: candidature
+  entro il <strong>{{ ed.scadenza_candidature|data_it }}</strong>{% endif %}.</p>
+{% elif ed %}
+<p>Le candidature per l'edizione {{ ed.anno }} sono chiuse. Il bando della prossima edizione sarà
+  pubblicato su questo sito; intanto puoi già registrarti.</p>
+{% endif %}
+<ol>
+  <li><a href="{{ url_for('auth.registrati') }}">Registrati</a>, conferma l'indirizzo email e completa il profilo.</li>
+  <li>Dalla tua area personale carica la proposta di unità didattica (o candidati come uditore)
+    e, se vuoi, consiglia qualche lettura.</li>
+  <li>Invia la candidatura entro la scadenza: l'esito arriva per email.</li>
+</ol>
+<div class="azioni">
+  {% if ed and ed.candidature_aperte %}{% if current_user.is_authenticated %}<a class="btn" href="{{ url_for('area.dashboard') }}">Vai alla tua area personale</a>{% else %}<a class="btn" href="{{ url_for('auth.registrati') }}">Registrati e candidati</a>{% endif %}{% endif %}
+  {% if ed and ed.bando_path %}<a class="btn btn-secondario" href="{{ url_for('public.bando', slug=ed.slug) }}">Bando {{ ed.anno }} (PDF)</a>{% endif %}
+  <a href="{{ url_for('public.la_scuola') }}">Chi può partecipare e come →</a>
+</div>
+
+{% if ed %}
+<h2>Dove</h2>
+<p>{{ ed.sede or ed.luogo or 'Ventotene' }}{% if ed.data_inizio %}, {{ ed.data_inizio|data_it }}{% if ed.data_fine %} – {{ ed.data_fine|data_it }}{% endif %}{% endif %}
+  · <a href="{{ url_for('public.edizione', slug=ed.slug) }}">programma dell'edizione {{ ed.anno }}</a></p>
+{% endif %}
+
+<h2>Problemi con il sito</h2>
+<p>Non ricordi la password? <a href="{{ url_for('auth.password_dimenticata') }}">Reimpostala qui</a>.
+  Non è arrivata l'email di conferma? Controlla la posta indesiderata, poi accedi e chiedi un
+  nuovo link. Le istruzioni passo passo sono nella <a href="{{ url_for('public.guida') }}">guida</a>;
+  per tutto il resto scrivi agli indirizzi qui sopra.</p>
+</div>
 {% endblock %}

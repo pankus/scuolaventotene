@@ -6,8 +6,9 @@ Istruzioni per agenti di sviluppo (Claude Code e simili). Leggere prima questo f
 
 ## Il progetto in breve
 
-Sito della scuola di formazione per docenti di Ventotene (CNR-ISMed, Centro di ricerca e
-documentazione sul confino politico e la detenzione Isole di Ventotene e Santo Stefano, ANPPIA).
+Sito della scuola di formazione per docenti di Ventotene, promossa da CNR-ISMed con i partner
+Centro di ricerca e documentazione sul confino politico e la detenzione Isole di Ventotene e
+Santo Stefano e ANPPIA.
 Serve a: presentare l'edizione corrente (bando, programma, comitato), raccogliere le candidature
 dei docenti (borsisti o uditori) con la proposta di unità didattica, far valutare le candidature
 al comitato, archiviare i materiali delle edizioni passate e mostrare una bibliografia
@@ -283,9 +284,10 @@ Nuove regole del bando o nuove rotte del back-office: aggiungere il test corrisp
 ## Lavori aperti (da ARCHITETTURA.md §7)
 
 1. Testi istituzionali: in `public/la_scuola.html` restano `[DA COMPLETARE]` storia e obiettivi
-   e la presentazione dei tre enti promotori (testi dell'utente). «Le edizioni» è scritta
+   e la presentazione di promotore (CNR-ISMed) e partner (testi dell'utente). «Le edizioni» è scritta
    (2023–2026, solo fatti dalle pagine ISMed e dai dati caricati): aggiornarla a ogni nuova
-   edizione. Loghi CNR-ISMed / Centro Ventotene / ANPPIA ancora da avere.
+   edizione. Loghi nel piede (`static/img/loghi/`, attenuati e a colori all'hover): CNR-ISMed e
+   ANPPIA fatti; manca quello del Centro Ventotene (per ora solo il nome, senza link).
    Informativa privacy: bozza art. 13 GDPR in `public/privacy.html` (titolare CNR via ISMed,
    server CNR, email via Infomaniak); i punti `[DA VERIFICARE]` e i tempi di conservazione
    vanno confermati con il DPO del CNR. Se cambiano i dati raccolti, i destinatari o i cookie,

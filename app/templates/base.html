@@ -75,10 +75,15 @@
 
 <footer class="piede">
   <div class="contenitore">
+    {# tre enti, logo sotto il nome: attenuato, a colori pieni al passaggio del mouse #}
     <div class="promotori">
-      <div><span>Promotore</span>CNR – Istituto di Studi sul Mediterraneo</div>
-      <div><span>Promotore</span>Centro di ricerca e documentazione sul confino politico e la detenzione Isole di Ventotene e Santo Stefano</div>
-      <div><span>Promotore</span>ANPPIA – Associazione Nazionale Perseguitati Politici Italiani Antifascisti</div>
+      <div><span>Promotore</span>CNR – Istituto di Studi sul Mediterraneo (ISMed)
+        <a class="logo-ente" href="https://www.ismed.cnr.it/" target="_blank" rel="noopener">
+          <img src="{{ url_for('static', filename='img/loghi/cnr-ismed.png') }}" alt="CNR – Istituto di Studi sul Mediterraneo (ISMed)" height="40"></a></div>
+      <div><span>Partner</span>Centro di ricerca e documentazione sul confino politico e la detenzione Isole di Ventotene e Santo Stefano</div>
+      <div><span>Partner</span>ANPPIA – Associazione Nazionale Perseguitati Politici Italiani Antifascisti
+        <a class="logo-ente" href="https://www.anppia.it/" target="_blank" rel="noopener">
+          <img src="{{ url_for('static', filename='img/loghi/anppia.png') }}" alt="ANPPIA – Associazione Nazionale Perseguitati Politici Italiani Antifascisti" height="40"></a></div>
     </div>
     <p><a href="{{ url_for('public.privacy') }}">Privacy</a> · <a href="{{ url_for('public.contatti') }}">Contatti</a></p>
     <p class="colofone">Composto in ET Book, Inter e JetBrains Mono · nessun tracciamento · nessuna richiesta esterna</p>

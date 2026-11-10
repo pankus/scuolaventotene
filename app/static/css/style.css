@@ -197,6 +197,9 @@ main.contenitore { padding-top: 2.5rem; padding-bottom: 5rem; min-height: 60vh; 
 .scheda.numero span { font-family: var(--mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--inchiostro-md); }
 aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); position: sticky; top: 6rem; }
 
+.contatti { list-style: none; padding: 0; margin: 1.2rem 0 2rem; display: flex; flex-direction: column; gap: .5rem; font-family: var(--sans); font-size: 1rem; }
+.contatti a { border-left: 2px solid var(--accento); padding-left: .8rem; }
+
 /* ------------------------------------------------------------------ avvisi */
 .avviso { font-family: var(--sans); font-size: .9rem; padding: .8rem 1rem; border-left: 3px solid var(--inchiostro-lo); background: var(--carta-2); margin-bottom: 1.2rem; }
 .avviso-ok { border-color: var(--ok); color: var(--ok); background: #effaf5; }
@@ -373,8 +376,13 @@ aside.scheda { background: var(--carta-2); border-color: var(--linea-lo); positi
 /* ------------------------------------------------------------------ piede */
 .piede { border-top: 1px solid var(--inchiostro); padding: 2.5rem 0 3rem; font-family: var(--sans); font-size: .82rem; color: var(--inchiostro-md); }
 .promotori { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.5rem; margin-bottom: 1.8rem; }
-.promotori div { border-left: 2px solid var(--accento); padding-left: .9rem; }
-.promotori span { display: block; font-family: var(--mono); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--inchiostro-lo); margin-bottom: .25rem; }
+.promotori > div { border-left: 2px solid var(--accento); padding-left: .9rem; }
+.promotori span, .etichetta-ente { display: block; font-family: var(--mono); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--inchiostro-lo); margin-bottom: .25rem; }
+/* tecnica del logo «CNR Edizioni» di dapca: colore attenuato, pieno all'hover; stessa altezza per tutti */
+.logo-ente { display: block; width: fit-content; margin-top: .8rem; }
+.logo-ente img { display: block; height: 40px; width: auto; filter: saturate(.35) opacity(.7); transition: filter .25s ease; }
+.logo-ente:hover img, .logo-ente:focus-visible img { filter: none; }
+@media (prefers-reduced-motion: reduce) { .logo-ente img { transition: none; } }
 .piede a { color: var(--inchiostro-md); }
 .colofone { font-family: var(--mono); font-size: .68rem; color: var(--inchiostro-lo); }
 

@@ -199,7 +199,7 @@ def la_scuola():
 
 @bp.route("/contatti")
 def contatti():
-    return render_template("public/contatti.html")
+    return render_template("public/contatti.html", ed=edizione_corrente())
 
 
 @bp.route("/privacy")
